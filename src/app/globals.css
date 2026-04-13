@@ -1,26 +1,171 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================
+   TZEVET HATZOLAH — Design System
+   Tailwind v4 CSS-based configuration
+   ============================================ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+
+  /* --- Fonts --- */
+  --font-sans: 'Heebo', Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
+
+  /* --- Navy (Primary / Trust) --- */
+  --color-navy-50:  #E8EDF7;
+  --color-navy-400: #2D5299;
+  --color-navy-600: #204085;
+  --color-navy-800: #162D5E;
+  --color-navy-950: #0C1A38;
+
+  /* --- Gold (Accent / Highlights) --- */
+  --color-gold-50:  #FEFAE6;
+  --color-gold-300: #F8E048;
+  --color-gold-500: #C9A800;
+  --color-gold-700: #957B00;
+  --color-gold-900: #5C4C00;
+
+  /* --- Red (Donations / CTA / Urgency) --- */
+  --color-red-50:  #FBEAEC;
+  --color-red-400: #E02238;
+  --color-red-600: #C31A2D;
+  --color-red-800: #8F1120;
+  --color-red-950: #5C0A14;
+
+  /* --- Neutrals --- */
+  --color-warm-white: #F7F6F2;
+  --color-stone:      #ECEAE3;
+  --color-muted:      #9B9A95;
+  --color-dark:       #44433F;
+  --color-charcoal:   #1E1D1A;
+
+  /* --- Semantic aliases --- */
+  --color-background:    var(--color-warm-white);
+  --color-surface:       var(--color-stone);
+  --color-text-primary:  var(--color-charcoal);
+  --color-text-body:     var(--color-dark);
+  --color-text-muted:    var(--color-muted);
+  --color-primary:       var(--color-navy-600);
+  --color-primary-dark:  var(--color-navy-800);
+  --color-cta:           var(--color-red-400);
+  --color-cta-hover:     var(--color-red-600);
+  --color-accent:        var(--color-gold-500);
+
+  /* --- Typography scale --- */
+  --font-size-display: 3rem;        /* 48px — hero heading */
+  --font-size-h1:      2.25rem;     /* 36px */
+  --font-size-h2:      1.625rem;    /* 26px */
+  --font-size-h3:      1.25rem;     /* 20px */
+  --font-size-body:    1.0625rem;   /* 17px */
+  --font-size-caption: 0.875rem;    /* 14px */
+  --font-size-button:  1rem;        /* 16px */
+
+  /* --- Font weights --- */
+  --font-weight-regular: 400;
+  --font-weight-medium:  500;
+  --font-weight-bold:    700;
+  --font-weight-black:   800;
+
+  /* --- Line heights --- */
+  --line-height-display: 1.2;
+  --line-height-heading: 1.35;
+  --line-height-body:    1.8;
+  --line-height-ui:      1.5;
+
+  /* --- Border radius --- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* --- Spacing (major stops) --- */
+  --spacing-section: 5rem;   /* between page sections */
+  --spacing-card:    1.5rem; /* internal card padding */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ============================================
+   Base styles
+   ============================================ */
+
+@layer base {
+  html {
+    direction: rtl; /* Hebrew-first */
+    font-family: var(--font-sans);
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* LTR override for English pages */
+  html[lang="en"] {
+    direction: ltr;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-body);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-heading);
+  }
+
+  h1 { font-size: var(--font-size-h1); }
+  h2 { font-size: var(--font-size-h2); }
+  h3 { font-size: var(--font-size-h3); font-weight: var(--font-weight-medium); }
+
+  a {
+    color: var(--color-navy-400);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-navy-600);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================
+   Utility: CTA button (donate)
+   ============================================ */
+
+@layer components {
+  .btn-donate {
+    background-color: var(--color-cta);
+    color: #ffffff;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-button);
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius-md);
+    letter-spacing: 0.02em;
+    transition: background-color 0.15s ease;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-donate:hover {
+    background-color: var(--color-cta-hover);
+    color: #ffffff;
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-button);
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius-md);
+    transition: background-color 0.15s ease;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-primary-dark);
+    color: #ffffff;
+  }
 }
