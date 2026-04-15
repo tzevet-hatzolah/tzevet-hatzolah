@@ -9,7 +9,7 @@ export function proxy(request: import("next/server").NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all paths except internals, static files, and Sanity studio
-    "/((?!api|_next/static|_next/image|studio|favicon.ico|sitemap.xml|robots.txt).*)",
+    // Match all paths except internals, static assets, and Sanity studio
+    "/((?!api|_next/static|_next/image|studio|favicon.ico|sitemap.xml|robots.txt|.*\\..*).*)",
   ],
 };

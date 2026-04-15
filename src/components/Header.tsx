@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 
@@ -21,10 +22,14 @@ export default function Header() {
       <div className="max-w-6xl mx-auto flex items-center justify-between px-4 h-16 md:h-[72px]">
         {/* Logo + org name */}
         <Link href="/" className="flex items-center gap-3 text-white hover:text-white">
-          {/* Logo placeholder circle */}
-          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold shrink-0">
-            לוגו
-          </div>
+          <Image
+            src="/logo.jpg"
+            alt="צוות הצלה לוגו"
+            width={44}
+            height={44}
+            className="rounded-full shrink-0"
+            priority
+          />
           <div className="leading-tight">
             <span className="text-lg font-bold block">צוות הצלה</span>
             <span className="text-[11px] text-white/60 block">Tzevet Hatzolah</span>
