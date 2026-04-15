@@ -3,6 +3,29 @@ import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import Ticker from "@/components/Ticker";
+import HeroVideo from "@/components/HeroVideo";
+
+async function getHeroMedia() {
+  try {
+    // Dynamic import to avoid crashing when Sanity env vars are missing
+    const { client } = await import("@/sanity/lib/client");
+    const data = await client.fetch<{
+      videoUrl: string | null;
+      posterUrl: string | null;
+    } | null>(
+      `*[_type == "siteSettings"][0]{
+        "videoUrl": heroVideo.asset->url,
+        "posterUrl": heroVideoPoster.asset->url
+      }`,
+      {},
+      { next: { revalidate: 3600 } }
+    );
+    return data;
+  } catch {
+    // Sanity env vars may not be configured yet — fall back to no video
+    return null;
+  }
+}
 
 export default async function HomePage({
   params,
@@ -12,10 +35,18 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <HomeContent />;
+  const heroMedia = await getHeroMedia();
+
+  return <HomeContent heroVideoUrl={heroMedia?.videoUrl} heroPosterUrl={heroMedia?.posterUrl} />;
 }
 
-function HomeContent() {
+function HomeContent({
+  heroVideoUrl,
+  heroPosterUrl,
+}: {
+  heroVideoUrl?: string | null;
+  heroPosterUrl?: string | null;
+}) {
   const t = useTranslations("home");
   const tDonate = useTranslations("donate");
 
@@ -36,7 +67,13 @@ function HomeContent() {
 
       {/* ==================== 1. HERO ==================== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600 text-white py-20 sm:py-28 md:py-36 lg:py-44 px-5 sm:px-6">
-        {/* Decorative elements */}
+        {/* Video background (from Sanity) */}
+        <HeroVideo videoUrl={heroVideoUrl} posterUrl={heroPosterUrl} />
+
+        {/* Dark overlay — ensures text readability over video */}
+        <div className="absolute inset-0 bg-navy-950/60 pointer-events-none" />
+
+        {/* Decorative elements (on top of overlay) */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-24 left-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-gold-300/5 rounded-full blur-3xl animate-float" />
           <div className="absolute -bottom-20 right-1/4 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-navy-400/10 rounded-full blur-3xl animate-float delay-200" style={{ animationDelay: "2s" }} />

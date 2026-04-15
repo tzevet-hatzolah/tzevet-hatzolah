@@ -53,6 +53,23 @@ export const siteSettingsType = defineType({
       ],
     }),
     defineField({
+      name: "heroVideo",
+      title: "Hero Background Video",
+      type: "file",
+      options: {
+        accept: "video/mp4,video/webm",
+      },
+      description:
+        "Background video for the homepage hero section. Keep under 15MB for fast loading. MP4 (H.264) recommended.",
+    }),
+    defineField({
+      name: "heroVideoPoster",
+      title: "Hero Video Poster (Fallback Image)",
+      type: "image",
+      description:
+        "Shown while the video loads or on slow connections. Use a frame from the video.",
+    }),
+    defineField({
       name: "statsVolunteers",
       title: "Stats: Volunteers",
       type: "number",
