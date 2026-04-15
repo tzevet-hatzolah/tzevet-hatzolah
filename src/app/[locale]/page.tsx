@@ -18,7 +18,7 @@ async function getHeroMedia() {
         "posterUrl": heroVideoPoster.asset->url
       }`,
       {},
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 60 } }
     );
     return data;
   } catch {
