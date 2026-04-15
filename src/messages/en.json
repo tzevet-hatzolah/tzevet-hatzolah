@@ -49,6 +49,13 @@
     "news": {
       "title": "News & Updates",
       "view_all": "All articles"
+    },
+    "ticker": {
+      "item1": "Tzevet Hatzolah — Every second counts",
+      "item2": "Over 500 active volunteers across the country",
+      "item3": "24/7 emergency hotline",
+      "item4": "Join us — Donate now and save lives",
+      "item5": "Real-time first-response medical assistance"
     }
   },
   "donate": {

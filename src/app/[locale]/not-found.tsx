@@ -5,12 +5,13 @@ export default function NotFound() {
   const t = useTranslations("not_found");
 
   return (
-    <main className="flex-1 flex items-center justify-center py-20 px-6">
-      <div className="text-center max-w-md">
-        <span className="text-6xl font-bold text-navy-600">404</span>
-        <h1 className="text-2xl font-bold mt-4 mb-2">{t("title")}</h1>
-        <p className="text-dark mb-8">{t("text")}</p>
-        <Link href="/" className="btn-primary text-base px-8 py-3">
+    <main className="flex-1 flex items-center justify-center py-24 px-6 relative">
+      <div className="absolute inset-0 pattern-dots opacity-30 pointer-events-none" />
+      <div className="text-center max-w-md relative z-10 animate-fade-up">
+        <span className="text-7xl md:text-8xl font-[number:var(--font-weight-black)] text-gradient block">404</span>
+        <h1 className="text-2xl font-bold mt-5 mb-3">{t("title")}</h1>
+        <p className="text-dark/70 mb-10">{t("text")}</p>
+        <Link href="/" className="btn-primary text-base px-10 py-3.5">
           {t("home_link")}
         </Link>
       </div>
