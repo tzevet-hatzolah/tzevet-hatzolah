@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "title": "Tzevet Hatzolah",
+    "description": "Tzevet Hatzolah - Emergency Rescue Organization"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "activities": "Activities",
+    "news": "News",
+    "donate": "Donate Now",
+    "contact": "Contact"
+  },
+  "footer": {
+    "nav_title": "Navigation",
+    "contact_title": "Contact Us",
+    "social_title": "Follow Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "accessibility": "Accessibility",
+    "rights": "All rights reserved",
+    "contact_phone": "Phone",
+    "contact_email": "Email",
+    "contact_address": "Address"
+  },
+  "home": {
+    "hero": {
+      "badge": "Volunteer Rescue Organization · Active 24/7",
+      "title": "We are here every moment —\nSaving lives every day",
+      "subtitle": "Tzevet Hatzolah operates around the clock with hundreds of certified volunteers across the country.",
+      "cta_donate": "Donate — Click Here",
+      "cta_about": "Learn More"
+    },
+    "stats": {
+      "volunteers": "Active Volunteers",
+      "calls_per_year": "Calls per Year",
+      "years_active": "Years Active"
+    },
+    "mission": {
+      "title": "Who We Are",
+      "text": "Tzevet Hatzolah is dedicated to saving lives and providing first-response medical assistance in real time, with dedication and professionalism.",
+      "link": "Read our story"
+    },
+    "donate_block": {
+      "title": "Every Donation Saves Lives",
+      "subtitle": "Join thousands of donors who support us every month",
+      "cta": "Donate Now"
+    },
+    "news": {
+      "title": "News & Updates",
+      "view_all": "All articles"
+    }
+  },
+  "donate": {
+    "title": "Donate",
+    "subtitle": "Your donation enables us to continue saving lives",
+    "amount_label": "Choose an amount",
+    "custom_amount": "Custom amount",
+    "currency": "₪",
+    "one_time": "One-time donation",
+    "recurring": "Monthly donation",
+    "donor_type": {
+      "label": "Donor type",
+      "israeli": "Israeli donor",
+      "international": "International donor"
+    },
+    "cta": "Donate Now",
+    "trust": {
+      "secure": "Secure payment",
+      "registration": "Registered nonprofit"
+    }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "message": "Message",
+    "consent": "I agree to be contacted according to the privacy policy",
+    "submit": "Send Message",
+    "success": "Message sent successfully!",
+    "whatsapp": "Message us on WhatsApp"
+  },
+  "about": {
+    "title": "About Tzevet Hatzolah"
+  },
+  "activities": {
+    "title": "Our Activities"
+  },
+  "news_page": {
+    "title": "News & Stories"
+  },
+  "accessibility_page": {
+    "title": "Accessibility Statement"
+  },
+  "privacy_page": {
+    "title": "Privacy Policy"
+  },
+  "terms_page": {
+    "title": "Terms of Use"
+  },
+  "not_found": {
+    "title": "Page Not Found",
+    "text": "Sorry, the page you are looking for does not exist.",
+    "home_link": "Back to Home"
+  },
+  "thank_you": {
+    "title": "Thank You!",
+    "text": "Your donation has been received. Thank you for supporting Tzevet Hatzolah.",
+    "home_link": "Back to Home"
+  }
+}
