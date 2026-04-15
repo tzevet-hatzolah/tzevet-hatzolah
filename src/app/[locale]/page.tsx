@@ -1,6 +1,8 @@
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import AnimateOnScroll from "@/components/AnimateOnScroll";
+import Ticker from "@/components/Ticker";
 
 export default async function HomePage({
   params,
@@ -19,45 +21,65 @@ function HomeContent() {
 
   const presetAmounts = [50, 100, 250];
 
+  const tickerItems = [
+    t("ticker.item1"),
+    t("ticker.item2"),
+    t("ticker.item3"),
+    t("ticker.item4"),
+    t("ticker.item5"),
+  ];
+
   return (
     <main className="flex flex-col flex-1">
+      {/* ==================== TICKER BAR ==================== */}
+      <Ticker items={tickerItems} />
+
       {/* ==================== 1. HERO ==================== */}
-      {/* Full-width, image overlay in production */}
-      <section className="relative bg-navy-600 text-white py-20 md:py-28 px-6">
-        <div className="max-w-3xl mx-auto text-center">
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600 text-white py-20 sm:py-28 md:py-36 lg:py-44 px-5 sm:px-6">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-24 left-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-gold-300/5 rounded-full blur-3xl animate-float" />
+          <div className="absolute -bottom-20 right-1/4 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-navy-400/10 rounded-full blur-3xl animate-float delay-200" style={{ animationDelay: "2s" }} />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(248,224,72,0.04)_0%,transparent_70%)]" />
+        </div>
+
+        <div className="max-w-3xl mx-auto text-center relative z-10">
           {/* Badge */}
-          <span className="inline-block bg-gold-300 text-navy-800 text-xs md:text-sm font-bold px-4 py-1.5 rounded-full mb-6">
+          <span className="inline-block bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 text-xs sm:text-sm font-bold px-4 sm:px-5 py-1.5 sm:py-2 rounded-full mb-6 sm:mb-7 shadow-[var(--shadow-glow-gold)] animate-fade-up">
             {t("hero.badge")}
           </span>
 
           {/* Headline */}
-          <h1 className="text-3xl md:text-[length:var(--font-size-display)] font-[number:var(--font-weight-black)] leading-[1.25] whitespace-pre-line">
+          <h1 className="text-3xl sm:text-4xl md:text-[length:var(--font-size-display)] font-[number:var(--font-weight-black)] leading-[var(--line-height-display)] whitespace-pre-line animate-fade-up delay-100">
             {t("hero.title")}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-white/80 text-base md:text-lg mt-4 max-w-xl mx-auto leading-relaxed">
+          <p className="text-white/65 text-sm sm:text-base md:text-lg mt-4 sm:mt-5 max-w-xl mx-auto leading-relaxed animate-fade-up delay-200">
             {t("hero.subtitle")}
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-            <Link href="/donate" className="btn-donate text-base md:text-lg px-8 py-3">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-8 sm:mt-10 md:mt-12 animate-fade-up delay-300">
+            <Link href="/donate" className="btn-donate text-base sm:text-lg px-8 sm:px-10 py-3 sm:py-3.5 animate-heartbeat" style={{ animationDelay: "1s" }}>
               {t("hero.cta_donate")}
             </Link>
             <Link
               href="/about"
-              className="border-2 border-white text-white font-bold text-base md:text-lg px-8 py-3 rounded-[var(--radius-md)] hover:bg-white/10 transition-colors inline-block text-center"
+              className="border-2 border-white/25 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-3 sm:py-3.5 rounded-[var(--radius-md)] hover:bg-white/10 hover:border-white/40 transition-all duration-300 inline-block text-center backdrop-blur-sm"
             >
               {t("hero.cta_about")}
             </Link>
           </div>
         </div>
+
+        {/* Bottom fade to next section */}
+        <div className="absolute bottom-0 inset-x-0 h-16 sm:h-20 bg-gradient-to-t from-gold-300 to-transparent opacity-30" />
       </section>
 
       {/* ==================== 2. STATS STRIP ==================== */}
-      <section className="bg-gold-300 py-6 md:py-8 px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-4 text-center">
+      <section className="relative bg-gradient-to-r from-gold-300 via-gold-300 to-gold-500/80 py-5 sm:py-7 md:py-9 px-4 sm:px-6 shadow-[var(--shadow-glow-gold)]">
+        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 sm:gap-4 text-center">
           <StatItem label={t("stats.volunteers")} value="+500" />
           <StatItem label={t("stats.calls_per_year")} value="+10,000" />
           <StatItem label={t("stats.years_active")} value="15" />
@@ -65,91 +87,104 @@ function HomeContent() {
       </section>
 
       {/* ==================== 3. MISSION / ABOUT TEASER ==================== */}
-      <section className="py-16 md:py-[var(--spacing-section)] px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <section className="py-14 sm:py-20 md:py-[var(--spacing-section)] px-5 sm:px-6 relative">
+        <div className="absolute inset-0 pattern-dots opacity-40 pointer-events-none" />
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center relative z-10">
           {/* Image/video placeholder */}
-          <div className="bg-stone rounded-[var(--radius-lg)] aspect-video flex items-center justify-center text-muted border border-dark/5 order-2 md:order-1">
-            <span className="text-sm">תמונה / וידאו ארגוני</span>
-          </div>
+          <AnimateOnScroll animation="slide-right" className="order-2 md:order-1">
+            <div className="bg-gradient-to-br from-stone to-navy-50 rounded-[var(--radius-xl)] aspect-video flex items-center justify-center text-muted border border-navy-100/50 shadow-[var(--shadow-card)] overflow-hidden img-zoom cursor-pointer">
+              <span className="text-sm">תמונה / וידאו ארגוני</span>
+            </div>
+          </AnimateOnScroll>
           {/* Text */}
-          <div className="order-1 md:order-2">
-            <h2 className="mb-4">{t("mission.title")}</h2>
-            <p className="text-dark leading-[var(--line-height-body)] mb-6">
+          <AnimateOnScroll animation="slide-left" delay={150} className="order-1 md:order-2">
+            <div className="section-line mb-4 sm:mb-5" />
+            <h2 className="text-xl sm:text-2xl md:text-3xl mb-3 sm:mb-4">{t("mission.title")}</h2>
+            <p className="text-dark leading-[var(--line-height-body)] mb-5 sm:mb-7 text-sm sm:text-base">
               {t("mission.text")}
             </p>
             <Link
               href="/about"
-              className="inline-block border-2 border-navy-600 text-navy-600 font-bold text-sm px-6 py-2.5 rounded-[var(--radius-md)] hover:bg-navy-600 hover:text-white transition-colors"
+              className="btn-outline text-sm px-6 sm:px-7 py-2 sm:py-2.5"
             >
               {t("mission.link")}
             </Link>
-          </div>
+          </AnimateOnScroll>
         </div>
       </section>
 
       {/* ==================== 4. DONATION CTA BLOCK ==================== */}
-      <section className="py-8 px-6">
-        <div className="max-w-3xl mx-auto bg-navy-800 text-white rounded-[var(--radius-xl)] py-12 px-6 md:px-12 text-center">
-          <h2 className="text-white text-2xl md:text-3xl mb-2">
-            {t("donate_block.title")}
-          </h2>
-          <p className="text-stone/70 mb-8">{t("donate_block.subtitle")}</p>
+      <AnimateOnScroll animation="scale-in" className="py-6 sm:py-10 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto relative overflow-hidden rounded-[var(--radius-xl)] sm:rounded-[var(--radius-2xl)] shadow-[var(--shadow-elevated)]">
+          {/* Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(248,224,72,0.08)_0%,transparent_60%)]" />
 
-          {/* Preset amounts */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {presetAmounts.map((amount) => (
-              <span
-                key={amount}
-                className="border-2 border-gold-500 text-white rounded-[var(--radius-md)] px-5 md:px-6 py-2.5 md:py-3 text-base md:text-lg font-bold cursor-pointer hover:bg-gold-500/10 transition-colors"
-              >
-                {tDonate("currency")}{amount}
+          <div className="relative z-10 py-10 sm:py-14 px-5 sm:px-6 md:px-14 text-center">
+            <h2 className="text-white text-xl sm:text-2xl md:text-3xl mb-2 sm:mb-3 font-[number:var(--font-weight-black)]">
+              {t("donate_block.title")}
+            </h2>
+            <p className="text-white/50 mb-6 sm:mb-9 text-sm sm:text-base">{t("donate_block.subtitle")}</p>
+
+            {/* Preset amounts */}
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6 sm:mb-9">
+              {presetAmounts.map((amount) => (
+                <span
+                  key={amount}
+                  className="border-2 border-gold-500/60 text-white rounded-[var(--radius-md)] px-4 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base md:text-lg font-bold cursor-pointer hover:bg-gold-500/15 hover:border-gold-500 hover:shadow-[var(--shadow-glow-gold)] transition-all duration-300 hover-lift"
+                >
+                  {tDonate("currency")}{amount}
+                </span>
+              ))}
+              <span className="border-2 border-white/15 text-white/50 rounded-[var(--radius-md)] px-4 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base md:text-lg cursor-pointer hover:border-white/30 hover:text-white/70 transition-all duration-300">
+                {tDonate("custom_amount")}
               </span>
-            ))}
-            <span className="border-2 border-white/30 text-white/70 rounded-[var(--radius-md)] px-5 md:px-6 py-2.5 md:py-3 text-base md:text-lg cursor-pointer hover:border-white/50 transition-colors">
-              {tDonate("custom_amount")}
-            </span>
-          </div>
+            </div>
 
-          <Link href="/donate" className="btn-donate text-base md:text-lg px-10 py-3">
-            {t("donate_block.cta")}
-          </Link>
-        </div>
-      </section>
-
-      {/* ==================== 5. LATEST NEWS ==================== */}
-      <section className="py-16 md:py-[var(--spacing-section)] px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2>{t("news.title")}</h2>
-            <Link
-              href="/news"
-              className="text-navy-400 text-sm font-medium hover:text-navy-600 transition-colors"
-            >
-              {t("news.view_all")} ←
+            <Link href="/donate" className="btn-donate text-sm sm:text-base md:text-lg px-8 sm:px-12 py-3 sm:py-3.5">
+              {t("donate_block.cta")}
             </Link>
           </div>
+        </div>
+      </AnimateOnScroll>
 
-          {/* News cards — placeholder data, will pull from Sanity in Epic 5 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {newsPlaceholders.map((item, i) => (
-              <article
-                key={i}
-                className="bg-white rounded-[var(--radius-lg)] overflow-hidden border border-dark/5"
+      {/* ==================== 5. LATEST NEWS ==================== */}
+      <section className="py-14 sm:py-20 md:py-[var(--spacing-section)] px-5 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <AnimateOnScroll animation="fade-up">
+            <div className="flex items-end justify-between mb-8 sm:mb-10">
+              <div>
+                <div className="section-line mb-3 sm:mb-4" />
+                <h2 className="text-xl sm:text-2xl md:text-3xl">{t("news.title")}</h2>
+              </div>
+              <Link
+                href="/news"
+                className="text-navy-400 text-xs sm:text-sm font-medium hover:text-navy-600 transition-colors duration-300 flex items-center gap-1.5"
               >
-                {/* Image placeholder */}
-                <div className="aspect-video bg-stone flex items-center justify-center text-muted text-sm">
-                  תמונה
-                </div>
-                <div className="p-[var(--spacing-card)]">
-                  <span className="text-gold-700 text-xs font-bold">
-                    {item.category}
-                  </span>
-                  <h3 className="mt-1.5 text-charcoal text-base">{item.title}</h3>
-                  <div className="mt-2 h-[2px] bg-stone/80 w-full" />
-                  <div className="mt-2 h-[2px] bg-stone/60 w-3/4" />
-                  <p className="text-muted text-xs mt-3">{item.date}</p>
-                </div>
-              </article>
+                {t("news.view_all")}
+                <span className="text-lg leading-none">&larr;</span>
+              </Link>
+            </div>
+          </AnimateOnScroll>
+
+          {/* News cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-7">
+            {newsPlaceholders.map((item, i) => (
+              <AnimateOnScroll key={i} animation="fade-up" delay={i * 120}>
+                <article className="card group cursor-pointer">
+                  {/* Image placeholder */}
+                  <div className="aspect-video bg-gradient-to-br from-stone to-navy-50 flex items-center justify-center text-muted text-sm relative overflow-hidden img-zoom">
+                    <span>תמונה</span>
+                  </div>
+                  <div className="p-4 sm:p-[var(--spacing-card)]">
+                    <span className="inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
+                      {item.category}
+                    </span>
+                    <h3 className="mt-2 sm:mt-2.5 text-charcoal text-sm sm:text-base group-hover:text-navy-600 transition-colors duration-300">{item.title}</h3>
+                    <p className="text-muted text-xs mt-2 sm:mt-3">{item.date}</p>
+                  </div>
+                </article>
+              </AnimateOnScroll>
             ))}
           </div>
         </div>
@@ -160,11 +195,11 @@ function HomeContent() {
 
 function StatItem({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <span className="text-2xl md:text-4xl font-bold text-navy-800">
+    <div className="group cursor-default">
+      <span className="text-xl sm:text-2xl md:text-4xl font-[number:var(--font-weight-black)] text-navy-950 block group-hover:scale-110 transition-transform duration-300">
         {value}
       </span>
-      <p className="text-navy-800 text-xs md:text-sm mt-1">{label}</p>
+      <p className="text-navy-800/70 text-[10px] sm:text-xs md:text-sm mt-0.5 sm:mt-1 font-medium">{label}</p>
     </div>
   );
 }
