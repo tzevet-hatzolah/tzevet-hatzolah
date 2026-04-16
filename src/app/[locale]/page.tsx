@@ -1,28 +1,45 @@
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import Image from "next/image";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import Ticker from "@/components/Ticker";
 import HeroVideo from "@/components/HeroVideo";
+import { client } from "@/sanity/lib/client";
+import { siteSettingsQuery, latestNewsQuery } from "@/sanity/lib/queries";
+import { urlFor } from "@/sanity/lib/image";
 
-async function getHeroMedia() {
+type SiteSettings = {
+  statsVolunteers?: number;
+  statsCallsPerYear?: number;
+  statsYearsActive?: number;
+} | null;
+
+type HeroMedia = {
+  videoUrl: string | null;
+  posterUrl: string | null;
+} | null;
+
+type NewsArticle = {
+  _id: string;
+  title: string;
+  titleEn?: string;
+  slug: string;
+  publishedAt: string;
+  mainImage?: { asset: { _ref: string }; alt?: string };
+  excerpt?: string;
+};
+
+async function getHeroMedia(): Promise<HeroMedia> {
   try {
-    // Dynamic import to avoid crashing when Sanity env vars are missing
-    const { client } = await import("@/sanity/lib/client");
-    const data = await client.fetch<{
-      videoUrl: string | null;
-      posterUrl: string | null;
-    } | null>(
+    const data = await client.fetch<HeroMedia>(
       `*[_type == "siteSettings"][0]{
         "videoUrl": heroVideo.asset->url,
         "posterUrl": heroVideoPoster.asset->url
-      }`,
-      {},
-      { next: { revalidate: 60 } }
+      }`
     );
     return data;
   } catch {
-    // Sanity env vars may not be configured yet — fall back to no video
     return null;
   }
 }
@@ -35,15 +52,45 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const heroMedia = await getHeroMedia();
+  const [settings, latestNews, heroMedia] = await Promise.all([
+    client.fetch<SiteSettings>(siteSettingsQuery),
+    client.fetch<NewsArticle[]>(latestNewsQuery),
+    getHeroMedia(),
+  ]);
 
-  return <HomeContent heroVideoUrl={heroMedia?.videoUrl} heroPosterUrl={heroMedia?.posterUrl} />;
+  const stats = {
+    volunteers: settings?.statsVolunteers
+      ? `+${settings.statsVolunteers.toLocaleString()}`
+      : "+500",
+    callsPerYear: settings?.statsCallsPerYear
+      ? `+${settings.statsCallsPerYear.toLocaleString()}`
+      : "+10,000",
+    yearsActive: settings?.statsYearsActive
+      ? String(settings.statsYearsActive)
+      : "15",
+  };
+
+  return (
+    <HomeContent
+      stats={stats}
+      latestNews={latestNews ?? []}
+      locale={locale}
+      heroVideoUrl={heroMedia?.videoUrl}
+      heroPosterUrl={heroMedia?.posterUrl}
+    />
+  );
 }
 
 function HomeContent({
+  stats,
+  latestNews,
+  locale,
   heroVideoUrl,
   heroPosterUrl,
 }: {
+  stats: { volunteers: string; callsPerYear: string; yearsActive: string };
+  latestNews: NewsArticle[];
+  locale: string;
   heroVideoUrl?: string | null;
   heroPosterUrl?: string | null;
 }) {
@@ -59,6 +106,8 @@ function HomeContent({
     t("ticker.item4"),
     t("ticker.item5"),
   ];
+
+  const hasNews = latestNews.length > 0;
 
   return (
     <main className="flex flex-col flex-1">
@@ -117,9 +166,9 @@ function HomeContent({
       {/* ==================== 2. STATS STRIP ==================== */}
       <section className="relative bg-gradient-to-r from-gold-300 via-gold-300 to-gold-500/80 py-5 sm:py-7 md:py-9 px-4 sm:px-6 shadow-[var(--shadow-glow-gold)]">
         <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 sm:gap-4 text-center">
-          <StatItem label={t("stats.volunteers")} value="+500" />
-          <StatItem label={t("stats.calls_per_year")} value="+10,000" />
-          <StatItem label={t("stats.years_active")} value="15" />
+          <StatItem label={t("stats.volunteers")} value={stats.volunteers} />
+          <StatItem label={t("stats.calls_per_year")} value={stats.callsPerYear} />
+          <StatItem label={t("stats.years_active")} value={stats.yearsActive} />
         </div>
       </section>
 
@@ -206,23 +255,59 @@ function HomeContent({
 
           {/* News cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-7">
-            {newsPlaceholders.map((item, i) => (
-              <AnimateOnScroll key={i} animation="fade-up" delay={i * 120}>
-                <article className="card group cursor-pointer">
-                  {/* Image placeholder */}
-                  <div className="aspect-video bg-gradient-to-br from-stone to-navy-50 flex items-center justify-center text-muted text-sm relative overflow-hidden img-zoom">
-                    <span>תמונה</span>
-                  </div>
-                  <div className="p-4 sm:p-[var(--spacing-card)]">
-                    <span className="inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
-                      {item.category}
-                    </span>
-                    <h3 className="mt-2 sm:mt-2.5 text-charcoal text-sm sm:text-base group-hover:text-navy-600 transition-colors duration-300">{item.title}</h3>
-                    <p className="text-muted text-xs mt-2 sm:mt-3">{item.date}</p>
-                  </div>
-                </article>
-              </AnimateOnScroll>
-            ))}
+            {hasNews
+              ? latestNews.map((article, i) => (
+                  <AnimateOnScroll key={article._id} animation="fade-up" delay={i * 120}>
+                    <Link href={`/news/${article.slug}`}>
+                      <article className="card group cursor-pointer">
+                        <div className="aspect-video relative overflow-hidden img-zoom">
+                          {article.mainImage?.asset ? (
+                            <Image
+                              src={urlFor(article.mainImage).width(600).height(340).auto("format").url()}
+                              alt={article.mainImage.alt || (locale === "en" ? article.titleEn || article.title : article.title)}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-stone to-navy-50 flex items-center justify-center text-muted text-sm">
+                              <span>תמונה</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4 sm:p-[var(--spacing-card)]">
+                          <span className="inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
+                            {t("news.category_news")}
+                          </span>
+                          <h3 className="mt-2 sm:mt-2.5 text-charcoal text-sm sm:text-base group-hover:text-navy-600 transition-colors duration-300">
+                            {locale === "en" ? article.titleEn || article.title : article.title}
+                          </h3>
+                          <p className="text-muted text-xs mt-2 sm:mt-3">
+                            {new Date(article.publishedAt).toLocaleDateString(
+                              locale === "en" ? "en-US" : "he-IL",
+                              { year: "numeric", month: "long", day: "numeric" }
+                            )}
+                          </p>
+                        </div>
+                      </article>
+                    </Link>
+                  </AnimateOnScroll>
+                ))
+              : newsPlaceholders.map((item, i) => (
+                  <AnimateOnScroll key={i} animation="fade-up" delay={i * 120}>
+                    <article className="card group cursor-pointer">
+                      <div className="aspect-video bg-gradient-to-br from-stone to-navy-50 flex items-center justify-center text-muted text-sm relative overflow-hidden img-zoom">
+                        <span>תמונה</span>
+                      </div>
+                      <div className="p-4 sm:p-[var(--spacing-card)]">
+                        <span className="inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
+                          {item.category}
+                        </span>
+                        <h3 className="mt-2 sm:mt-2.5 text-charcoal text-sm sm:text-base group-hover:text-navy-600 transition-colors duration-300">{item.title}</h3>
+                        <p className="text-muted text-xs mt-2 sm:mt-3">{item.date}</p>
+                      </div>
+                    </article>
+                  </AnimateOnScroll>
+                ))}
           </div>
         </div>
       </section>

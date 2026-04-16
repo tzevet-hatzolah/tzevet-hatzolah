@@ -48,7 +48,8 @@
     },
     "news": {
       "title": "News & Updates",
-      "view_all": "All articles"
+      "view_all": "All articles",
+      "category_news": "News"
     },
     "ticker": {
       "item1": "Tzevet Hatzolah — Every second counts",
