@@ -1,26 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { after } from "next/server";
 import { isAuthorizedUser } from "@/lib/bot/auth";
 import { publishToAll, formatResultsSummary } from "@/lib/bot/publisher";
 import { sendBotReply } from "@/lib/bot/publishers/telegram";
-import { addToMediaGroup } from "@/lib/bot/media-group-collector";
+import {
+  addToMediaGroup,
+  claimMediaGroup,
+} from "@/lib/bot/media-group-collector";
 import type { BotMessage, PhotoFile } from "@/lib/bot/types";
-
-let cachedBaseUrl = "";
-
-async function handlePublish(botMessage: BotMessage, baseUrl: string) {
-  try {
-    const results = await publishToAll(botMessage, baseUrl);
-    const summary = formatResultsSummary(results);
-    await sendBotReply(botMessage.chatId, summary);
-  } catch (error) {
-    console.error("Publish error:", error);
-    await sendBotReply(
-      botMessage.chatId,
-      "שגיאה בפרסום. נסה שוב מאוחר יותר."
-    );
-  }
-}
 
 export async function POST(request: NextRequest) {
   // Verify webhook secret
@@ -33,7 +21,6 @@ export async function POST(request: NextRequest) {
   }
 
   const baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
-  cachedBaseUrl = baseUrl;
 
   try {
     const update = await request.json();
@@ -68,18 +55,39 @@ export async function POST(request: NextRequest) {
         photo,
         text,
         chatId,
-        senderId,
-        (group) => {
-          const botMessage: BotMessage = {
-            text: group.text,
-            photos: group.photos,
-            senderId: group.senderId,
-            chatId: group.chatId,
-            messageId: message.message_id,
-          };
-          handlePublish(botMessage, cachedBaseUrl);
-        }
+        senderId
       );
+
+      // Schedule publishing after response is sent.
+      // Each photo in the group schedules this, but only the last one
+      // (after the debounce window) will actually claim and publish.
+      const mediaGroupId = message.media_group_id;
+      const messageId = message.message_id;
+      after(async () => {
+        const group = await claimMediaGroup(mediaGroupId);
+        if (!group) return;
+
+        const botMessage: BotMessage = {
+          text: group.text,
+          photos: group.photos,
+          senderId: group.senderId,
+          chatId: group.chatId,
+          messageId,
+        };
+
+        try {
+          const results = await publishToAll(botMessage, baseUrl);
+          const summary = formatResultsSummary(results);
+          await sendBotReply(group.chatId, summary);
+        } catch (error) {
+          console.error("Media group publish error:", error);
+          await sendBotReply(
+            group.chatId,
+            "שגיאה בפרסום. נסה שוב מאוחר יותר."
+          );
+        }
+      });
+
       return NextResponse.json({ ok: true });
     }
 
@@ -99,7 +107,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Publish to all platforms
     const results = await publishToAll(botMessage, baseUrl);
     const summary = formatResultsSummary(results);
     await sendBotReply(chatId, summary);
