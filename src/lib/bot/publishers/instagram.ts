@@ -1,5 +1,7 @@
 import type { BotMessage, PublishResult } from "../types";
 import { formatForPlainText } from "../formatter";
+import { generateTextImage } from "../image-generator";
+import { storeImage } from "../image-store";
 
 const GRAPH_API = "https://graph.facebook.com/v25.0";
 
@@ -51,26 +53,38 @@ async function waitForMediaReady(containerId: string): Promise<void> {
 
 export async function publishToInstagram(
   message: BotMessage,
-  photoUrls: string[]
+  photoUrls: string[],
+  baseUrl: string
 ): Promise<PublishResult> {
   try {
-    if (photoUrls.length === 0) {
-      // Instagram requires at least one image — skip text-only posts
-      return {
-        platform: "instagram",
-        success: false,
-        error: "אינסטגרם דורש לפחות תמונה אחת",
-      };
-    }
-
     const igId = getIgAccountId();
     const caption = formatForPlainText(message.text);
 
-    if (photoUrls.length === 1) {
+    let imageUrls = photoUrls;
+
+    // For text-only posts, generate an image with text on the background
+    if (imageUrls.length === 0) {
+      if (!message.text.trim()) {
+        return {
+          platform: "instagram",
+          success: false,
+          error: "אינסטגרם דורש לפחות תמונה אחת או טקסט",
+        };
+      }
+
+      const imageBuffer = await generateTextImage(message.text);
+      const imageId = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      storeImage(imageId, imageBuffer);
+      imageUrls = [
+        `${baseUrl}/api/generated-image?id=${encodeURIComponent(imageId)}`,
+      ];
+    }
+
+    if (imageUrls.length === 1) {
       // Single image post
       const container = await graphApi(`/${igId}/media`, {
         media_type: "IMAGE",
-        image_url: photoUrls[0],
+        image_url: imageUrls[0],
         caption,
       });
       await waitForMediaReady(container.id as string);
@@ -80,7 +94,7 @@ export async function publishToInstagram(
     } else {
       // Carousel post
       const itemIds = await Promise.all(
-        photoUrls.map(async (url) => {
+        imageUrls.map(async (url) => {
           const item = await graphApi(`/${igId}/media`, {
             media_type: "IMAGE",
             image_url: url,

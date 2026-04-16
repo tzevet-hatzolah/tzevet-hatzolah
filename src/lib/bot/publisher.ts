@@ -30,7 +30,7 @@ export async function publishToAll(
   const results = await Promise.all([
     publishToTelegram(message),
     publishToFacebook(message, telegramPhotoUrls),
-    publishToInstagram(message, proxiedPhotoUrls),
+    publishToInstagram(message, proxiedPhotoUrls, baseUrl),
   ]);
 
   return results;
