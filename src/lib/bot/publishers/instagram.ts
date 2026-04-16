@@ -1,7 +1,7 @@
 import type { BotMessage, PublishResult } from "../types";
 import { formatForPlainText } from "../formatter";
 
-const GRAPH_API = "https://graph.facebook.com/v21.0";
+const GRAPH_API = "https://graph.facebook.com/v25.0";
 
 function getIgAccountId(): string {
   const id = process.env.INSTAGRAM_ACCOUNT_ID;
@@ -69,6 +69,7 @@ export async function publishToInstagram(
     if (photoUrls.length === 1) {
       // Single image post
       const container = await graphApi(`/${igId}/media`, {
+        media_type: "IMAGE",
         image_url: photoUrls[0],
         caption,
       });
@@ -81,6 +82,7 @@ export async function publishToInstagram(
       const itemIds = await Promise.all(
         photoUrls.map(async (url) => {
           const item = await graphApi(`/${igId}/media`, {
+            media_type: "IMAGE",
             image_url: url,
             is_carousel_item: true,
           });

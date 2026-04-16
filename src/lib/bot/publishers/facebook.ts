@@ -1,7 +1,7 @@
 import type { BotMessage, PublishResult } from "../types";
 import { formatForPlainText } from "../formatter";
 
-const GRAPH_API = "https://graph.facebook.com/v21.0";
+const GRAPH_API = "https://graph.facebook.com/v25.0";
 
 function getPageId(): string {
   const id = process.env.FACEBOOK_PAGE_ID;

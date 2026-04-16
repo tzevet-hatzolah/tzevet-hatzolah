@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Publish to all platforms
-    const results = await publishToAll(botMessage);
+    const baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+    const results = await publishToAll(botMessage, baseUrl);
     const summary = formatResultsSummary(results);
 
     // Reply to the user with results
