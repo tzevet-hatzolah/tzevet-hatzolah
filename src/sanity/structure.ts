@@ -1,4 +1,10 @@
-import type { StructureResolver } from "sanity/structure";
+import type {
+  DefaultDocumentNodeResolver,
+  StructureResolver,
+} from "sanity/structure";
+
+export const defaultDocumentNode: DefaultDocumentNodeResolver = (S) =>
+  S.document();
 
 export const structure: StructureResolver = (S) =>
   S.list()
