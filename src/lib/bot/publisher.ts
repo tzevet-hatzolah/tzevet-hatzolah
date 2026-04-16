@@ -36,12 +36,19 @@ export async function publishToAll(
   return results;
 }
 
+const PLATFORM_NAMES: Record<string, string> = {
+  telegram: "טלגרם",
+  facebook: "פייסבוק",
+  instagram: "אינסטגרם",
+};
+
 /** Format results into a human-readable summary for the bot reply. */
 export function formatResultsSummary(results: PublishResult[]): string {
   const lines = results.map((r) => {
-    const icon = r.success ? "V" : "X";
-    const status = r.success ? "Published" : `Failed: ${r.error}`;
-    return `${icon} ${r.platform}: ${status}`;
+    const icon = r.success ? "\u2705" : "\u274C";
+    const name = PLATFORM_NAMES[r.platform] || r.platform;
+    const status = r.success ? "פורסם" : `נכשל: ${r.error}`;
+    return `${icon} ${name}: ${status}`;
   });
   return lines.join("\n");
 }

@@ -59,7 +59,7 @@ export async function publishToInstagram(
       return {
         platform: "instagram",
         success: false,
-        error: "Instagram requires at least one image",
+        error: "אינסטגרם דורש לפחות תמונה אחת",
       };
     }
 
