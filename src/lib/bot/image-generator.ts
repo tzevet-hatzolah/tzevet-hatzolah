@@ -140,7 +140,7 @@ function convertBoldMarkup(text: string): string {
   return parts
     .map((part, i) => {
       const escaped = escapeXml(part);
-      return i % 2 === 1 ? `<b>${escaped}</b>` : escaped;
+      return i % 2 === 1 ? `<span weight="ultrabold">${escaped}</span>` : escaped;
     })
     .join("");
 }
