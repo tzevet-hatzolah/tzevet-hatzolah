@@ -9,7 +9,7 @@ const IMAGE_WIDTH = 1080;
 const IMAGE_HEIGHT = 1080;
 
 // Top area reserved for the logo (don't place text here)
-const LOGO_RESERVED_TOP = 280;
+const LOGO_RESERVED_TOP = 320;
 
 // Available area for text
 const TEXT_PADDING = 60;
