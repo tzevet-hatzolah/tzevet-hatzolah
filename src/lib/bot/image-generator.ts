@@ -17,20 +17,10 @@ const IMAGE_HEIGHT = 1080;
 // Top area reserved for the logo (don't place text here)
 const LOGO_RESERVED_TOP = 280;
 
-let fontBase64Cache: string | null = null;
-
-function getFontBase64(): string {
-  if (!fontBase64Cache) {
-    const fontBuffer = fs.readFileSync(FONT_PATH);
-    fontBase64Cache = fontBuffer.toString("base64");
-  }
-  return fontBase64Cache;
-}
-
 /**
  * Generate an Instagram image with text overlaid on the background.
- * Text is red, centered in the middle (below the logo area),
- * with the Heebo font embedded for Hebrew support.
+ * Uses sharp's Pango text rendering with the bundled Heebo font
+ * for reliable Hebrew support on serverless.
  */
 export async function generateTextImage(text: string): Promise<Buffer> {
   const bgBuffer = fs.readFileSync(BG_IMAGE_PATH);
@@ -41,62 +31,42 @@ export async function generateTextImage(text: string): Promise<Buffer> {
     .toBuffer();
 
   // Strip * from text for plain display
-  const plainText = text.replace(/\*/g, "");
+  const plainText = text.replace(/\*/g, "").trim();
+  const escapedText = escapeXml(plainText);
 
-  // Split text into lines for wrapping
-  const lines = wrapText(plainText, 22);
+  // Render red text with white outline using Pango markup
+  const textWidth = IMAGE_WIDTH - 120;
+  const textImage = await sharp({
+    text: {
+      text: `<span foreground="#CC0000" size="40000">${escapedText}</span>`,
+      fontfile: FONT_PATH,
+      font: "Heebo Bold",
+      rgba: true,
+      width: textWidth,
+      align: "centre",
+      dpi: 200,
+    },
+  })
+    .png()
+    .toBuffer();
 
-  const fontSize = 56;
-  const lineHeight = 80;
-  const totalTextHeight = lines.length * lineHeight;
+  // Get text image dimensions for centering
+  const textMeta = await sharp(textImage).metadata();
+  const textHeight = textMeta.height || 0;
+  const textActualWidth = textMeta.width || textWidth;
 
   // Center text vertically in the area below the logo
   const availableHeight = IMAGE_HEIGHT - LOGO_RESERVED_TOP;
-  const textStartY =
-    LOGO_RESERVED_TOP + (availableHeight - totalTextHeight) / 2;
-
-  const fontData = getFontBase64();
-
-  const textElements = lines
-    .map((line, i) => {
-      const y = textStartY + i * lineHeight + fontSize;
-      const escapedLine = escapeXml(line);
-      return `<text x="50%" y="${y}" text-anchor="middle" dominant-baseline="middle">${escapedLine}</text>`;
-    })
-    .join("\n    ");
-
-  const svgOverlay = `
-  <svg width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <style>
-        @font-face {
-          font-family: 'Heebo';
-          src: url('data:font/truetype;base64,${fontData}') format('truetype');
-          font-weight: bold;
-        }
-        text {
-          font-family: 'Heebo', sans-serif;
-          font-size: ${fontSize}px;
-          font-weight: bold;
-          fill: #CC0000;
-          direction: rtl;
-          paint-order: stroke;
-          stroke: white;
-          stroke-width: 4px;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-        }
-      </style>
-    </defs>
-    ${textElements}
-  </svg>`;
+  const topOffset =
+    LOGO_RESERVED_TOP + Math.max(0, (availableHeight - textHeight) / 2);
+  const leftOffset = Math.max(0, (IMAGE_WIDTH - textActualWidth) / 2);
 
   const result = await sharp(background)
     .composite([
       {
-        input: Buffer.from(svgOverlay),
-        top: 0,
-        left: 0,
+        input: textImage,
+        top: Math.round(topOffset),
+        left: Math.round(leftOffset),
       },
     ])
     .jpeg({ quality: 90 })
@@ -105,28 +75,7 @@ export async function generateTextImage(text: string): Promise<Buffer> {
   return result;
 }
 
-/** Simple word-wrap for Hebrew/English text. */
-function wrapText(text: string, maxCharsPerLine: number): string[] {
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let currentLine = "";
-
-  for (const word of words) {
-    if (currentLine.length + word.length + 1 > maxCharsPerLine && currentLine) {
-      lines.push(currentLine.trim());
-      currentLine = word;
-    } else {
-      currentLine += (currentLine ? " " : "") + word;
-    }
-  }
-  if (currentLine.trim()) {
-    lines.push(currentLine.trim());
-  }
-
-  return lines;
-}
-
-/** Escape special XML characters for SVG. */
+/** Escape special XML characters for Pango markup. */
 function escapeXml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
