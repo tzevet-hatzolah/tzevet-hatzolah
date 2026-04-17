@@ -1,19 +1,32 @@
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
+import os from "os";
+import { HEEBO_BOLD_BASE64 } from "./heebo-bold-base64";
 
 const BG_IMAGE_PATH = path.join(process.cwd(), "public", "bot-bg.jpg");
-const FONT_PATH = path.join(process.cwd(), "public", "fonts", "Heebo-Bold.ttf");
 const IMAGE_WIDTH = 1080;
 const IMAGE_HEIGHT = 1080;
 
 // Top area reserved for the logo (don't place text here)
 const LOGO_RESERVED_TOP = 280;
 
+let tempFontPath: string | null = null;
+
+/** Write the embedded font to a temp file so Pango can use it. */
+function ensureFontFile(): string {
+  if (tempFontPath && fs.existsSync(tempFontPath)) {
+    return tempFontPath;
+  }
+  const fontBuffer = Buffer.from(HEEBO_BOLD_BASE64, "base64");
+  tempFontPath = path.join(os.tmpdir(), "Heebo-Bold.ttf");
+  fs.writeFileSync(tempFontPath, fontBuffer);
+  return tempFontPath;
+}
+
 /**
  * Generate an Instagram image with text overlaid on the background.
- * Uses sharp's Pango text rendering with the bundled Heebo font
- * for reliable Hebrew support on serverless.
+ * Uses sharp's Pango text rendering with the embedded Heebo font.
  */
 export async function generateTextImage(text: string): Promise<Buffer> {
   const bgBuffer = fs.readFileSync(BG_IMAGE_PATH);
@@ -23,16 +36,18 @@ export async function generateTextImage(text: string): Promise<Buffer> {
     .resize(IMAGE_WIDTH, IMAGE_HEIGHT, { fit: "cover", position: "top" })
     .toBuffer();
 
-  // Strip * from text for plain display
+  // Strip * from text
   const plainText = text.replace(/\*/g, "").trim();
   const escapedText = escapeXml(plainText);
 
-  // Render red text with white outline using Pango markup
+  const fontFile = ensureFontFile();
+
+  // Render red text using Pango with custom font
   const textWidth = IMAGE_WIDTH - 120;
   const textImage = await sharp({
     text: {
       text: `<span foreground="#CC0000" size="40000">${escapedText}</span>`,
-      fontfile: FONT_PATH,
+      fontfile: fontFile,
       font: "Heebo Bold",
       rgba: true,
       width: textWidth,
