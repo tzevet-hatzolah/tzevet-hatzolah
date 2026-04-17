@@ -45,8 +45,7 @@ export async function generateTextImage(text: string): Promise<Buffer> {
     .resize(IMAGE_WIDTH, IMAGE_HEIGHT, { fit: "cover", position: "top" })
     .toBuffer();
 
-  // Convert *bold* markers to Pango bold markup, escape XML in text parts
-  const pangoText = convertBoldMarkup(text.trim());
+  const trimmedText = text.trim();
 
   const fontFile = ensureFontFile();
 
@@ -56,6 +55,7 @@ export async function generateTextImage(text: string): Promise<Buffer> {
   let textActualWidth = 0;
 
   for (const fontSize of FONT_SIZES) {
+    const pangoText = convertBoldMarkup(trimmedText, fontSize);
     const pangoMarkup = `<span foreground="#000000" size="${fontSize}">${pangoText}</span>`;
     const rendered = await sharp({
       text: {
@@ -85,7 +85,7 @@ export async function generateTextImage(text: string): Promise<Buffer> {
   if (!textImage) {
     const rendered = await sharp({
       text: {
-        text: `<span foreground="#000000" size="${FONT_SIZES[FONT_SIZES.length - 1]}">${pangoText}</span>`,
+        text: `<span foreground="#000000" size="${FONT_SIZES[FONT_SIZES.length - 1]}">${convertBoldMarkup(trimmedText, FONT_SIZES[FONT_SIZES.length - 1])}</span>`,
         fontfile: fontFile,
         font: "Heebo Bold",
         rgba: true,
@@ -131,16 +131,17 @@ export async function generateTextImage(text: string): Promise<Buffer> {
 }
 
 /**
- * Convert *bold* markers to Pango <b> tags.
- * Text outside markers is escaped for XML.
+ * Convert *bold* markers to larger text to make them stand out.
+ * Since only the Bold font is available, we increase font size by 15%.
  */
-function convertBoldMarkup(text: string): string {
+function convertBoldMarkup(text: string, fontSize: number): string {
+  const boldSize = Math.round(fontSize * 1.15);
   const parts = text.split(/\*([^*]+)\*/g);
   // parts: [before, bold1, between, bold2, ...] — odd indices are bold
   return parts
     .map((part, i) => {
       const escaped = escapeXml(part);
-      return i % 2 === 1 ? `<span weight="ultrabold">${escaped}</span>` : escaped;
+      return i % 2 === 1 ? `<span size="${boldSize}">${escaped}</span>` : escaped;
     })
     .join("");
 }
