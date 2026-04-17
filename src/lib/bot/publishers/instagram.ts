@@ -1,7 +1,5 @@
 import type { BotMessage, PublishResult } from "../types";
 import { formatForPlainText } from "../formatter";
-import { generateTextImage } from "../image-generator";
-import { storeImage } from "../image-store";
 
 const GRAPH_API = "https://graph.facebook.com/v25.0";
 
@@ -57,34 +55,22 @@ export async function publishToInstagram(
   baseUrl: string
 ): Promise<PublishResult> {
   try {
+    if (photoUrls.length === 0) {
+      return {
+        platform: "instagram",
+        success: false,
+        error: "אינסטגרם דורש לפחות תמונה אחת",
+      };
+    }
+
     const igId = getIgAccountId();
     const caption = formatForPlainText(message.text);
 
-    let imageUrls = photoUrls;
-
-    // For text-only posts, generate an image with text on the background
-    if (imageUrls.length === 0) {
-      if (!message.text.trim()) {
-        return {
-          platform: "instagram",
-          success: false,
-          error: "אינסטגרם דורש לפחות תמונה אחת או טקסט",
-        };
-      }
-
-      const imageBuffer = await generateTextImage(message.text);
-      const imageId = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      storeImage(imageId, imageBuffer);
-      imageUrls = [
-        `${baseUrl}/api/generated-image?id=${encodeURIComponent(imageId)}`,
-      ];
-    }
-
-    if (imageUrls.length === 1) {
+    if (photoUrls.length === 1) {
       // Single image post
       const container = await graphApi(`/${igId}/media`, {
         media_type: "IMAGE",
-        image_url: imageUrls[0],
+        image_url: photoUrls[0],
         caption,
       });
       await waitForMediaReady(container.id as string);
@@ -94,7 +80,7 @@ export async function publishToInstagram(
     } else {
       // Carousel post
       const itemIds = await Promise.all(
-        imageUrls.map(async (url) => {
+        photoUrls.map(async (url) => {
           const item = await graphApi(`/${igId}/media`, {
             media_type: "IMAGE",
             image_url: url,

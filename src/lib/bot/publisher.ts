@@ -18,7 +18,8 @@ function proxyPhotoUrls(telegramUrls: string[], baseUrl: string): string[] {
 /** Publish a message to all platforms in parallel. */
 export async function publishToAll(
   message: BotMessage,
-  baseUrl: string
+  baseUrl: string,
+  options?: { skipInstagram?: boolean }
 ): Promise<PublishResult[]> {
   // Get photo URLs once — needed by Facebook and Instagram
   const telegramPhotoUrls =
@@ -27,11 +28,16 @@ export async function publishToAll(
   // Instagram needs proxied URLs with proper content-type headers
   const proxiedPhotoUrls = proxyPhotoUrls(telegramPhotoUrls, baseUrl);
 
-  const results = await Promise.all([
+  const publishers = [
     publishToTelegram(message),
     publishToFacebook(message, telegramPhotoUrls),
-    publishToInstagram(message, proxiedPhotoUrls, baseUrl),
-  ]);
+  ];
+
+  if (!options?.skipInstagram) {
+    publishers.push(publishToInstagram(message, proxiedPhotoUrls, baseUrl));
+  }
+
+  const results = await Promise.all(publishers);
 
   return results;
 }

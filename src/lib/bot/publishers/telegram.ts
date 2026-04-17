@@ -83,6 +83,46 @@ export async function sendBotReply(chatId: number, text: string) {
   });
 }
 
+/** Send a photo with inline keyboard buttons to the user. */
+export async function sendPhotoWithButtons(
+  chatId: number,
+  imageBuffer: Buffer,
+  caption: string,
+  buttons: { text: string; callbackData: string }[]
+) {
+  const token = getToken();
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  form.append("photo", new Blob([new Uint8Array(imageBuffer)], { type: "image/jpeg" }), "preview.jpg");
+  form.append("caption", caption);
+  form.append(
+    "reply_markup",
+    JSON.stringify({
+      inline_keyboard: [
+        buttons.map((b) => ({ text: b.text, callback_data: b.callbackData })),
+      ],
+    })
+  );
+
+  const res = await fetch(`${TELEGRAM_API}${token}/sendPhoto`, {
+    method: "POST",
+    body: form,
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    throw new Error(`Telegram API sendPhoto: ${data.description}`);
+  }
+  return data.result;
+}
+
+/** Answer a callback query (removes the loading state on the button). */
+export async function answerCallbackQuery(callbackQueryId: string, text?: string) {
+  await telegramApi("answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
+    text,
+  });
+}
+
 /** Get a direct download URL for a Telegram file. */
 export async function getFileUrl(fileId: string): Promise<string> {
   const file = await telegramApi("getFile", { file_id: fileId });

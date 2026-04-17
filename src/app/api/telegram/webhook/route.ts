@@ -3,11 +3,24 @@ import type { NextRequest } from "next/server";
 import { after } from "next/server";
 import { isAuthorizedUser } from "@/lib/bot/auth";
 import { publishToAll, formatResultsSummary } from "@/lib/bot/publisher";
-import { sendBotReply } from "@/lib/bot/publishers/telegram";
+import { publishToInstagram } from "@/lib/bot/publishers/instagram";
+import {
+  sendBotReply,
+  sendPhotoWithButtons,
+  answerCallbackQuery,
+} from "@/lib/bot/publishers/telegram";
 import {
   addToMediaGroup,
   claimMediaGroup,
 } from "@/lib/bot/media-group-collector";
+import { generateTextImage } from "@/lib/bot/image-generator";
+import { storeImage } from "@/lib/bot/image-store";
+import {
+  storePendingPost,
+  getPendingPost,
+  deletePendingPost,
+} from "@/lib/bot/pending-instagram";
+import { formatForPlainText } from "@/lib/bot/formatter";
 import type { BotMessage, PhotoFile } from "@/lib/bot/types";
 
 export async function POST(request: NextRequest) {
@@ -24,8 +37,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const update = await request.json();
-    const message = update.message;
 
+    // Handle callback queries (button presses)
+    if (update.callback_query) {
+      await handleCallbackQuery(update.callback_query, baseUrl);
+      return NextResponse.json({ ok: true });
+    }
+
+    const message = update.message;
     if (!message) {
       return NextResponse.json({ ok: true });
     }
@@ -58,9 +77,6 @@ export async function POST(request: NextRequest) {
         senderId
       );
 
-      // Schedule publishing after response is sent.
-      // Each photo in the group schedules this, but only the last one
-      // (after the debounce window) will actually claim and publish.
       const mediaGroupId = message.media_group_id;
       const messageId = message.message_id;
       after(async () => {
@@ -107,13 +123,105 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const results = await publishToAll(botMessage, baseUrl);
-    const summary = formatResultsSummary(results);
-    await sendBotReply(chatId, summary);
+    const isTextOnly = photos.length === 0;
+
+    if (isTextOnly) {
+      // Text-only: publish to Telegram & Facebook, then ask about Instagram
+      const results = await publishToAll(botMessage, baseUrl, {
+        skipInstagram: true,
+      });
+      const summary = formatResultsSummary(results);
+      await sendBotReply(chatId, summary);
+
+      // Generate the Instagram image preview
+      const imageBuffer = await generateTextImage(text);
+      const imageId = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      storeImage(imageId, imageBuffer);
+
+      const imageUrl = `${baseUrl}/api/generated-image?id=${encodeURIComponent(imageId)}`;
+      const caption = formatForPlainText(text);
+
+      // Store pending post for confirmation
+      const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      storePendingPost(pendingId, imageUrl, caption, chatId);
+
+      // Send preview with confirmation buttons
+      await sendPhotoWithButtons(
+        chatId,
+        imageBuffer,
+        "האם אתה רוצה להעלות לאינסטגרם?",
+        [
+          { text: "כן ✅", callbackData: `ig_yes:${pendingId}` },
+          { text: "לא ❌", callbackData: `ig_no:${pendingId}` },
+        ]
+      );
+    } else {
+      // Has photos: publish to all platforms
+      const results = await publishToAll(botMessage, baseUrl);
+      const summary = formatResultsSummary(results);
+      await sendBotReply(chatId, summary);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Webhook error:", error);
     return NextResponse.json({ ok: true });
+  }
+}
+
+async function handleCallbackQuery(
+  callbackQuery: {
+    id: string;
+    data?: string;
+    from: { id: number };
+    message?: { chat: { id: number } };
+  },
+  baseUrl: string
+) {
+  const data = callbackQuery.data;
+  if (!data) return;
+
+  const senderId = callbackQuery.from.id;
+  if (!isAuthorizedUser(senderId)) return;
+
+  const chatId = callbackQuery.message?.chat?.id;
+  if (!chatId) return;
+
+  if (data.startsWith("ig_yes:")) {
+    const pendingId = data.replace("ig_yes:", "");
+    const pending = getPendingPost(pendingId);
+
+    await answerCallbackQuery(callbackQuery.id);
+
+    if (!pending) {
+      await sendBotReply(chatId, "הפוסט פג תוקף. שלח שוב.");
+      return;
+    }
+
+    deletePendingPost(pendingId);
+
+    // Publish to Instagram with the generated image
+    const dummyMessage: BotMessage = {
+      text: pending.caption,
+      photos: [],
+      senderId,
+      chatId: pending.chatId,
+      messageId: 0,
+    };
+
+    const result = await publishToInstagram(
+      dummyMessage,
+      [pending.imageUrl],
+      baseUrl
+    );
+
+    const icon = result.success ? "\u2705" : "\u274C";
+    const status = result.success ? "פורסם" : `נכשל: ${result.error}`;
+    await sendBotReply(chatId, `${icon} אינסטגרם: ${status}`);
+  } else if (data.startsWith("ig_no:")) {
+    const pendingId = data.replace("ig_no:", "");
+    deletePendingPost(pendingId);
+    await answerCallbackQuery(callbackQuery.id, "בוטל");
+    await sendBotReply(chatId, "העלאה לאינסטגרם בוטלה.");
   }
 }
