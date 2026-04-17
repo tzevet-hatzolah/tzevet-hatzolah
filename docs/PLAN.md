@@ -194,7 +194,7 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [x] Field story page — distinct visual treatment from news (gold accent, location badge, image backdrop hero, pull-quote excerpt) at `/stories` + `/stories/[slug]`
 - [x] Portable Text renderer (`@portabletext/react`)
 - [ ] YouTube embed support inside Portable Text
-- [ ] Homepage "Latest News" strip — 3 most recent, revalidated hourly (currently SSG on every build)
+- [x] Homepage "Latest News" strip — 3 most recent, revalidated hourly (`revalidate = 3600` set on `[locale]/layout.tsx`, Sanity client switched to `useCdn: false`)
 - [ ] Category/tag filtering — **defer to Phase 2**
 
 ---
@@ -493,7 +493,7 @@ Seven sections top to bottom:
 | Epic 2 — Design System | ✅ Complete (remaining wireframes deferred — pages built directly) |
 | Epic 3 — CMS Setup | 🔄 In progress (schemas + GROQ queries done, live preview + locale + editor training remaining) |
 | Epic 4 — Core Pages | 🔄 In progress (all non-blocked pages connected to Sanity; floating WhatsApp + animated counters + donation integration remain) |
-| Epic 5 — News & Stories | 🔄 In progress (news listing/detail + field stories live; YouTube embed + ISR revalidation remain) |
+| Epic 5 — News & Stories | 🔄 In progress (news listing/detail + field stories live, ISR hourly; YouTube embed remains) |
 | Epic 6 — Donation Flow | 🔴 Blocked (Sumit/JGive docs needed) |
 | Epic 7 — SEO, Performance, Accessibility & Compliance | ⏳ Not started |
 | Epic 8 — Testing & Launch | ⏳ Not started |
@@ -506,8 +506,7 @@ Seven sections top to bottom:
 5. Add animated counters to stats strip
 6. Add floating WhatsApp button (once number confirmed)
 7. Populate `siteSettings` in Sanity Studio (phone, email, address, socials, registration number)
-8. Add ISR revalidation to news/stories routes (currently SSG only)
-9. YouTube embed support inside Portable Text
+8. YouTube embed support inside Portable Text
 
 ### Realistic Timeline
 | Week | Focus |
@@ -521,4 +520,4 @@ Seven sections top to bottom:
 
 ---
 
-*Document version: 2.3 | Last updated: April 17, 2026 | Status: Epics 1-2 complete, Epics 3-5 in progress — field story route live at `/stories`; remaining: donation integration (blocked), floating WhatsApp, animated counters, ISR on news/stories*
+*Document version: 2.4 | Last updated: April 17, 2026 | Status: Epics 1-2 complete, Epics 3-5 in progress — ISR hourly revalidation live on all locale pages; remaining: donation integration (blocked), floating WhatsApp, animated counters, YouTube embed, Epic 7*
