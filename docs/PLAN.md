@@ -153,9 +153,9 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [x] Define schemas: `page`, `newsArticle`, `fieldStory`, `teamMember`, `siteSettings`
 - [x] Define `blockContent` schema with numbered lists, YouTube embeds, bilingual alt text
 - [x] Studio navigation configured (Site Settings singleton, Pages, News, Field Stories, Team)
+- [x] Configure GROQ queries in Next.js for each content type
 - [ ] Configure Hebrew as default locale; add `en` as secondary locale field
 - [ ] Set up Sanity media plugin for image uploads with alt text (Hebrew + English)
-- [ ] Configure GROQ queries in Next.js for each content type
 - [ ] Enable Sanity live preview for content editors
 - [ ] Train content editors (1 session + 1-page quick-reference guide)
 
@@ -178,11 +178,11 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [x] Global navigation — RTL-aware, mobile hamburger, persistent red donate CTA button in header
 - [x] Logo integrated in header (`next/image`, served from `/public/logo.jpg`)
 - [x] Footer — 3 columns (nav, contact, social), org registration number, legal links
-- [ ] Connect pages to Sanity CMS (GROQ queries, dynamic content)
+- [x] Connect pages to Sanity CMS (GROQ queries, dynamic content) — home, about, activities, news, news article, negishot, contact, Footer all wired to `siteSettings` / content schemas; donate page remains placeholder (blocked)
+- [x] `next/image` configured for Sanity CDN (`cdn.sanity.io` in allowed domains)
 - [ ] Homepage stats strip — animated counters on scroll (currently static)
 - [ ] Homepage latest news — connect to Sanity `newsArticle` (ISR hourly)
 - [ ] Floating WhatsApp button — links to `https://wa.me/<number>` (awaiting number from client)
-- [ ] `next/image` configured for Sanity CDN (`cdn.sanity.io` in allowed domains)
 - [ ] Donation page — connect amount presets to Sumit/JGive redirect (blocked on their docs)
 
 ---
@@ -491,21 +491,22 @@ Seven sections top to bottom:
 |---|---|
 | Epic 1 — Setup | ✅ Complete (Sumit/JGive emails pending) |
 | Epic 2 — Design System | ✅ Complete (remaining wireframes deferred — pages built directly) |
-| Epic 3 — CMS Setup | 🔄 In progress (schemas done, GROQ queries + preview remaining) |
-| Epic 4 — Core Pages | 🔄 In progress (all pages built with placeholder content, need Sanity connection) |
+| Epic 3 — CMS Setup | 🔄 In progress (schemas + GROQ queries done, live preview + locale + editor training remaining) |
+| Epic 4 — Core Pages | 🔄 In progress (all non-blocked pages connected to Sanity; floating WhatsApp + animated counters + donation integration remain) |
 | Epic 5 — News Section | ⏳ Not started (blocked on Epic 3 GROQ queries) |
 | Epic 6 — Donation Flow | 🔴 Blocked (Sumit/JGive docs needed) |
 | Epic 7 — SEO, Performance, Accessibility & Compliance | ⏳ Not started |
 | Epic 8 — Testing & Launch | ⏳ Not started |
 
 ### Immediate Next Actions
-1. **Connect pages to Sanity CMS** — write GROQ queries, replace placeholder content with dynamic data
+1. Build field story page (Epic 5) — `fieldStoriesQuery` exists but no route renders it
 2. Send Sumit + JGive integration emails (ask about donation receipts too)
 3. Confirm accessibility coordinator + WhatsApp number from client
 4. Get real stats numbers from client for homepage strip
 5. Point domain DNS to Vercel
 6. Add animated counters to stats strip
 7. Add floating WhatsApp button (once number confirmed)
+8. Populate `siteSettings` in Sanity Studio (phone, email, address, socials, registration number)
 
 ### Realistic Timeline
 | Week | Focus |
@@ -519,4 +520,4 @@ Seven sections top to bottom:
 
 ---
 
-*Document version: 2.1 | Last updated: April 14, 2026 | Status: Epics 1-2 complete, Epics 3-4 in progress — all page shells built, Sanity schemas defined, logo integrated, i18n routing live*
+*Document version: 2.2 | Last updated: April 17, 2026 | Status: Epics 1-2 complete, Epics 3-4 in progress — all non-blocked pages connected to Sanity (Footer + contact now dynamic via `siteSettings`); remaining: field story page, donation integration (blocked), floating WhatsApp, animated counters*

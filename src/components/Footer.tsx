@@ -1,8 +1,36 @@
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { client } from "@/sanity/lib/client";
+import { siteSettingsQuery } from "@/sanity/lib/queries";
 
-export default function Footer() {
-  const t = useTranslations();
+type FooterSettings = {
+  phone?: string;
+  email?: string;
+  address?: string;
+  registrationNumber?: string;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+    tiktok?: string;
+  };
+} | null;
+
+export default async function Footer() {
+  const t = await getTranslations();
+  const settings = await client
+    .fetch<FooterSettings>(siteSettingsQuery)
+    .catch(() => null);
+
+  const socials: Array<{ label: string; href: string }> = [];
+  if (settings?.socialLinks?.facebook)
+    socials.push({ label: "FB", href: settings.socialLinks.facebook });
+  if (settings?.socialLinks?.instagram)
+    socials.push({ label: "IG", href: settings.socialLinks.instagram });
+  if (settings?.socialLinks?.youtube)
+    socials.push({ label: "YT", href: settings.socialLinks.youtube });
+  if (settings?.socialLinks?.tiktok)
+    socials.push({ label: "TT", href: settings.socialLinks.tiktok });
 
   return (
     <footer className="relative overflow-hidden">
@@ -50,9 +78,17 @@ export default function Footer() {
                 {t("footer.contact_title")}
               </h3>
               <div className="flex flex-col gap-3 text-sm text-white/50">
-                <p>{t("footer.contact_phone")}</p>
-                <p>{t("footer.contact_email")}</p>
-                <p>{t("footer.contact_address")}</p>
+                {settings?.phone && (
+                  <a href={`tel:${settings.phone.replace(/\s|-/g, "")}`} className="hover:text-gold-300 transition-colors duration-300">
+                    {settings.phone}
+                  </a>
+                )}
+                {settings?.email && (
+                  <a href={`mailto:${settings.email}`} className="hover:text-gold-300 transition-colors duration-300">
+                    {settings.email}
+                  </a>
+                )}
+                {settings?.address && <p>{settings.address}</p>}
               </div>
             </div>
 
@@ -61,16 +97,21 @@ export default function Footer() {
               <h3 className="text-white font-bold text-sm mb-5 tracking-wide uppercase">
                 {t("footer.social_title")}
               </h3>
-              <div className="flex gap-3">
-                {["FB", "IG", "YT"].map((label) => (
-                  <span
-                    key={label}
-                    className="w-10 h-10 rounded-full bg-white/8 flex items-center justify-center text-white/40 text-xs font-bold hover:bg-gold-500/20 hover:text-gold-300 transition-all duration-300 cursor-pointer"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
+              {socials.length > 0 && (
+                <div className="flex gap-3">
+                  {socials.map(({ label, href }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full bg-white/8 flex items-center justify-center text-white/40 text-xs font-bold hover:bg-gold-500/20 hover:text-gold-300 transition-all duration-300"
+                    >
+                      {label}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -79,8 +120,12 @@ export default function Footer() {
         <div className="border-t border-white/8">
           <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/30">
             <div className="flex items-center gap-2">
-              <span>ע&quot;ר 580XXXXXX</span>
-              <span className="text-white/15">|</span>
+              {settings?.registrationNumber && (
+                <>
+                  <span>ע&quot;ר {settings.registrationNumber}</span>
+                  <span className="text-white/15">|</span>
+                </>
+              )}
               <span>{t("footer.rights")} {new Date().getFullYear()}</span>
             </div>
             <div className="flex gap-5">

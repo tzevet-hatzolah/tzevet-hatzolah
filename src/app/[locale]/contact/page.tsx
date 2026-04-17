@@ -1,6 +1,13 @@
-import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+import { client } from "@/sanity/lib/client";
+import { siteSettingsQuery } from "@/sanity/lib/queries";
+
+type ContactSettings = {
+  phone?: string;
+  email?: string;
+  whatsappNumber?: string;
+} | null;
 
 export default async function ContactPage({
   params,
@@ -10,11 +17,17 @@ export default async function ContactPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <ContactContent />;
-}
+  const [t, settings] = await Promise.all([
+    getTranslations("contact"),
+    client.fetch<ContactSettings>(siteSettingsQuery).catch(() => null),
+  ]);
 
-function ContactContent() {
-  const t = useTranslations("contact");
+  const phone = settings?.phone;
+  const email = settings?.email;
+  const whatsappNumber = settings?.whatsappNumber;
+  const whatsappHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}`
+    : null;
 
   return (
     <main className="flex-1">
@@ -100,8 +113,19 @@ function ContactContent() {
                 </div>
                 <h3 className="font-bold text-charcoal mb-2 text-sm sm:text-base">פרטי התקשרות</h3>
                 <div className="flex flex-col gap-1.5 text-xs sm:text-sm text-dark/70">
-                  <p>052-000-0000</p>
-                  <p>info@tzevet-hatzolah.org</p>
+                  {phone && (
+                    <a href={`tel:${phone.replace(/\s|-/g, "")}`} className="hover:text-navy-600 transition-colors">
+                      {phone}
+                    </a>
+                  )}
+                  {email && (
+                    <a href={`mailto:${email}`} className="hover:text-navy-600 transition-colors">
+                      {email}
+                    </a>
+                  )}
+                  {!phone && !email && (
+                    <p className="text-muted">פרטי התקשרות ייתווספו בקרוב</p>
+                  )}
                 </div>
               </div>
             </AnimateOnScroll>
@@ -111,9 +135,20 @@ function ContactContent() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-navy-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </div>
                 <h3 className="font-bold text-charcoal mb-2 text-sm sm:text-base">{t("whatsapp")}</h3>
-                <p className="text-xs sm:text-sm text-muted">
-                  קישור WhatsApp ייתווסף כשמספר הארגון יאושר
-                </p>
+                {whatsappHref ? (
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs sm:text-sm text-navy-600 hover:text-navy-400 transition-colors font-medium"
+                  >
+                    {whatsappNumber}
+                  </a>
+                ) : (
+                  <p className="text-xs sm:text-sm text-muted">
+                    קישור WhatsApp ייתווסף כשמספר הארגון יאושר
+                  </p>
+                )}
               </div>
             </AnimateOnScroll>
           </div>
