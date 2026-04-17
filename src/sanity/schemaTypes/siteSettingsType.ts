@@ -45,11 +45,20 @@ export const siteSettingsType = defineType({
       name: "socialLinks",
       title: "Social Media Links",
       type: "object",
+      description:
+        "Links for the Footer 'Follow us' section. Leave a field blank to hide its icon. The WhatsApp Channel link is different from the WhatsApp Number above — that one is for direct contact.",
       fields: [
-        { name: "facebook", title: "Facebook", type: "url" },
+        {
+          name: "whatsappChannel",
+          title: "WhatsApp Channel",
+          type: "url",
+          description:
+            "Public WhatsApp channel URL, e.g. https://whatsapp.com/channel/...",
+        },
+        { name: "telegram", title: "Telegram", type: "url" },
         { name: "instagram", title: "Instagram", type: "url" },
         { name: "youtube", title: "YouTube", type: "url" },
-        { name: "tiktok", title: "TikTok", type: "url" },
+        { name: "facebook", title: "Facebook", type: "url" },
       ],
     }),
     defineField({
