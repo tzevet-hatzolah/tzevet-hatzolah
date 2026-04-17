@@ -11,6 +11,14 @@ const IMAGE_HEIGHT = 1080;
 // Top area reserved for the logo (don't place text here)
 const LOGO_RESERVED_TOP = 280;
 
+// Available area for text
+const TEXT_PADDING = 60;
+const MAX_TEXT_HEIGHT = IMAGE_HEIGHT - LOGO_RESERVED_TOP - TEXT_PADDING * 2;
+const TEXT_WIDTH = IMAGE_WIDTH - 120;
+
+// Font sizes to try, from largest to smallest
+const FONT_SIZES = [40000, 32000, 26000, 20000, 16000, 12000];
+
 let tempFontPath: string | null = null;
 
 /** Write the embedded font to a temp file so Pango can use it. */
@@ -27,6 +35,7 @@ function ensureFontFile(): string {
 /**
  * Generate an Instagram image with text overlaid on the background.
  * Uses sharp's Pango text rendering with the embedded Heebo font.
+ * Automatically scales font size to fit the available area.
  */
 export async function generateTextImage(text: string): Promise<Buffer> {
   const bgBuffer = fs.readFileSync(BG_IMAGE_PATH);
@@ -42,29 +51,68 @@ export async function generateTextImage(text: string): Promise<Buffer> {
 
   const fontFile = ensureFontFile();
 
-  // Render red text using Pango with custom font
-  const textWidth = IMAGE_WIDTH - 120;
-  const textImage = await sharp({
-    text: {
-      text: `<span foreground="#CC0000" size="40000">${escapedText}</span>`,
-      fontfile: fontFile,
-      font: "Heebo Bold",
-      rgba: true,
-      width: textWidth,
-      align: "centre",
-      dpi: 200,
-    },
-  })
-    .png()
-    .toBuffer();
+  // Try font sizes from largest to smallest until text fits
+  let textImage: Buffer | null = null;
+  let textHeight = 0;
+  let textActualWidth = 0;
 
-  // Get text image dimensions for centering
-  const textMeta = await sharp(textImage).metadata();
-  const textHeight = textMeta.height || 0;
-  const textActualWidth = textMeta.width || textWidth;
+  for (const fontSize of FONT_SIZES) {
+    const pangoMarkup = `<span foreground="#CC0000" size="${fontSize}">${escapedText}</span>`;
+    const rendered = await sharp({
+      text: {
+        text: pangoMarkup,
+        fontfile: fontFile,
+        font: "Heebo Bold",
+        rgba: true,
+        width: TEXT_WIDTH,
+        align: "centre",
+        dpi: 200,
+      },
+    })
+      .png()
+      .toBuffer();
+
+    const meta = await sharp(rendered).metadata();
+    textHeight = meta.height || 0;
+    textActualWidth = meta.width || TEXT_WIDTH;
+
+    if (textHeight <= MAX_TEXT_HEIGHT) {
+      textImage = rendered;
+      break;
+    }
+  }
+
+  // If even the smallest font doesn't fit, use it anyway but resize to fit
+  if (!textImage) {
+    const rendered = await sharp({
+      text: {
+        text: `<span foreground="#CC0000" size="${FONT_SIZES[FONT_SIZES.length - 1]}">${escapedText}</span>`,
+        fontfile: fontFile,
+        font: "Heebo Bold",
+        rgba: true,
+        width: TEXT_WIDTH,
+        align: "centre",
+        dpi: 200,
+      },
+    })
+      .png()
+      .toBuffer();
+
+    textImage = await sharp(rendered)
+      .resize({
+        width: TEXT_WIDTH,
+        height: MAX_TEXT_HEIGHT,
+        fit: "inside",
+      })
+      .toBuffer();
+
+    const meta = await sharp(textImage).metadata();
+    textHeight = meta.height || MAX_TEXT_HEIGHT;
+    textActualWidth = meta.width || TEXT_WIDTH;
+  }
 
   // Center text vertically in the area below the logo
-  const availableHeight = IMAGE_HEIGHT - LOGO_RESERVED_TOP;
+  const availableHeight = IMAGE_HEIGHT - LOGO_RESERVED_TOP - TEXT_PADDING;
   const topOffset =
     LOGO_RESERVED_TOP + Math.max(0, (availableHeight - textHeight) / 2);
   const leftOffset = Math.max(0, (IMAGE_WIDTH - textActualWidth) / 2);
