@@ -45,9 +45,8 @@ export async function generateTextImage(text: string): Promise<Buffer> {
     .resize(IMAGE_WIDTH, IMAGE_HEIGHT, { fit: "cover", position: "top" })
     .toBuffer();
 
-  // Strip * from text
-  const plainText = text.replace(/\*/g, "").trim();
-  const escapedText = escapeXml(plainText);
+  // Convert *bold* markers to Pango bold markup, escape XML in text parts
+  const pangoText = convertBoldMarkup(text.trim());
 
   const fontFile = ensureFontFile();
 
@@ -57,7 +56,7 @@ export async function generateTextImage(text: string): Promise<Buffer> {
   let textActualWidth = 0;
 
   for (const fontSize of FONT_SIZES) {
-    const pangoMarkup = `<span foreground="#CC0000" size="${fontSize}">${escapedText}</span>`;
+    const pangoMarkup = `<span foreground="#000000" size="${fontSize}">${pangoText}</span>`;
     const rendered = await sharp({
       text: {
         text: pangoMarkup,
@@ -86,7 +85,7 @@ export async function generateTextImage(text: string): Promise<Buffer> {
   if (!textImage) {
     const rendered = await sharp({
       text: {
-        text: `<span foreground="#CC0000" size="${FONT_SIZES[FONT_SIZES.length - 1]}">${escapedText}</span>`,
+        text: `<span foreground="#000000" size="${FONT_SIZES[FONT_SIZES.length - 1]}">${pangoText}</span>`,
         fontfile: fontFile,
         font: "Heebo Bold",
         rgba: true,
@@ -129,6 +128,21 @@ export async function generateTextImage(text: string): Promise<Buffer> {
     .toBuffer();
 
   return result;
+}
+
+/**
+ * Convert *bold* markers to Pango <b> tags.
+ * Text outside markers is escaped for XML.
+ */
+function convertBoldMarkup(text: string): string {
+  const parts = text.split(/\*([^*]+)\*/g);
+  // parts: [before, bold1, between, bold2, ...] — odd indices are bold
+  return parts
+    .map((part, i) => {
+      const escaped = escapeXml(part);
+      return i % 2 === 1 ? `<b>${escaped}</b>` : escaped;
+    })
+    .join("");
 }
 
 /** Escape special XML characters for Pango markup. */
