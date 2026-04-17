@@ -108,6 +108,12 @@ export const fieldStoryBySlugQuery = groq`
   }
 `;
 
+export const fieldStoriesSlugsQuery = groq`
+  *[_type == "fieldStory" && defined(slug.current)]{
+    "slug": slug.current
+  }
+`;
+
 // ── Team Members ───────────────────────────────────────────────────
 export const teamMembersQuery = groq`
   *[_type == "teamMember"] | order(order asc){

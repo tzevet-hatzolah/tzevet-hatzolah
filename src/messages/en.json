@@ -8,6 +8,7 @@
     "about": "About",
     "activities": "Activities",
     "news": "News",
+    "stories": "Field Stories",
     "donate": "Donate Now",
     "contact": "Contact"
   },
@@ -97,6 +98,11 @@
   },
   "news_page": {
     "title": "News & Stories"
+  },
+  "stories_page": {
+    "title": "Field Stories",
+    "subtitle": "Real moments from our volunteers in the field",
+    "empty": "New stories will be published soon"
   },
   "accessibility_page": {
     "title": "Accessibility Statement"

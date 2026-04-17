@@ -66,6 +66,9 @@ export default async function Footer() {
                 <Link href="/news" className="text-sm text-white/50 hover:text-gold-300 transition-colors duration-300">
                   {t("nav.news")}
                 </Link>
+                <Link href="/stories" className="text-sm text-white/50 hover:text-gold-300 transition-colors duration-300">
+                  {t("nav.stories")}
+                </Link>
                 <Link href="/contact" className="text-sm text-white/50 hover:text-gold-300 transition-colors duration-300">
                   {t("nav.contact")}
                 </Link>

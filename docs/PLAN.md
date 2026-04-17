@@ -189,12 +189,12 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 
 ### EPIC 5 – News & Stories Section
 
-- [ ] News listing page — ISR, paginated, from Sanity `newsArticle` schema
-- [ ] Single article page — `app/[locale]/news/[slug]/page.tsx`
-- [ ] Field story page — distinct visual treatment from news
-- [ ] Portable Text renderer (`@portabletext/react`)
+- [x] News listing page — from Sanity `newsArticle` schema (pagination deferred)
+- [x] Single article page — `app/[locale]/news/[slug]/page.tsx`
+- [x] Field story page — distinct visual treatment from news (gold accent, location badge, image backdrop hero, pull-quote excerpt) at `/stories` + `/stories/[slug]`
+- [x] Portable Text renderer (`@portabletext/react`)
 - [ ] YouTube embed support inside Portable Text
-- [ ] Homepage "Latest News" strip — 3 most recent, revalidated hourly
+- [ ] Homepage "Latest News" strip — 3 most recent, revalidated hourly (currently SSG on every build)
 - [ ] Category/tag filtering — **defer to Phase 2**
 
 ---
@@ -493,20 +493,21 @@ Seven sections top to bottom:
 | Epic 2 — Design System | ✅ Complete (remaining wireframes deferred — pages built directly) |
 | Epic 3 — CMS Setup | 🔄 In progress (schemas + GROQ queries done, live preview + locale + editor training remaining) |
 | Epic 4 — Core Pages | 🔄 In progress (all non-blocked pages connected to Sanity; floating WhatsApp + animated counters + donation integration remain) |
-| Epic 5 — News Section | ⏳ Not started (blocked on Epic 3 GROQ queries) |
+| Epic 5 — News & Stories | 🔄 In progress (news listing/detail + field stories live; YouTube embed + ISR revalidation remain) |
 | Epic 6 — Donation Flow | 🔴 Blocked (Sumit/JGive docs needed) |
 | Epic 7 — SEO, Performance, Accessibility & Compliance | ⏳ Not started |
 | Epic 8 — Testing & Launch | ⏳ Not started |
 
 ### Immediate Next Actions
-1. Build field story page (Epic 5) — `fieldStoriesQuery` exists but no route renders it
-2. Send Sumit + JGive integration emails (ask about donation receipts too)
-3. Confirm accessibility coordinator + WhatsApp number from client
-4. Get real stats numbers from client for homepage strip
-5. Point domain DNS to Vercel
-6. Add animated counters to stats strip
-7. Add floating WhatsApp button (once number confirmed)
-8. Populate `siteSettings` in Sanity Studio (phone, email, address, socials, registration number)
+1. Send Sumit + JGive integration emails (ask about donation receipts too)
+2. Confirm accessibility coordinator + WhatsApp number from client
+3. Get real stats numbers from client for homepage strip
+4. Point domain DNS to Vercel
+5. Add animated counters to stats strip
+6. Add floating WhatsApp button (once number confirmed)
+7. Populate `siteSettings` in Sanity Studio (phone, email, address, socials, registration number)
+8. Add ISR revalidation to news/stories routes (currently SSG only)
+9. YouTube embed support inside Portable Text
 
 ### Realistic Timeline
 | Week | Focus |
@@ -520,4 +521,4 @@ Seven sections top to bottom:
 
 ---
 
-*Document version: 2.2 | Last updated: April 17, 2026 | Status: Epics 1-2 complete, Epics 3-4 in progress — all non-blocked pages connected to Sanity (Footer + contact now dynamic via `siteSettings`); remaining: field story page, donation integration (blocked), floating WhatsApp, animated counters*
+*Document version: 2.3 | Last updated: April 17, 2026 | Status: Epics 1-2 complete, Epics 3-5 in progress — field story route live at `/stories`; remaining: donation integration (blocked), floating WhatsApp, animated counters, ISR on news/stories*
