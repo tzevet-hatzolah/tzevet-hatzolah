@@ -3,14 +3,7 @@ import path from "path";
 import fs from "fs";
 
 const BG_IMAGE_PATH = path.join(process.cwd(), "public", "bot-bg.jpg");
-const FONT_PATH = path.join(
-  process.cwd(),
-  "src",
-  "lib",
-  "bot",
-  "fonts",
-  "Heebo-Bold.ttf"
-);
+const FONT_PATH = path.join(process.cwd(), "public", "fonts", "Heebo-Bold.ttf");
 const IMAGE_WIDTH = 1080;
 const IMAGE_HEIGHT = 1080;
 
