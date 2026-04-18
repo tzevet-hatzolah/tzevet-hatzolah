@@ -73,10 +73,10 @@ export const siteSettingsType = defineType({
     }),
     defineField({
       name: "heroVideoPoster",
-      title: "Hero Video Poster (Fallback Image)",
+      title: "Hero Image / Video Poster",
       type: "image",
       description:
-        "Shown while the video loads or on slow connections. Use a frame from the video.",
+        "Used as the hero background when no video is set. If a video IS set, this image is shown while it loads and as a fallback on slow connections.",
     }),
     defineField({
       name: "statsVolunteers",

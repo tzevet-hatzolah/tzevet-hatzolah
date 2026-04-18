@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 export default function HeroVideo({
@@ -25,7 +26,20 @@ export default function HeroVideo({
     return () => video.removeEventListener("canplaythrough", onCanPlay);
   }, []);
 
-  if (!videoUrl) return null;
+  // No video — render poster as a still hero background
+  if (!videoUrl) {
+    if (!posterUrl) return null;
+    return (
+      <Image
+        src={posterUrl}
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="absolute inset-0 object-cover"
+      />
+    );
+  }
 
   return (
     <video
