@@ -120,7 +120,7 @@ function HomeContent({
         <HeroVideo videoUrl={heroVideoUrl} posterUrl={heroPosterUrl} />
 
         {/* Dark overlay — ensures text readability over video */}
-        <div className="absolute inset-0 bg-navy-950/60 pointer-events-none" />
+        <div className="absolute inset-0 bg-navy-950/75 pointer-events-none" />
 
         {/* Decorative elements (on top of overlay) */}
         <div className="absolute inset-0 pointer-events-none">
@@ -136,12 +136,12 @@ function HomeContent({
           </span>
 
           {/* Headline */}
-          <h1 className="text-3xl sm:text-4xl md:text-[length:var(--font-size-display)] font-[number:var(--font-weight-black)] leading-[var(--line-height-display)] whitespace-pre-line animate-fade-up delay-100">
+          <h1 className="text-white text-3xl sm:text-4xl md:text-[length:var(--font-size-display)] font-[number:var(--font-weight-black)] leading-[var(--line-height-display)] whitespace-pre-line animate-fade-up delay-100 [text-shadow:0_2px_20px_rgba(0,0,0,0.5)]">
             {t("hero.title")}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-white/65 text-sm sm:text-base md:text-lg mt-4 sm:mt-5 max-w-xl mx-auto leading-relaxed animate-fade-up delay-200">
+          <p className="text-white/85 text-sm sm:text-base md:text-lg mt-4 sm:mt-5 max-w-xl mx-auto leading-relaxed animate-fade-up delay-200 [text-shadow:0_1px_8px_rgba(0,0,0,0.4)]">
             {t("hero.subtitle")}
           </p>
 
