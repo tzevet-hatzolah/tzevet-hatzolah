@@ -131,7 +131,7 @@ function HomeContent({
 
         <div className="max-w-3xl mx-auto text-center relative z-10">
           {/* Badge */}
-          <span className="inline-block bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 text-xs sm:text-sm font-bold px-4 sm:px-5 py-1.5 sm:py-2 rounded-full mb-6 sm:mb-7 shadow-[var(--shadow-glow-gold)] animate-fade-up">
+          <span className="inline-block bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 text-sm sm:text-base font-bold px-5 sm:px-7 py-2 sm:py-2.5 rounded-full mb-6 sm:mb-7 shadow-[var(--shadow-glow-gold)] animate-fade-up">
             {t("hero.badge")}
           </span>
 
