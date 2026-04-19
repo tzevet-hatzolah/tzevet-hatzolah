@@ -1,11 +1,26 @@
+import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
 import { client } from "@/sanity/lib/client";
 import { pageBySlugQuery } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
+import { alternateLinks } from "@/lib/seo";
 import SanityPortableText from "@/components/SanityPortableText";
 import type { PortableTextBlock } from "next-sanity";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "activities" });
+  return {
+    title: t("title"),
+    alternates: alternateLinks("/activities"),
+  };
+}
 
 type PageData = {
   title: string;

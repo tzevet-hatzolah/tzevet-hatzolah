@@ -8,6 +8,7 @@ import {
   fieldStoriesSlugsQuery,
 } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
+import { alternateLinks } from "@/lib/seo";
 import SanityPortableText from "@/components/SanityPortableText";
 import type { PortableTextBlock } from "next-sanity";
 import type { Metadata } from "next";
@@ -44,9 +45,21 @@ export async function generateMetadata({
   const title =
     locale === "en" ? story.titleEn || story.title : story.title;
 
+  const ogImage = story.mainImage?.asset
+    ? urlFor(story.mainImage).width(1200).height(630).auto("format").url()
+    : undefined;
+
   return {
     title,
     description: story.excerpt,
+    alternates: alternateLinks(`/stories/${slug}`),
+    openGraph: {
+      type: "article",
+      title,
+      description: story.excerpt,
+      publishedTime: story.publishedAt,
+      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : undefined,
+    },
   };
 }
 

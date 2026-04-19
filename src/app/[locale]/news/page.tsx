@@ -1,11 +1,26 @@
+import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { client } from "@/sanity/lib/client";
 import { newsArticlesQuery } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
+import { alternateLinks } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "news_page" });
+  return {
+    title: t("title"),
+    alternates: alternateLinks("/news"),
+  };
+}
 
 type NewsArticle = {
   _id: string;

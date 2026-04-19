@@ -1,6 +1,22 @@
+import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+import { alternateLinks } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "donate" });
+  return {
+    title: t("title"),
+    description: t("subtitle"),
+    alternates: alternateLinks("/donate"),
+  };
+}
 
 export default async function DonatePage({
   params,

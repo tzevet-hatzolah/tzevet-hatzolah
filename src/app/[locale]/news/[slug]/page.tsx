@@ -8,6 +8,7 @@ import {
   newsArticlesSlugsQuery,
 } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
+import { alternateLinks } from "@/lib/seo";
 import SanityPortableText from "@/components/SanityPortableText";
 import type { PortableTextBlock } from "next-sanity";
 import type { Metadata } from "next";
@@ -46,9 +47,21 @@ export async function generateMetadata({
       ? article.titleEn || article.title
       : article.title;
 
+  const ogImage = article.mainImage?.asset
+    ? urlFor(article.mainImage).width(1200).height(630).auto("format").url()
+    : undefined;
+
   return {
     title,
     description: article.excerpt,
+    alternates: alternateLinks(`/news/${slug}`),
+    openGraph: {
+      type: "article",
+      title,
+      description: article.excerpt,
+      publishedTime: article.publishedAt,
+      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : undefined,
+    },
   };
 }
 

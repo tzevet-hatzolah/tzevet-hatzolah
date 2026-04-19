@@ -1,7 +1,22 @@
+import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { client } from "@/sanity/lib/client";
 import { siteSettingsQuery } from "@/sanity/lib/queries";
+import { alternateLinks } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "accessibility_page" });
+  return {
+    title: t("title"),
+    alternates: alternateLinks("/negishot"),
+  };
+}
 
 type SiteSettings = {
   accessibilityCoordinator?: string;

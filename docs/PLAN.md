@@ -216,10 +216,11 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 *Non-negotiable baseline. Not a nice-to-have.*
 
 **SEO**
-- [ ] `generateMetadata()` on all pages (Hebrew + English variants)
-- [ ] `hreflang` alternate links for `he` / `en`
-- [ ] `sitemap.ts` — auto-generated
-- [ ] `robots.ts` — configured for production
+- [x] `generateMetadata()` on all pages (Hebrew + English variants)
+- [x] `hreflang` alternate links for `he` / `en`
+- [x] `sitemap.ts` — auto-generated (static pages + news + field stories)
+- [x] `robots.ts` — configured for production (disallow `/studio` and `/api`)
+- [x] Open Graph metadata on detail pages (news, stories) with article images
 
 **Performance**
 - [ ] `next/image` on all images — no raw `<img>` tags; WebP/AVIF auto-format enabled
@@ -495,7 +496,7 @@ Seven sections top to bottom:
 | Epic 4 — Core Pages | 🔄 In progress (all non-blocked pages connected to Sanity; floating WhatsApp + animated counters + donation integration remain) |
 | Epic 5 — News & Stories | 🔄 In progress (news listing/detail + field stories live, ISR hourly; YouTube embed remains) |
 | Epic 6 — Donation Flow | 🔴 Blocked (Sumit/JGive docs needed) |
-| Epic 7 — SEO, Performance, Accessibility & Compliance | ⏳ Not started |
+| Epic 7 — SEO, Performance, Accessibility & Compliance | 🔄 In progress (SEO basics live: sitemap, robots, metadata + hreflang on all pages; performance/a11y/security remain) |
 | Epic 8 — Testing & Launch | ⏳ Not started |
 
 ### Immediate Next Actions
@@ -520,4 +521,4 @@ Seven sections top to bottom:
 
 ---
 
-*Document version: 2.4 | Last updated: April 17, 2026 | Status: Epics 1-2 complete, Epics 3-5 in progress — ISR hourly revalidation live on all locale pages; remaining: donation integration (blocked), floating WhatsApp, animated counters, YouTube embed, Epic 7*
+*Document version: 2.5 | Last updated: April 17, 2026 | Status: Epics 1-2 complete, Epics 3-5 in progress, Epic 7 started — SEO basics live (sitemap, robots, generateMetadata + hreflang on all pages); remaining: donation integration (blocked), floating WhatsApp, animated counters, YouTube embed, Epic 7 performance/a11y/security*

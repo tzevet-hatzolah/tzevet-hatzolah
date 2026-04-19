@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { alternateLinks } from "@/lib/seo";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -10,6 +12,27 @@ export function generateStaticParams() {
 }
 
 export const revalidate = 3600;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "meta" });
+  const title = t("title");
+  return {
+    title: {
+      default: title,
+      template: `%s | ${title}`,
+    },
+    description: t("description"),
+    alternates: alternateLinks("/"),
+    openGraph: {
+      locale: locale === "he" ? "he_IL" : "en_US",
+    },
+  };
+}
 
 export default async function LocaleLayout({
   children,

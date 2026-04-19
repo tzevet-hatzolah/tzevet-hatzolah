@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Heebo } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const heebo = Heebo({
@@ -12,8 +13,25 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: "צוות הצלה | Tzevet Hatzolah",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "צוות הצלה | Tzevet Hatzolah",
+    template: "%s | צוות הצלה",
+  },
   description: "צוות הצלה - ארגון חירום והצלה",
+  openGraph: {
+    type: "website",
+    siteName: "צוות הצלה",
+    locale: "he_IL",
+    alternateLocale: ["en_US"],
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function RootLayout({

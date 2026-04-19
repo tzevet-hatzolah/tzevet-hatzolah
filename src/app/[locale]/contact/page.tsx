@@ -1,7 +1,22 @@
+import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { client } from "@/sanity/lib/client";
 import { siteSettingsQuery } from "@/sanity/lib/queries";
+import { alternateLinks } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "contact" });
+  return {
+    title: t("title"),
+    alternates: alternateLinks("/contact"),
+  };
+}
 
 type ContactSettings = {
   phone?: string;
