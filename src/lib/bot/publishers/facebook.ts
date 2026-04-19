@@ -33,6 +33,36 @@ async function graphApi(
   return data;
 }
 
+/**
+ * Upload photos to Facebook as unpublished and return their Facebook-hosted URLs.
+ * Used to get URLs that Instagram can fetch (Meta can reach its own servers).
+ */
+export async function uploadPhotosToFacebook(
+  photoUrls: string[]
+): Promise<string[]> {
+  const pageId = getPageId();
+  const token = getPageToken();
+
+  return Promise.all(
+    photoUrls.map(async (url) => {
+      // Upload as unpublished photo
+      const result = await graphApi(`/${pageId}/photos`, {
+        url,
+        published: false,
+      });
+      const photoId = result.id as string;
+
+      // Query the photo to get its Facebook-hosted URL
+      const res = await fetch(
+        `${GRAPH_API}/${photoId}?fields=images&access_token=${token}`
+      );
+      const data = await res.json();
+      // images array is sorted by size descending — first is largest
+      return data.images?.[0]?.source as string;
+    })
+  );
+}
+
 export async function publishToFacebook(
   message: BotMessage,
   photoUrls: string[]

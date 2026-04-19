@@ -1,6 +1,6 @@
 import type { BotMessage, PublishResult } from "./types";
 import { publishToTelegram, getFileUrl } from "./publishers/telegram";
-import { publishToFacebook } from "./publishers/facebook";
+import { publishToFacebook, uploadPhotosToFacebook } from "./publishers/facebook";
 import { publishToInstagram } from "./publishers/instagram";
 
 /** Resolve Telegram file IDs to public download URLs. */
@@ -18,18 +18,24 @@ export async function publishToAll(
   const telegramPhotoUrls =
     message.photos.length > 0 ? await resolvePhotoUrls(message) : [];
 
-  // Instagram needs proxied URLs — Telegram serves application/octet-stream
-  const proxiedPhotoUrls = telegramPhotoUrls.map(
-    (url) => `${baseUrl}/api/image-proxy?url=${encodeURIComponent(url)}`
-  );
+  // Upload to Facebook first to get Facebook-hosted URLs for Instagram
+  // (Instagram can't fetch from Vercel or Telegram, but can fetch from Facebook)
+  let facebookPhotoUrls: string[] = [];
+  if (!options?.skipInstagram && telegramPhotoUrls.length > 0) {
+    try {
+      facebookPhotoUrls = await uploadPhotosToFacebook(telegramPhotoUrls);
+    } catch (e) {
+      console.error("[Publisher] Failed to upload photos to Facebook for Instagram:", e);
+    }
+  }
 
   const publishers = [
     publishToTelegram(message),
     publishToFacebook(message, telegramPhotoUrls),
   ];
 
-  if (!options?.skipInstagram) {
-    publishers.push(publishToInstagram(message, proxiedPhotoUrls, baseUrl));
+  if (!options?.skipInstagram && facebookPhotoUrls.length > 0) {
+    publishers.push(publishToInstagram(message, facebookPhotoUrls, baseUrl));
   }
 
   const results = await Promise.all(publishers);
