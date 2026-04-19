@@ -8,13 +8,6 @@ async function resolvePhotoUrls(message: BotMessage): Promise<string[]> {
   return Promise.all(message.photos.map((photo) => getFileUrl(photo.fileId)));
 }
 
-/** Convert Telegram file URLs to proxied URLs that Instagram can fetch. */
-function proxyPhotoUrls(telegramUrls: string[], baseUrl: string): string[] {
-  return telegramUrls.map(
-    (url) => `${baseUrl}/api/image-proxy?url=${encodeURIComponent(url)}`
-  );
-}
-
 /** Publish a message to all platforms in parallel. */
 export async function publishToAll(
   message: BotMessage,
@@ -25,16 +18,14 @@ export async function publishToAll(
   const telegramPhotoUrls =
     message.photos.length > 0 ? await resolvePhotoUrls(message) : [];
 
-  // Instagram needs proxied URLs with proper content-type headers
-  const proxiedPhotoUrls = proxyPhotoUrls(telegramPhotoUrls, baseUrl);
-
   const publishers = [
     publishToTelegram(message),
     publishToFacebook(message, telegramPhotoUrls),
   ];
 
   if (!options?.skipInstagram) {
-    publishers.push(publishToInstagram(message, proxiedPhotoUrls, baseUrl));
+    // Use Telegram file URLs directly — they serve proper content-type
+    publishers.push(publishToInstagram(message, telegramPhotoUrls, baseUrl));
   }
 
   const results = await Promise.all(publishers);
