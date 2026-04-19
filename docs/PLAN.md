@@ -139,7 +139,7 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [ ] News listing wireframe
 - [ ] News article wireframe
 - [ ] About page wireframe
-- [ ] Create favicon set (including Apple touch icon, 32x32, 16x16)
+- [x] Create favicon set (including Apple touch icon, 32x32, 16x16) — generated from `public/logo.jpg` via `scripts/generate-icons.mjs`
 - [ ] Design default OG image for social sharing (Hebrew + English variants)
 - [ ] Design page-specific OG image for donation page
 - [ ] Define image aspect ratios for hero, news thumbnails, team photos

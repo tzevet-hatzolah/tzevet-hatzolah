@@ -1,0 +1,55 @@
+import sharp from "sharp";
+import { writeFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = join(__dirname, "..");
+const source = join(root, "public/logo.jpg");
+const appDir = join(root, "src/app");
+
+async function resizePng(size) {
+  return sharp(source).resize(size, size, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
+}
+
+function buildIco(images) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(images.length, 4);
+
+  const entries = [];
+  const payloads = [];
+  let offset = 6 + 16 * images.length;
+
+  for (const { size, data } of images) {
+    const entry = Buffer.alloc(16);
+    entry.writeUInt8(size >= 256 ? 0 : size, 0);
+    entry.writeUInt8(size >= 256 ? 0 : size, 1);
+    entry.writeUInt8(0, 2);
+    entry.writeUInt8(0, 3);
+    entry.writeUInt16LE(1, 4);
+    entry.writeUInt16LE(32, 6);
+    entry.writeUInt32LE(data.length, 8);
+    entry.writeUInt32LE(offset, 12);
+    entries.push(entry);
+    payloads.push(data);
+    offset += data.length;
+  }
+
+  return Buffer.concat([header, ...entries, ...payloads]);
+}
+
+const icon512 = await resizePng(512);
+const apple180 = await resizePng(180);
+const png16 = await resizePng(16);
+const png32 = await resizePng(32);
+
+writeFileSync(join(appDir, "icon.png"), icon512);
+writeFileSync(join(appDir, "apple-icon.png"), apple180);
+writeFileSync(join(appDir, "favicon.ico"), buildIco([
+  { size: 16, data: png16 },
+  { size: 32, data: png32 },
+]));
+
+console.log("Generated: icon.png (512), apple-icon.png (180), favicon.ico (16+32)");

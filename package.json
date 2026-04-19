@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "setup:webhook": "bash scripts/setup-telegram-webhook.sh"
+    "setup:webhook": "bash scripts/setup-telegram-webhook.sh",
+    "icons:generate": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@portabletext/react": "^6.0.3",
