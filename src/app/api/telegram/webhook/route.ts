@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { isAuthorizedUser } from "@/lib/bot/auth";
 import { publishToAll, formatResultsSummary } from "@/lib/bot/publisher";
 import { publishToInstagram } from "@/lib/bot/publishers/instagram";
+import { uploadPhotosToFacebook } from "@/lib/bot/publishers/facebook";
 import {
   sendBotReply,
   sendPhotoWithButtons,
@@ -209,11 +210,23 @@ async function handleCallbackQuery(
       messageId: 0,
     };
 
-    const result = await publishToInstagram(
-      dummyMessage,
-      [pending.imageUrl],
-      baseUrl
-    );
+    let instagramPhotoUrls: string[] = [];
+    try {
+      instagramPhotoUrls = await uploadPhotosToFacebook([pending.imageUrl]);
+    } catch (e) {
+      console.error(
+        "[Webhook] Failed to upload generated image to Facebook for Instagram:",
+        e
+      );
+    }
+
+    const result = instagramPhotoUrls.length
+      ? await publishToInstagram(dummyMessage, instagramPhotoUrls, baseUrl)
+      : {
+          platform: "instagram" as const,
+          success: false,
+          error: "העלאה לפייסבוק נכשלה — לא ניתן לפרסם באינסטגרם",
+        };
 
     const icon = result.success ? "\u2705" : "\u274C";
     const status = result.success ? "פורסם" : `נכשל: ${result.error}`;
