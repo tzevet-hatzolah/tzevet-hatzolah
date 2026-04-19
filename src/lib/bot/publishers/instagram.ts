@@ -69,7 +69,6 @@ export async function publishToInstagram(
     if (photoUrls.length === 1) {
       // Single image post
       const container = await graphApi(`/${igId}/media`, {
-        media_type: "IMAGE",
         image_url: photoUrls[0],
         caption,
       });
@@ -82,7 +81,6 @@ export async function publishToInstagram(
       const itemIds = await Promise.all(
         photoUrls.map(async (url) => {
           const item = await graphApi(`/${igId}/media`, {
-            media_type: "IMAGE",
             image_url: url,
             is_carousel_item: true,
           });
