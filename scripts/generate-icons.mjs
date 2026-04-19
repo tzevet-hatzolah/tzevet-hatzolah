@@ -8,11 +8,16 @@ const root = join(__dirname, "..");
 const source = join(root, "public/logo.jpg");
 const appDir = join(root, "src/app");
 
+// Trim whitespace margin once so every downstream size fits edge-to-edge.
+const trimmed = await sharp(source)
+  .trim({ background: "#ffffff", threshold: 10 })
+  .toBuffer();
+
 async function resizePng(size) {
   const mask = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="#fff"/></svg>`
   );
-  return sharp(source)
+  return sharp(trimmed)
     .resize(size, size, { fit: "cover" })
     .composite([{ input: mask, blend: "dest-in" }])
     .png()
@@ -58,5 +63,6 @@ writeFileSync(join(appDir, "favicon.ico"), buildIco([
   { size: 16, data: png16 },
   { size: 32, data: png32 },
 ]));
+writeFileSync(join(root, "public/logo-circle.png"), icon512);
 
-console.log("Generated: icon.png (512), apple-icon.png (180), favicon.ico (16+32)");
+console.log("Generated: icon.png (512), apple-icon.png (180), favicon.ico (16+32), public/logo-circle.png (512)");

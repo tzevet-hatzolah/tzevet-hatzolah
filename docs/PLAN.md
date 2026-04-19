@@ -140,7 +140,7 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [ ] News article wireframe
 - [ ] About page wireframe
 - [x] Create favicon set (including Apple touch icon, 32x32, 16x16) — generated from `public/logo.jpg` via `scripts/generate-icons.mjs`
-- [ ] Design default OG image for social sharing (Hebrew + English variants)
+- [x] Design default OG image for social sharing (Hebrew + English variants) — dynamic via `src/app/[locale]/opengraph-image.tsx` using `next/og` + Heebo font + `public/logo-circle.png`
 - [ ] Design page-specific OG image for donation page
 - [ ] Define image aspect ratios for hero, news thumbnails, team photos
 - [ ] Client approval on all wireframes before Epic 4 begins
