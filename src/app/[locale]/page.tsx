@@ -15,9 +15,13 @@ type SiteSettings = {
   statsYearsActive?: number;
 } | null;
 
-type HeroMedia = {
-  videoUrl: string | null;
-  posterUrl: string | null;
+type SanityImage = { asset: { _ref: string }; alt?: string } | null;
+
+type PageMedia = {
+  heroVideoUrl: string | null;
+  heroPosterUrl: string | null;
+  missionVideoUrl: string | null;
+  missionImage: SanityImage;
 } | null;
 
 type NewsArticle = {
@@ -30,12 +34,14 @@ type NewsArticle = {
   excerpt?: string;
 };
 
-async function getHeroMedia(): Promise<HeroMedia> {
+async function getPageMedia(): Promise<PageMedia> {
   try {
-    const data = await client.fetch<HeroMedia>(
+    const data = await client.fetch<PageMedia>(
       `*[_type == "siteSettings"][0]{
-        "videoUrl": heroVideo.asset->url,
-        "posterUrl": heroVideoPoster.asset->url
+        "heroVideoUrl": heroVideo.asset->url,
+        "heroPosterUrl": heroVideoPoster.asset->url,
+        "missionVideoUrl": missionVideo.asset->url,
+        missionImage
       }`
     );
     return data;
@@ -52,10 +58,10 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [settings, latestNews, heroMedia] = await Promise.all([
+  const [settings, latestNews, pageMedia] = await Promise.all([
     client.fetch<SiteSettings>(siteSettingsQuery),
     client.fetch<NewsArticle[]>(latestNewsQuery),
-    getHeroMedia(),
+    getPageMedia(),
   ]);
 
   const stats = {
@@ -75,8 +81,10 @@ export default async function HomePage({
       stats={stats}
       latestNews={latestNews ?? []}
       locale={locale}
-      heroVideoUrl={heroMedia?.videoUrl}
-      heroPosterUrl={heroMedia?.posterUrl}
+      heroVideoUrl={pageMedia?.heroVideoUrl}
+      heroPosterUrl={pageMedia?.heroPosterUrl}
+      missionVideoUrl={pageMedia?.missionVideoUrl}
+      missionImage={pageMedia?.missionImage}
     />
   );
 }
@@ -87,12 +95,16 @@ function HomeContent({
   locale,
   heroVideoUrl,
   heroPosterUrl,
+  missionVideoUrl,
+  missionImage,
 }: {
   stats: { volunteers: string; callsPerYear: string; yearsActive: string };
   latestNews: NewsArticle[];
   locale: string;
   heroVideoUrl?: string | null;
   heroPosterUrl?: string | null;
+  missionVideoUrl?: string | null;
+  missionImage?: SanityImage;
 }) {
   const t = useTranslations("home");
   const tDonate = useTranslations("donate");
@@ -176,10 +188,33 @@ function HomeContent({
       <section className="py-14 sm:py-20 md:py-[var(--spacing-section)] px-5 sm:px-6 relative">
         <div className="absolute inset-0 pattern-dots opacity-40 pointer-events-none" />
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center relative z-10">
-          {/* Image/video placeholder */}
+          {/* Image/video */}
           <AnimateOnScroll animation="slide-right" className="order-2 md:order-1">
-            <div className="bg-gradient-to-br from-stone to-navy-50 rounded-[var(--radius-xl)] aspect-video flex items-center justify-center text-muted border border-navy-100/50 shadow-[var(--shadow-card)] overflow-hidden img-zoom cursor-pointer">
-              <span className="text-sm">תמונה / וידאו ארגוני</span>
+            <div className="bg-gradient-to-br from-stone to-navy-50 rounded-[var(--radius-xl)] aspect-video flex items-center justify-center text-muted border border-navy-100/50 shadow-[var(--shadow-card)] overflow-hidden img-zoom">
+              {missionVideoUrl ? (
+                <video
+                  controls
+                  playsInline
+                  poster={
+                    missionImage?.asset
+                      ? urlFor(missionImage).width(1200).auto("format").url()
+                      : undefined
+                  }
+                  className="w-full h-full object-cover"
+                >
+                  <source src={missionVideoUrl} type="video/mp4" />
+                </video>
+              ) : missionImage?.asset ? (
+                <Image
+                  src={urlFor(missionImage).width(1200).auto("format").url()}
+                  alt={missionImage.alt || t("mission.title")}
+                  width={1200}
+                  height={675}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-sm">תמונה / וידאו ארגוני</span>
+              )}
             </div>
           </AnimateOnScroll>
           {/* Text */}

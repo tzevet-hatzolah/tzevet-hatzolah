@@ -79,6 +79,23 @@ export const siteSettingsType = defineType({
         "Used as the hero background when no video is set. If a video IS set, this image is shown while it loads and as a fallback on slow connections.",
     }),
     defineField({
+      name: "missionVideo",
+      title: "Mission Section Video",
+      type: "file",
+      options: {
+        accept: "video/mp4,video/webm",
+      },
+      description:
+        "Optional video shown in the 'Who We Are' section on the homepage. Plays with controls. Keep under 15MB. MP4 (H.264) recommended.",
+    }),
+    defineField({
+      name: "missionImage",
+      title: "Mission Section Image",
+      type: "image",
+      description:
+        "Image shown in the 'Who We Are' section on the homepage when no video is set.",
+    }),
+    defineField({
       name: "statsVolunteers",
       title: "Stats: Volunteers",
       type: "number",
