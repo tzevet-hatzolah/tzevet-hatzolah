@@ -23,7 +23,7 @@ export async function generateMetadata({
   const title = t("title");
   return {
     title: {
-      default: title,
+      absolute: title,
       template: `%s | ${title}`,
     },
     description: t("description"),
