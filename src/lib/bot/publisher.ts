@@ -2,16 +2,29 @@ import type { BotMessage, PublishResult } from "./types";
 import { publishToTelegram, getFileUrl } from "./publishers/telegram";
 import { publishToFacebook } from "./publishers/facebook";
 import { publishToInstagram } from "./publishers/instagram";
+import { storeImage } from "./image-store";
 
 /** Resolve Telegram file IDs to public download URLs. */
 async function resolvePhotoUrls(message: BotMessage): Promise<string[]> {
   return Promise.all(message.photos.map((photo) => getFileUrl(photo.fileId)));
 }
 
-/** Convert Telegram file URLs to proxied URLs that Instagram can fetch. */
-function proxyPhotoUrls(telegramUrls: string[], baseUrl: string): string[] {
-  return telegramUrls.map(
-    (url) => `${baseUrl}/api/image-proxy?url=${encodeURIComponent(url)}`
+/**
+ * Download photos from Telegram URLs, store them in the image store,
+ * and return direct URLs that Instagram can reliably fetch.
+ */
+async function storePhotosForInstagram(
+  telegramUrls: string[],
+  baseUrl: string
+): Promise<string[]> {
+  return Promise.all(
+    telegramUrls.map(async (url) => {
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const id = `photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      storeImage(id, buffer);
+      return `${baseUrl}/api/generated-image?id=${encodeURIComponent(id)}`;
+    })
   );
 }
 
@@ -25,8 +38,11 @@ export async function publishToAll(
   const telegramPhotoUrls =
     message.photos.length > 0 ? await resolvePhotoUrls(message) : [];
 
-  // Instagram needs proxied URLs with proper content-type headers
-  const proxiedPhotoUrls = proxyPhotoUrls(telegramPhotoUrls, baseUrl);
+  // Download and store photos so Instagram can fetch them directly from our server
+  const storedPhotoUrls =
+    !options?.skipInstagram && telegramPhotoUrls.length > 0
+      ? await storePhotosForInstagram(telegramPhotoUrls, baseUrl)
+      : [];
 
   const publishers = [
     publishToTelegram(message),
@@ -34,7 +50,7 @@ export async function publishToAll(
   ];
 
   if (!options?.skipInstagram) {
-    publishers.push(publishToInstagram(message, proxiedPhotoUrls, baseUrl));
+    publishers.push(publishToInstagram(message, storedPhotoUrls, baseUrl));
   }
 
   const results = await Promise.all(publishers);
