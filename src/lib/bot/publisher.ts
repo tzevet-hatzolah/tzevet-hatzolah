@@ -18,14 +18,18 @@ export async function publishToAll(
   const telegramPhotoUrls =
     message.photos.length > 0 ? await resolvePhotoUrls(message) : [];
 
+  // Instagram needs proxied URLs — Telegram serves application/octet-stream
+  const proxiedPhotoUrls = telegramPhotoUrls.map(
+    (url) => `${baseUrl}/api/image-proxy?url=${encodeURIComponent(url)}`
+  );
+
   const publishers = [
     publishToTelegram(message),
     publishToFacebook(message, telegramPhotoUrls),
   ];
 
   if (!options?.skipInstagram) {
-    // Use Telegram file URLs directly — they serve proper content-type
-    publishers.push(publishToInstagram(message, telegramPhotoUrls, baseUrl));
+    publishers.push(publishToInstagram(message, proxiedPhotoUrls, baseUrl));
   }
 
   const results = await Promise.all(publishers);
