@@ -242,7 +242,7 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [ ] Terms of use page
 
 **Security**
-- [x] Configure security headers in `next.config.ts` — HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy. CSP deferred until Sumit/JGive iframe integration is known.
+- [ ] Configure security headers in `next.config.js` (CSP, HSTS, X-Content-Type-Options, X-Frame-Options)
 - [ ] Ensure CSP allows Sumit/JGive iframes if using embed method
 - [ ] Verify no sensitive data in URL parameters during donation redirect flow
 
