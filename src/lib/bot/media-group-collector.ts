@@ -3,6 +3,7 @@ import type { PhotoFile } from "./types";
 interface PendingGroup {
   chatId: number;
   senderId: number;
+  senderName: string;
   text: string;
   photos: PhotoFile[];
   lastUpdated: number;
@@ -30,7 +31,8 @@ export function addToMediaGroup(
   photo: PhotoFile,
   text: string,
   chatId: number,
-  senderId: number
+  senderId: number,
+  senderName: string
 ): void {
   const existing = pendingGroups.get(mediaGroupId);
 
@@ -44,6 +46,7 @@ export function addToMediaGroup(
     pendingGroups.set(mediaGroupId, {
       chatId,
       senderId,
+      senderName,
       text,
       photos: [photo],
       lastUpdated: Date.now(),

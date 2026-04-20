@@ -22,6 +22,7 @@ import {
   deletePendingPost,
 } from "@/lib/bot/pending-instagram";
 import { formatForPlainText } from "@/lib/bot/formatter";
+import { broadcastToOthers, getSenderName } from "@/lib/bot/broadcast";
 import type { BotMessage, PhotoFile } from "@/lib/bot/types";
 
 export async function POST(request: NextRequest) {
@@ -58,6 +59,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    const senderName = getSenderName(message.from);
+
     // Extract text (from text or caption)
     const text = message.text || message.caption || "";
 
@@ -75,7 +78,8 @@ export async function POST(request: NextRequest) {
         photo,
         text,
         chatId,
-        senderId
+        senderId,
+        senderName
       );
 
       const mediaGroupId = message.media_group_id;
@@ -96,6 +100,12 @@ export async function POST(request: NextRequest) {
           const results = await publishToAll(botMessage, baseUrl);
           const summary = formatResultsSummary(results);
           await sendBotReply(group.chatId, summary);
+          await broadcastToOthers(
+            group.senderId,
+            group.senderName,
+            group.text,
+            summary
+          );
         } catch (error) {
           console.error("Media group publish error:", error);
           await sendBotReply(
@@ -133,6 +143,7 @@ export async function POST(request: NextRequest) {
       });
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
+      await broadcastToOthers(senderId, senderName, text, summary);
 
       // Generate the Instagram image preview
       const imageBuffer = await generateTextImage(text);
@@ -161,6 +172,7 @@ export async function POST(request: NextRequest) {
       const results = await publishToAll(botMessage, baseUrl);
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
+      await broadcastToOthers(senderId, senderName, text, summary);
     }
 
     return NextResponse.json({ ok: true });
