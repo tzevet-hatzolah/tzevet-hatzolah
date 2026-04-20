@@ -51,8 +51,8 @@ export async function broadcastToOthers(
 
   const headline = extractHeadline(text);
   const message = headline
-    ? `המשתמש ${senderName} העלה את ההודעה ${headline}.\nתוצאות ההעלאה\n${resultsSummary}`
-    : `המשתמש ${senderName} העלה הודעה.\nתוצאות ההעלאה\n${resultsSummary}`;
+    ? `המשתמש ${senderName} העלה את ההודעה ${headline}.\n:תוצאות ההעלאה\n${resultsSummary}`
+    : `המשתמש ${senderName} העלה הודעה.\n:תוצאות ההעלאה\n${resultsSummary}`;
 
   await Promise.all(
     recipients.map((id) =>
