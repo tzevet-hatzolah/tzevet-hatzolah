@@ -62,6 +62,7 @@ export const latestNewsQuery = groq`
 export const newsArticleBySlugQuery = groq`
   *[_type == "newsArticle" && slug.current == $slug][0]{
     _id,
+    _updatedAt,
     title,
     titleEn,
     "slug": slug.current,
@@ -96,6 +97,7 @@ export const fieldStoriesQuery = groq`
 export const fieldStoryBySlugQuery = groq`
   *[_type == "fieldStory" && slug.current == $slug][0]{
     _id,
+    _updatedAt,
     title,
     titleEn,
     "slug": slug.current,

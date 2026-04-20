@@ -9,12 +9,17 @@ import {
 } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
 import { alternateLinks } from "@/lib/seo";
+import {
+  jsonLdScript,
+  newsArticleSchema,
+} from "@/lib/structuredData";
 import SanityPortableText from "@/components/SanityPortableText";
 import type { PortableTextBlock } from "next-sanity";
 import type { Metadata } from "next";
 
 type FieldStory = {
   _id: string;
+  _updatedAt: string;
   title: string;
   titleEn?: string;
   slug: string;
@@ -83,8 +88,30 @@ export default async function FieldStoryPage({
   const title = isEn ? story.titleEn || story.title : story.title;
   const body = isEn ? story.bodyEn || story.body : story.body;
 
+  const mainImageUrl = story.mainImage?.asset
+    ? urlFor(story.mainImage).width(1200).height(630).auto("format").url()
+    : null;
+
+  const storyJsonLd = newsArticleSchema({
+    article: {
+      title: story.title,
+      titleEn: story.titleEn,
+      slug: story.slug,
+      publishedAt: story.publishedAt,
+      updatedAt: story._updatedAt,
+      excerpt: story.excerpt,
+      mainImageUrl,
+    },
+    locale,
+    path: "stories",
+  });
+
   return (
     <main className="flex-1">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(storyJsonLd) }}
+      />
       {/* Hero with image backdrop */}
       <section className="relative bg-navy-800 text-white">
         {story.mainImage?.asset ? (

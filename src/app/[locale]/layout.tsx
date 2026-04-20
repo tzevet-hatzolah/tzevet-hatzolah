@@ -4,6 +4,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { alternateLinks } from "@/lib/seo";
+import {
+  getSiteSettings,
+  jsonLdScript,
+  organizationSchema,
+} from "@/lib/structuredData";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -49,8 +54,16 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
+  const settings = await getSiteSettings();
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript(organizationSchema(settings, locale)),
+        }}
+      />
       <Header />
       {children}
       <Footer />

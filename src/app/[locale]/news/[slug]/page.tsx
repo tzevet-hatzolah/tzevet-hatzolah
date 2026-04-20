@@ -9,12 +9,17 @@ import {
 } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
 import { alternateLinks } from "@/lib/seo";
+import {
+  jsonLdScript,
+  newsArticleSchema,
+} from "@/lib/structuredData";
 import SanityPortableText from "@/components/SanityPortableText";
 import type { PortableTextBlock } from "next-sanity";
 import type { Metadata } from "next";
 
 type NewsArticle = {
   _id: string;
+  _updatedAt: string;
   title: string;
   titleEn?: string;
   slug: string;
@@ -86,8 +91,30 @@ export default async function NewsArticlePage({
   const title = isEn ? article.titleEn || article.title : article.title;
   const body = isEn ? article.bodyEn || article.body : article.body;
 
+  const mainImageUrl = article.mainImage?.asset
+    ? urlFor(article.mainImage).width(1200).height(630).auto("format").url()
+    : null;
+
+  const articleJsonLd = newsArticleSchema({
+    article: {
+      title: article.title,
+      titleEn: article.titleEn,
+      slug: article.slug,
+      publishedAt: article.publishedAt,
+      updatedAt: article._updatedAt,
+      excerpt: article.excerpt,
+      mainImageUrl,
+    },
+    locale,
+    path: "news",
+  });
+
   return (
     <main className="flex-1">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd) }}
+      />
       {/* Header */}
       <section className="page-header text-white py-12 sm:py-16 md:py-20 px-5 sm:px-6 text-center">
         <div className="relative z-10 max-w-3xl mx-auto">
