@@ -11,6 +11,7 @@ import {
 } from "@/lib/structuredData";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -55,6 +56,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const settings = await getSiteSettings();
+  const t = await getTranslations({ locale, namespace: "contact" });
 
   return (
     <>
@@ -67,6 +69,12 @@ export default async function LocaleLayout({
       <Header />
       {children}
       <Footer />
+      {settings?.whatsappNumber && (
+        <FloatingWhatsApp
+          phoneNumber={settings.whatsappNumber}
+          label={t("whatsapp")}
+        />
+      )}
     </>
   );
 }

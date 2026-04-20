@@ -9,6 +9,7 @@ export type OrgSettings = {
   registrationNumber?: string;
   phone?: string;
   email?: string;
+  whatsappNumber?: string;
   address?: string;
   socialLinks?: {
     whatsappChannel?: string;
