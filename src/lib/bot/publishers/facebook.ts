@@ -1,5 +1,6 @@
 import type { BotMessage, PublishResult } from "../types";
 import { formatForPlainText } from "../formatter";
+import { normalizeForInstagram } from "../instagram-aspect-fix";
 
 const GRAPH_API = "https://graph.facebook.com/v25.0";
 
@@ -36,6 +37,8 @@ async function graphApi(
 /**
  * Upload photos to Facebook as unpublished and return their Facebook-hosted URLs.
  * Used to get URLs that Instagram can fetch (Meta can reach its own servers).
+ * Photos outside Instagram's [4:5, 1.91:1] range are padded with a blurred
+ * background so the Instagram step doesn't reject them.
  */
 export async function uploadPhotosToFacebook(
   photoUrls: string[]
@@ -45,12 +48,7 @@ export async function uploadPhotosToFacebook(
 
   return Promise.all(
     photoUrls.map(async (url) => {
-      // Upload as unpublished photo
-      const result = await graphApi(`/${pageId}/photos`, {
-        url,
-        published: false,
-      });
-      const photoId = result.id as string;
+      const photoId = await uploadNormalizedPhoto(pageId, url);
 
       // Query the photo to get its Facebook-hosted URL
       const res = await fetch(
@@ -61,6 +59,32 @@ export async function uploadPhotosToFacebook(
       return data.images?.[0]?.source as string;
     })
   );
+}
+
+async function uploadNormalizedPhoto(pageId: string, url: string): Promise<string> {
+  const src = await fetch(url);
+  if (!src.ok) throw new Error(`Failed to fetch photo ${url}: ${src.status}`);
+  const originalBuf = Buffer.from(await src.arrayBuffer());
+  const normalized = await normalizeForInstagram(originalBuf);
+
+  const form = new FormData();
+  form.append("access_token", getPageToken());
+  form.append("published", "false");
+  form.append(
+    "source",
+    new Blob([new Uint8Array(normalized)], { type: "image/jpeg" }),
+    "photo.jpg"
+  );
+
+  const res = await fetch(`${GRAPH_API}/${pageId}/photos`, {
+    method: "POST",
+    body: form,
+  });
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(`Facebook API /${pageId}/photos: ${data.error.message}`);
+  }
+  return data.id as string;
 }
 
 export async function publishToFacebook(
