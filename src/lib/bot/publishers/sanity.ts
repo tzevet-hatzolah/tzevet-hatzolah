@@ -11,9 +11,8 @@ type ParsedArticle = {
 
 /**
  * Parse bot text into a news article shape:
- *   line 1  → body (kept)
- *   line 2  → title (removed from body)
- *   line 3  → excerpt (kept as the first post-line-1 body paragraph)
+ *   line 1  → title (removed from body)
+ *   line 2  → excerpt (kept as first body paragraph)
  *   rest    → body
  * Lines containing the "דוברות צוות הצלה" credit are removed first.
  */
@@ -26,9 +25,9 @@ export function parseBotTextAsArticle(text: string): ParsedArticle | null {
 
   if (rows.length < 2) return null;
 
-  const title = rows[1];
-  const excerpt = rows[2];
-  const bodyLines = rows.filter((_, i) => i !== 1);
+  const title = rows[0];
+  const excerpt = rows[1];
+  const bodyLines = rows.filter((_, i) => i !== 0);
 
   return { title, excerpt, bodyLines };
 }
