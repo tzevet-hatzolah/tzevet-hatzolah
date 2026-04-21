@@ -44,6 +44,33 @@ export const newsArticleType = defineType({
       ],
     }),
     defineField({
+      name: "gallery",
+      title: "גלריה (Gallery)",
+      type: "array",
+      description:
+        "תמונות נוספות שיוצגו כגלריה בתחתית הכתבה. ניתן לגרור לשינוי סדר.",
+      of: [
+        {
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            {
+              name: "alt",
+              type: "string",
+              title: "טקסט חלופי (Alt Text)",
+              validation: (rule) => rule.required(),
+            },
+            {
+              name: "caption",
+              type: "string",
+              title: "כיתוב (Caption)",
+              description: "אופציונלי — יופיע מתחת לתמונה",
+            },
+          ],
+        },
+      ],
+    }),
+    defineField({
       name: "excerpt",
       title: "תקציר (Excerpt)",
       type: "text",

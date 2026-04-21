@@ -76,6 +76,7 @@ export const newsArticleBySlugQuery = groq`
     "slug": slug.current,
     publishedAt,
     mainImage,
+    gallery,
     excerpt,
     body,
     bodyEn

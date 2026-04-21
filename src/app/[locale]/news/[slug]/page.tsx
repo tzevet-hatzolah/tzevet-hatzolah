@@ -17,6 +17,38 @@ import SanityPortableText from "@/components/SanityPortableText";
 import type { PortableTextBlock } from "next-sanity";
 import type { Metadata } from "next";
 
+type GalleryImage = {
+  _key?: string;
+  asset: { _ref: string };
+  alt?: string;
+  caption?: string;
+};
+
+const CREDIT_HE = "תיעוד: דוברות צוות הצלה";
+const CREDIT_EN = "Photos: Tzevet Hatzolah Spokesperson's Office";
+const CREDIT_MATCH = /דוברות\s+צוות\s+הצלה|tzevet\s+hatzolah\s+spokesperson/i;
+
+function stripCreditBlocks(
+  blocks: PortableTextBlock[] | undefined
+): PortableTextBlock[] | undefined {
+  if (!blocks) return blocks;
+  return blocks.filter((b) => {
+    if (b._type !== "block") return true;
+    const children = (b as unknown as { children?: { text?: string }[] }).children;
+    if (!Array.isArray(children)) return true;
+    const text = children.map((c) => c.text ?? "").join("").trim();
+    return !CREDIT_MATCH.test(text);
+  });
+}
+
+function PhotoCredit({ isEn }: { isEn: boolean }) {
+  return (
+    <p className="text-muted text-sm sm:text-base mt-4 text-center">
+      {isEn ? CREDIT_EN : CREDIT_HE}
+    </p>
+  );
+}
+
 type NewsArticle = {
   _id: string;
   _updatedAt: string;
@@ -25,6 +57,7 @@ type NewsArticle = {
   slug: string;
   publishedAt: string;
   mainImage?: { asset: { _ref: string }; alt?: string };
+  gallery?: GalleryImage[];
   excerpt?: string;
   body?: PortableTextBlock[];
   bodyEn?: PortableTextBlock[];
@@ -89,7 +122,11 @@ export default async function NewsArticlePage({
 
   const isEn = locale === "en";
   const title = isEn ? article.titleEn || article.title : article.title;
-  const body = isEn ? article.bodyEn || article.body : article.body;
+  const rawBody = isEn ? article.bodyEn || article.body : article.body;
+  const body = stripCreditBlocks(rawBody);
+
+  const hasMainImage = Boolean(article.mainImage?.asset);
+  const hasGallery = Boolean(article.gallery && article.gallery.length > 0);
 
   const mainImageUrl = article.mainImage?.asset
     ? urlFor(article.mainImage).width(1200).height(630).auto("format").url()
@@ -131,7 +168,7 @@ export default async function NewsArticlePage({
       </section>
 
       {/* Main image */}
-      {article.mainImage?.asset && (
+      {hasMainImage && article.mainImage && (
         <section className="px-5 sm:px-6">
           <div className="max-w-3xl mx-auto -mt-8 relative">
             <Image
@@ -142,6 +179,8 @@ export default async function NewsArticlePage({
               className="rounded-[var(--radius-xl)] w-full h-auto shadow-[var(--shadow-elevated)]"
               priority
             />
+            {/* If there's no gallery, credit sits directly under the main photo */}
+            {!hasGallery && <PhotoCredit isEn={isEn} />}
           </div>
         </section>
       )}
@@ -150,6 +189,41 @@ export default async function NewsArticlePage({
       <section className="py-12 sm:py-16 md:py-20 px-5 sm:px-6">
         <div className="max-w-3xl mx-auto">
           <SanityPortableText value={body} />
+
+          {/* Gallery — one image per row, same size as the main image */}
+          {hasGallery && article.gallery && (
+            <div className="mt-10 space-y-6 sm:space-y-8">
+              {article.gallery.map((img, i) => {
+                if (!img.asset) return null;
+                const src = urlFor(img)
+                  .width(1200)
+                  .height(600)
+                  .auto("format")
+                  .url();
+                const alt = img.alt || title;
+                return (
+                  <figure key={img._key || i}>
+                    <Image
+                      src={src}
+                      alt={alt}
+                      width={1200}
+                      height={600}
+                      className="rounded-[var(--radius-xl)] w-full h-auto shadow-[var(--shadow-elevated)]"
+                      sizes="(max-width: 768px) 100vw, 768px"
+                    />
+                    {img.caption && (
+                      <figcaption className="text-muted text-xs mt-3 text-center">
+                        {img.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Photo credit after the gallery (when one exists) */}
+          {hasGallery && <PhotoCredit isEn={isEn} />}
 
           {/* Back link */}
           <div className="mt-12 pt-8 border-t border-stone">
