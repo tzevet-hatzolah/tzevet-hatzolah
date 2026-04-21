@@ -52,13 +52,13 @@ const pendingSelections = new Map<number, PendingSelection>();
 const TTL_MS = 10 * 60 * 1000;
 
 export function startPendingSelection(userId: number): Set<PlatformName> {
-  const current = getUserPlatforms(userId);
+  const empty = new Set<PlatformName>();
   pendingSelections.set(userId, {
-    platforms: new Set(current),
+    platforms: empty,
     expiresAt: Date.now() + TTL_MS,
   });
   cleanup();
-  return current;
+  return empty;
 }
 
 export function getPendingSelection(
