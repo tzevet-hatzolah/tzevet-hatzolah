@@ -2,6 +2,8 @@ import type { BotMessage, PublishResult } from "./types";
 import { publishToTelegram, getFileUrl } from "./publishers/telegram";
 import { publishToFacebook, uploadPhotosToFacebook } from "./publishers/facebook";
 import { publishToInstagram } from "./publishers/instagram";
+import { publishToSanity } from "./publishers/sanity";
+import type { PlatformName } from "./platform-selection";
 
 /** Resolve Telegram file IDs to public download URLs. */
 async function resolvePhotoUrls(message: BotMessage): Promise<string[]> {
@@ -12,16 +14,28 @@ async function resolvePhotoUrls(message: BotMessage): Promise<string[]> {
 export async function publishToAll(
   message: BotMessage,
   baseUrl: string,
-  options?: { skipInstagram?: boolean }
+  options?: { skipInstagram?: boolean; platforms?: Set<PlatformName> }
 ): Promise<PublishResult[]> {
-  // Get photo URLs once — needed by Facebook and Instagram
-  const telegramPhotoUrls =
-    message.photos.length > 0 ? await resolvePhotoUrls(message) : [];
+  const enabled = options?.platforms;
+  const isEnabled = (p: PlatformName) => !enabled || enabled.has(p);
+
+  const telegramWanted = isEnabled("telegram");
+  const facebookWanted = isEnabled("facebook");
+  const sanityWanted = isEnabled("sanity");
+  const instagramWanted = !options?.skipInstagram && isEnabled("instagram");
+
+  // Only resolve Telegram file URLs when a consumer actually needs them.
+  const needsFileUrls =
+    message.photos.length > 0 &&
+    (facebookWanted || sanityWanted || instagramWanted);
+  const telegramPhotoUrls = needsFileUrls
+    ? await resolvePhotoUrls(message)
+    : [];
 
   // Upload to Facebook first to get Facebook-hosted URLs for Instagram
   // (Instagram can't fetch from Vercel or Telegram, but can fetch from Facebook)
   let facebookPhotoUrls: string[] = [];
-  if (!options?.skipInstagram && telegramPhotoUrls.length > 0) {
+  if (instagramWanted && telegramPhotoUrls.length > 0) {
     try {
       facebookPhotoUrls = await uploadPhotosToFacebook(telegramPhotoUrls);
     } catch (e) {
@@ -29,12 +43,12 @@ export async function publishToAll(
     }
   }
 
-  const publishers = [
-    publishToTelegram(message),
-    publishToFacebook(message, telegramPhotoUrls),
-  ];
+  const publishers: Promise<PublishResult>[] = [];
+  if (telegramWanted) publishers.push(publishToTelegram(message));
+  if (facebookWanted) publishers.push(publishToFacebook(message, telegramPhotoUrls));
+  if (sanityWanted) publishers.push(publishToSanity(message, telegramPhotoUrls));
 
-  if (!options?.skipInstagram && facebookPhotoUrls.length > 0) {
+  if (instagramWanted && facebookPhotoUrls.length > 0) {
     publishers.push(publishToInstagram(message, facebookPhotoUrls, baseUrl));
   }
 
@@ -47,6 +61,7 @@ const PLATFORM_NAMES: Record<string, string> = {
   telegram: "טלגרם",
   facebook: "פייסבוק",
   instagram: "אינסטגרם",
+  sanity: "אתר",
 };
 
 /** Format results into a human-readable summary for the bot reply. */

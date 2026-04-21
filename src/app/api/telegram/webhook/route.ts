@@ -9,7 +9,21 @@ import {
   sendBotReply,
   sendPhotoWithButtons,
   answerCallbackQuery,
+  sendInlineKeyboard,
+  editInlineKeyboard,
+  editMessageText,
+  PLATFORM_PICKER_BUTTON,
 } from "@/lib/bot/publishers/telegram";
+import {
+  ALL_PLATFORMS,
+  PLATFORM_LABELS,
+  cancelPendingSelection,
+  commitPendingSelection,
+  getUserPlatforms,
+  startPendingSelection,
+  togglePendingPlatform,
+  type PlatformName,
+} from "@/lib/bot/platform-selection";
 import {
   addToMediaGroup,
   claimMediaGroup,
@@ -64,6 +78,12 @@ export async function POST(request: NextRequest) {
     // Extract text (from text or caption)
     const text = message.text || message.caption || "";
 
+    // Intercept the persistent-keyboard button: open the platform picker.
+    if (text.trim() === PLATFORM_PICKER_BUTTON) {
+      await openPlatformPicker(senderId, chatId);
+      return NextResponse.json({ ok: true });
+    }
+
     // Extract photo — Telegram sends multiple sizes, pick the largest
     let photo: PhotoFile | null = null;
     if (message.photo && message.photo.length > 0) {
@@ -97,7 +117,8 @@ export async function POST(request: NextRequest) {
         };
 
         try {
-          const results = await publishToAll(botMessage, baseUrl);
+          const platforms = getUserPlatforms(group.senderId);
+          const results = await publishToAll(botMessage, baseUrl, { platforms });
           const summary = formatResultsSummary(results);
           await sendBotReply(group.chatId, summary);
           await broadcastToOthers(
@@ -135,15 +156,23 @@ export async function POST(request: NextRequest) {
     }
 
     const isTextOnly = photos.length === 0;
+    const platforms = getUserPlatforms(senderId);
+    const instagramEnabled = platforms.has("instagram");
 
     if (isTextOnly) {
-      // Text-only: publish to Telegram & Facebook, then ask about Instagram
+      // Text-only: publish to enabled platforms (minus Instagram), then ask about Instagram.
       const results = await publishToAll(botMessage, baseUrl, {
         skipInstagram: true,
+        platforms,
       });
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
       await broadcastToOthers(senderId, senderName, text, summary);
+
+      if (!instagramEnabled) {
+        // User has Instagram disabled — don't prompt for it.
+        return NextResponse.json({ ok: true });
+      }
 
       // Generate the Instagram image preview
       const imageBuffer = await generateTextImage(text);
@@ -168,8 +197,8 @@ export async function POST(request: NextRequest) {
         ]
       );
     } else {
-      // Has photos: publish to all platforms
-      const results = await publishToAll(botMessage, baseUrl);
+      // Has photos: publish to user's enabled platforms
+      const results = await publishToAll(botMessage, baseUrl, { platforms });
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
       await broadcastToOthers(senderId, senderName, text, summary);
@@ -187,7 +216,7 @@ async function handleCallbackQuery(
     id: string;
     data?: string;
     from: { id: number };
-    message?: { chat: { id: number } };
+    message?: { message_id: number; chat: { id: number } };
   },
   baseUrl: string
 ) {
@@ -199,6 +228,41 @@ async function handleCallbackQuery(
 
   const chatId = callbackQuery.message?.chat?.id;
   if (!chatId) return;
+
+  // Platform picker callbacks
+  if (data.startsWith("ps_tog:")) {
+    const platform = data.replace("ps_tog:", "") as PlatformName;
+    const messageId = callbackQuery.message?.message_id;
+    const selection = togglePendingPlatform(senderId, platform);
+    await answerCallbackQuery(callbackQuery.id);
+    if (selection && messageId) {
+      await editInlineKeyboard(chatId, messageId, buildPickerKeyboard(selection));
+    }
+    return;
+  }
+
+  if (data === "ps_ok") {
+    const messageId = callbackQuery.message?.message_id;
+    const committed = commitPendingSelection(senderId);
+    await answerCallbackQuery(callbackQuery.id);
+    if (messageId) {
+      const summary = committed && committed.size > 0
+        ? formatSelectionSummary(committed)
+        : "לא נבחרה אף פלטפורמה. ההעלאה הבאה לא תפורסם לשום מקום.";
+      await editMessageText(chatId, messageId, summary);
+    }
+    return;
+  }
+
+  if (data === "ps_cancel") {
+    const messageId = callbackQuery.message?.message_id;
+    cancelPendingSelection(senderId);
+    await answerCallbackQuery(callbackQuery.id, "בוטל");
+    if (messageId) {
+      await editMessageText(chatId, messageId, "בחירת הפלטפורמות בוטלה.");
+    }
+    return;
+  }
 
   if (data.startsWith("ig_yes:")) {
     const pendingId = data.replace("ig_yes:", "");
@@ -249,4 +313,39 @@ async function handleCallbackQuery(
     await answerCallbackQuery(callbackQuery.id, "בוטל");
     await sendBotReply(chatId, "העלאה לאינסטגרם בוטלה.");
   }
+}
+
+function buildPickerKeyboard(selection: Set<PlatformName>) {
+  const toggleRows = ALL_PLATFORMS.map((p) => [
+    {
+      text: `${selection.has(p) ? "✅" : "⬜️"} ${PLATFORM_LABELS[p]}`,
+      callbackData: `ps_tog:${p}`,
+    },
+  ]);
+  return [
+    ...toggleRows,
+    [
+      { text: "אישור", callbackData: "ps_ok" },
+      { text: "ביטול", callbackData: "ps_cancel" },
+    ],
+  ];
+}
+
+function formatSelectionSummary(selection: Set<PlatformName>): string {
+  const names = ALL_PLATFORMS.filter((p) => selection.has(p)).map(
+    (p) => PLATFORM_LABELS[p]
+  );
+  if (names.length === ALL_PLATFORMS.length) {
+    return "ההעלאות הבאות יפורסמו לכל הפלטפורמות.";
+  }
+  return `ההעלאות הבאות יפורסמו רק ל: ${names.join(", ")}.`;
+}
+
+async function openPlatformPicker(senderId: number, chatId: number) {
+  const current = startPendingSelection(senderId);
+  await sendInlineKeyboard(
+    chatId,
+    "בחר לאילו פלטפורמות להעלות (לחץ כדי לסמן/לבטל, ואז אישור):",
+    buildPickerKeyboard(current)
+  );
 }

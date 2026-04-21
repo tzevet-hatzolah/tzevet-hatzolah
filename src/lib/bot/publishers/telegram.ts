@@ -75,10 +75,67 @@ export async function publishToTelegram(
   }
 }
 
+/** Text of the persistent reply-keyboard button for opening the platform picker. */
+export const PLATFORM_PICKER_BUTTON = "📍 בחר פלטפורמות";
+
+const PERSISTENT_REPLY_KEYBOARD = {
+  keyboard: [[{ text: PLATFORM_PICKER_BUTTON }]],
+  resize_keyboard: true,
+  is_persistent: true,
+};
+
 /** Send a reply message back to the user in the bot chat. */
 export async function sendBotReply(chatId: number, text: string) {
   await telegramApi("sendMessage", {
     chat_id: chatId,
+    text,
+    reply_markup: PERSISTENT_REPLY_KEYBOARD,
+  });
+}
+
+/** Send a message with an inline keyboard (rows of callback buttons). */
+export async function sendInlineKeyboard(
+  chatId: number,
+  text: string,
+  rows: { text: string; callbackData: string }[][]
+) {
+  return telegramApi("sendMessage", {
+    chat_id: chatId,
+    text,
+    reply_markup: {
+      inline_keyboard: rows.map((row) =>
+        row.map((b) => ({ text: b.text, callback_data: b.callbackData }))
+      ),
+    },
+  });
+}
+
+/** Update an existing inline keyboard in place. */
+export async function editInlineKeyboard(
+  chatId: number,
+  messageId: number,
+  rows: { text: string; callbackData: string }[][]
+) {
+  await telegramApi("editMessageReplyMarkup", {
+    chat_id: chatId,
+    message_id: messageId,
+    reply_markup: {
+      inline_keyboard: rows.map((row) =>
+        row.map((b) => ({ text: b.text, callback_data: b.callbackData }))
+      ),
+    },
+  });
+}
+
+/** Replace the text of an existing message and strip any inline keyboard. */
+export async function editMessageText(
+  chatId: number,
+  messageId: number,
+  text: string
+) {
+  await telegramApi("editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
     text,
   });
 }
