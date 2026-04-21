@@ -25,11 +25,16 @@ export function parseBotTextAsArticle(text: string): ParsedArticle | null {
 
   if (rows.length < 2) return null;
 
-  const title = rows[0];
-  const excerpt = rows[1];
+  const title = stripStars(rows[0]);
+  const excerpt = stripStars(rows[1]);
   const bodyLines = rows.filter((_, i) => i !== 0);
 
   return { title, excerpt, bodyLines };
+}
+
+/** Remove Telegram-style *bold* markers, leaving the plain text. */
+function stripStars(text: string): string {
+  return text.replace(/\*([^*]+)\*/g, "$1");
 }
 
 function randomKey() {
@@ -43,20 +48,50 @@ function makeSlug(): string {
   return `${dateStr}-${rand}`;
 }
 
+/** Split a line into spans, turning *text* segments into strong-marked spans. */
+function lineToSpans(text: string) {
+  const spans: Array<{ _type: "span"; _key: string; text: string; marks: string[] }> = [];
+  const regex = /\*([^*]+)\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      spans.push({
+        _type: "span",
+        _key: randomKey(),
+        text: text.slice(lastIndex, match.index),
+        marks: [],
+      });
+    }
+    spans.push({
+      _type: "span",
+      _key: randomKey(),
+      text: match[1],
+      marks: ["strong"],
+    });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    spans.push({
+      _type: "span",
+      _key: randomKey(),
+      text: text.slice(lastIndex),
+      marks: [],
+    });
+  }
+  if (spans.length === 0) {
+    spans.push({ _type: "span", _key: randomKey(), text, marks: [] });
+  }
+  return spans;
+}
+
 function linesToPortableText(lines: string[]) {
   return lines.map((text) => ({
     _type: "block",
     _key: randomKey(),
     style: "normal",
     markDefs: [],
-    children: [
-      {
-        _type: "span",
-        _key: randomKey(),
-        text,
-        marks: [],
-      },
-    ],
+    children: lineToSpans(text),
   }));
 }
 
