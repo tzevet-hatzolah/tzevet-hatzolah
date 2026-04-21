@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+import AnimatedCounter from "@/components/AnimatedCounter";
 import Ticker from "@/components/Ticker";
 import HeroVideo from "@/components/HeroVideo";
 import { client } from "@/sanity/lib/client";
@@ -65,15 +66,9 @@ export default async function HomePage({
   ]);
 
   const stats = {
-    volunteers: settings?.statsVolunteers
-      ? `+${settings.statsVolunteers.toLocaleString()}`
-      : "+500",
-    callsPerYear: settings?.statsCallsPerYear
-      ? `+${settings.statsCallsPerYear.toLocaleString()}`
-      : "+10,000",
-    yearsActive: settings?.statsYearsActive
-      ? String(settings.statsYearsActive)
-      : "15",
+    volunteers: settings?.statsVolunteers ?? 500,
+    callsPerYear: settings?.statsCallsPerYear ?? 10000,
+    yearsActive: settings?.statsYearsActive ?? 15,
   };
 
   return (
@@ -98,7 +93,7 @@ function HomeContent({
   missionVideoUrl,
   missionImage,
 }: {
-  stats: { volunteers: string; callsPerYear: string; yearsActive: string };
+  stats: { volunteers: number; callsPerYear: number; yearsActive: number };
   latestNews: NewsArticle[];
   locale: string;
   heroVideoUrl?: string | null;
@@ -178,9 +173,9 @@ function HomeContent({
       {/* ==================== 2. STATS STRIP ==================== */}
       <section className="relative bg-gradient-to-r from-gold-300 via-gold-300 to-gold-500/80 py-5 sm:py-7 md:py-9 px-4 sm:px-6 shadow-[var(--shadow-glow-gold)]">
         <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 sm:gap-4 text-center">
-          <StatItem label={t("stats.volunteers")} value={stats.volunteers} />
-          <StatItem label={t("stats.calls_per_year")} value={stats.callsPerYear} />
-          <StatItem label={t("stats.years_active")} value={stats.yearsActive} />
+          <StatItem label={t("stats.volunteers")} value={stats.volunteers} prefix="+" locale={locale} />
+          <StatItem label={t("stats.calls_per_year")} value={stats.callsPerYear} prefix="+" locale={locale} />
+          <StatItem label={t("stats.years_active")} value={stats.yearsActive} locale={locale} />
         </div>
       </section>
 
@@ -350,12 +345,25 @@ function HomeContent({
   );
 }
 
-function StatItem({ label, value }: { label: string; value: string }) {
+function StatItem({
+  label,
+  value,
+  prefix,
+  locale,
+}: {
+  label: string;
+  value: number;
+  prefix?: string;
+  locale: string;
+}) {
   return (
     <div className="group cursor-default">
-      <span className="text-xl sm:text-2xl md:text-4xl font-[number:var(--font-weight-black)] text-navy-950 block group-hover:scale-110 transition-transform duration-300">
-        {value}
-      </span>
+      <AnimatedCounter
+        value={value}
+        prefix={prefix}
+        locale={locale}
+        className="text-xl sm:text-2xl md:text-4xl font-[number:var(--font-weight-black)] text-navy-950 block group-hover:scale-110 transition-transform duration-300"
+      />
       <p className="text-navy-800/70 text-[10px] sm:text-xs md:text-sm mt-0.5 sm:mt-1 font-medium">{label}</p>
     </div>
   );
