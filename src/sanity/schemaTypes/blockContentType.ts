@@ -1,5 +1,8 @@
 import { defineType, defineArrayMember } from "sanity";
-import { ImageIcon } from "@sanity/icons";
+import { ImageIcon, PlayIcon } from "@sanity/icons";
+
+const YOUTUBE_URL_REGEX =
+  /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}/;
 
 export const blockContentType = defineType({
   title: "Block Content",
@@ -62,13 +65,40 @@ export const blockContentType = defineType({
       name: "youtube",
       type: "object",
       title: "YouTube Video",
+      icon: PlayIcon,
       fields: [
         {
           name: "url",
           type: "url",
           title: "YouTube URL",
+          description:
+            "Paste any YouTube link — full (youtube.com/watch?v=…), short (youtu.be/…), embed, or Shorts.",
+          validation: (rule) =>
+            rule
+              .required()
+              .custom((value) => {
+                if (typeof value !== "string") return true;
+                return YOUTUBE_URL_REGEX.test(value) || "Must be a valid YouTube URL";
+              }),
+        },
+        {
+          name: "title",
+          type: "string",
+          title: "Accessible title",
+          description:
+            "Shown to screen readers and search engines. Describes what the video is about.",
         },
       ],
+      preview: {
+        select: { url: "url", title: "title" },
+        prepare({ url, title }: { url?: string; title?: string }) {
+          return {
+            title: title || "YouTube video",
+            subtitle: url || "No URL set",
+            media: PlayIcon,
+          };
+        },
+      },
     }),
   ],
 });

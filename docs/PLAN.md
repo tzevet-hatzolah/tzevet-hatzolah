@@ -180,7 +180,7 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [x] Footer — 3 columns (nav, contact, social), org registration number, legal links
 - [x] Connect pages to Sanity CMS (GROQ queries, dynamic content) — home, about, activities, news, news article, negishot, contact, Footer all wired to `siteSettings` / content schemas; donate page remains placeholder (blocked)
 - [x] `next/image` configured for Sanity CDN (`cdn.sanity.io` in allowed domains)
-- [ ] Homepage stats strip — animated counters on scroll (currently static)
+- [x] Homepage stats strip — animated counters on scroll (count-up from 0, easeOutExpo, respects `prefers-reduced-motion`)
 - [ ] Homepage latest news — connect to Sanity `newsArticle` (ISR hourly)
 - [ ] Floating WhatsApp button — links to `https://wa.me/<number>` (awaiting number from client)
 - [ ] Donation page — connect amount presets to Sumit/JGive redirect (blocked on their docs)
@@ -193,7 +193,7 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [x] Single article page — `app/[locale]/news/[slug]/page.tsx`
 - [x] Field story page — distinct visual treatment from news (gold accent, location badge, image backdrop hero, pull-quote excerpt) at `/stories` + `/stories/[slug]`
 - [x] Portable Text renderer (`@portabletext/react`)
-- [ ] YouTube embed support inside Portable Text
+- [x] YouTube embed support inside Portable Text (youtube-nocookie, lazy-loaded, validated URL, optional accessible title)
 - [x] Homepage "Latest News" strip — 3 most recent, revalidated hourly (`revalidate = 3600` set on `[locale]/layout.tsx`, Sanity client switched to `useCdn: false`)
 - [ ] Category/tag filtering — **defer to Phase 2**
 
@@ -504,10 +504,7 @@ Seven sections top to bottom:
 2. Confirm accessibility coordinator + WhatsApp number from client
 3. Get real stats numbers from client for homepage strip
 4. Point domain DNS to Vercel
-5. Add animated counters to stats strip
-6. Add floating WhatsApp button (once number confirmed)
-7. Populate `siteSettings` in Sanity Studio (phone, email, address, socials, registration number)
-8. YouTube embed support inside Portable Text
+5. Populate `siteSettings` in Sanity Studio (phone, email, address, socials, registration number)
 
 ### Realistic Timeline
 | Week | Focus |

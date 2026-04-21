@@ -82,16 +82,26 @@ const components: PortableTextComponents = {
       if (!value?.url) return null;
       const videoId = extractYouTubeId(value.url);
       if (!videoId) return null;
+      const title = value.title || "YouTube video";
       return (
-        <div className="my-6 aspect-video rounded-[var(--radius-lg)] overflow-hidden">
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
-            title="YouTube video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full"
-          />
-        </div>
+        <figure className="my-6">
+          <div className="aspect-video rounded-[var(--radius-lg)] overflow-hidden bg-charcoal">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+              title={title}
+              loading="lazy"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="w-full h-full"
+            />
+          </div>
+          {value.title && (
+            <figcaption className="text-muted text-xs mt-2 text-center">
+              {value.title}
+            </figcaption>
+          )}
+        </figure>
       );
     },
   },
@@ -99,7 +109,7 @@ const components: PortableTextComponents = {
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
   );
   return match?.[1] ?? null;
 }
