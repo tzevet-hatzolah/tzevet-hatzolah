@@ -1,32 +1,20 @@
 /**
- * Temporary in-memory store for generated images.
- * Images are stored with a TTL and cleaned up automatically.
+ * KV-backed store for bot-generated images (the Instagram text-card previews).
+ * The image is fetched later by Facebook's servers via /api/generated-image,
+ * so the buffer must be reachable from any serverless instance — hence KV.
  */
 
-const store = new Map<string, { buffer: Buffer; expiresAt: number }>();
+import { kvGet, kvSet } from "./kv";
 
-const TTL_MS = 5 * 60 * 1000; // 5 minutes
+const TTL_SECONDS = 5 * 60;
 
-export function storeImage(id: string, buffer: Buffer): void {
-  store.set(id, { buffer, expiresAt: Date.now() + TTL_MS });
-  cleanup();
+export async function storeImage(id: string, buffer: Buffer): Promise<void> {
+  const b64 = buffer.toString("base64");
+  await kvSet(`bot:image:${id}`, b64, TTL_SECONDS);
 }
 
-export function getImage(id: string): Buffer | null {
-  const entry = store.get(id);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    store.delete(id);
-    return null;
-  }
-  return entry.buffer;
-}
-
-function cleanup() {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now > entry.expiresAt) {
-      store.delete(key);
-    }
-  }
+export async function getImage(id: string): Promise<Buffer | null> {
+  const b64 = await kvGet<string>(`bot:image:${id}`);
+  if (!b64) return null;
+  return Buffer.from(b64, "base64");
 }

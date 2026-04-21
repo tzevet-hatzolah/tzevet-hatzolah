@@ -17,11 +17,9 @@ import {
 import {
   ALL_PLATFORMS,
   PLATFORM_LABELS,
-  cancelPendingSelection,
-  commitPendingSelection,
   getUserPlatforms,
-  startPendingSelection,
-  togglePendingPlatform,
+  resetUserPlatforms,
+  setUserPlatforms,
   type PlatformName,
 } from "@/lib/bot/platform-selection";
 import {
@@ -117,8 +115,9 @@ export async function POST(request: NextRequest) {
         };
 
         try {
-          const platforms = getUserPlatforms(group.senderId);
+          const platforms = await getUserPlatforms(group.senderId);
           const results = await publishToAll(botMessage, baseUrl, { platforms });
+          await resetUserPlatforms(group.senderId);
           const summary = formatResultsSummary(results);
           await sendBotReply(group.chatId, summary);
           await broadcastToOthers(
@@ -156,7 +155,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isTextOnly = photos.length === 0;
-    const platforms = getUserPlatforms(senderId);
+    const platforms = await getUserPlatforms(senderId);
     const instagramEnabled = platforms.has("instagram");
 
     if (isTextOnly) {
@@ -171,20 +170,21 @@ export async function POST(request: NextRequest) {
 
       if (!instagramEnabled) {
         // User has Instagram disabled — don't prompt for it.
+        await resetUserPlatforms(senderId);
         return NextResponse.json({ ok: true });
       }
 
       // Generate the Instagram image preview
       const imageBuffer = await generateTextImage(text);
       const imageId = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      storeImage(imageId, imageBuffer);
+      await storeImage(imageId, imageBuffer);
 
       const imageUrl = `${baseUrl}/api/generated-image?id=${encodeURIComponent(imageId)}`;
       const caption = formatForPlainText(text);
 
       // Store pending post for confirmation
       const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      storePendingPost(pendingId, imageUrl, caption, chatId);
+      await storePendingPost(pendingId, imageUrl, caption, chatId);
 
       // Send preview with confirmation buttons
       await sendPhotoWithButtons(
@@ -199,6 +199,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Has photos: publish to user's enabled platforms
       const results = await publishToAll(botMessage, baseUrl, { platforms });
+      await resetUserPlatforms(senderId);
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
       await broadcastToOthers(senderId, senderName, text, summary);
@@ -211,12 +212,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
+type InlineKeyboardButton = { text: string; callback_data?: string };
+
 async function handleCallbackQuery(
   callbackQuery: {
     id: string;
     data?: string;
     from: { id: number };
-    message?: { message_id: number; chat: { id: number } };
+    message?: {
+      message_id: number;
+      chat: { id: number };
+      reply_markup?: { inline_keyboard: InlineKeyboardButton[][] };
+    };
   },
   baseUrl: string
 ) {
@@ -229,26 +236,35 @@ async function handleCallbackQuery(
   const chatId = callbackQuery.message?.chat?.id;
   if (!chatId) return;
 
-  // Platform picker callbacks
+  // Platform picker callbacks — state is read from the inline keyboard itself,
+  // so it survives serverless cold starts without needing an external store.
   if (data.startsWith("ps_tog:")) {
     const platform = data.replace("ps_tog:", "") as PlatformName;
     const messageId = callbackQuery.message?.message_id;
-    const selection = togglePendingPlatform(senderId, platform);
+    const current = parseSelectionFromKeyboard(
+      callbackQuery.message?.reply_markup
+    );
+    if (current.has(platform)) current.delete(platform);
+    else current.add(platform);
     await answerCallbackQuery(callbackQuery.id);
-    if (selection && messageId) {
-      await editInlineKeyboard(chatId, messageId, buildPickerKeyboard(selection));
+    if (messageId) {
+      await editInlineKeyboard(chatId, messageId, buildPickerKeyboard(current));
     }
     return;
   }
 
   if (data === "ps_ok") {
     const messageId = callbackQuery.message?.message_id;
-    const committed = commitPendingSelection(senderId);
+    const committed = parseSelectionFromKeyboard(
+      callbackQuery.message?.reply_markup
+    );
+    await setUserPlatforms(senderId, committed);
     await answerCallbackQuery(callbackQuery.id);
     if (messageId) {
-      const summary = committed && committed.size > 0
-        ? formatSelectionSummary(committed)
-        : "לא נבחרה אף פלטפורמה. ההעלאה הבאה לא תפורסם לשום מקום.";
+      const summary =
+        committed.size > 0
+          ? formatSelectionSummary(committed)
+          : "לא נבחרה אף פלטפורמה. ההעלאה הבאה לא תפורסם לשום מקום.";
       await editMessageText(chatId, messageId, summary);
     }
     return;
@@ -256,7 +272,7 @@ async function handleCallbackQuery(
 
   if (data === "ps_cancel") {
     const messageId = callbackQuery.message?.message_id;
-    cancelPendingSelection(senderId);
+    await resetUserPlatforms(senderId);
     await answerCallbackQuery(callbackQuery.id, "בוטל");
     if (messageId) {
       await editMessageText(chatId, messageId, "בחירת הפלטפורמות בוטלה.");
@@ -266,7 +282,7 @@ async function handleCallbackQuery(
 
   if (data.startsWith("ig_yes:")) {
     const pendingId = data.replace("ig_yes:", "");
-    const pending = getPendingPost(pendingId);
+    const pending = await getPendingPost(pendingId);
 
     await answerCallbackQuery(callbackQuery.id);
 
@@ -275,7 +291,7 @@ async function handleCallbackQuery(
       return;
     }
 
-    deletePendingPost(pendingId);
+    await deletePendingPost(pendingId);
 
     // Publish to Instagram with the generated image
     const dummyMessage: BotMessage = {
@@ -307,12 +323,29 @@ async function handleCallbackQuery(
     const icon = result.success ? "\u2705" : "\u274C";
     const status = result.success ? "פורסם" : `נכשל: ${result.error}`;
     await sendBotReply(chatId, `${icon} אינסטגרם: ${status}`);
+    await resetUserPlatforms(senderId);
   } else if (data.startsWith("ig_no:")) {
     const pendingId = data.replace("ig_no:", "");
-    deletePendingPost(pendingId);
+    await deletePendingPost(pendingId);
     await answerCallbackQuery(callbackQuery.id, "בוטל");
     await sendBotReply(chatId, "העלאה לאינסטגרם בוטלה.");
+    await resetUserPlatforms(senderId);
   }
+}
+
+function parseSelectionFromKeyboard(
+  rm?: { inline_keyboard: InlineKeyboardButton[][] }
+): Set<PlatformName> {
+  const result = new Set<PlatformName>();
+  if (!rm) return result;
+  for (const row of rm.inline_keyboard) {
+    for (const btn of row) {
+      if (!btn.callback_data?.startsWith("ps_tog:")) continue;
+      const platform = btn.callback_data.slice("ps_tog:".length) as PlatformName;
+      if (btn.text.startsWith("✅")) result.add(platform);
+    }
+  }
+  return result;
 }
 
 function buildPickerKeyboard(selection: Set<PlatformName>) {
@@ -342,10 +375,11 @@ function formatSelectionSummary(selection: Set<PlatformName>): string {
 }
 
 async function openPlatformPicker(senderId: number, chatId: number) {
-  const current = startPendingSelection(senderId);
+  // Clear any previously-saved selection so the picker state is authoritative.
+  await resetUserPlatforms(senderId);
   await sendInlineKeyboard(
     chatId,
     "בחר לאילו פלטפורמות להעלות (לחץ כדי לסמן/לבטל, ואז אישור):",
-    buildPickerKeyboard(current)
+    buildPickerKeyboard(new Set())
   );
 }

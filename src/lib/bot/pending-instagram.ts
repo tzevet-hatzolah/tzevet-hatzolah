@@ -1,54 +1,33 @@
 /**
- * Temporary store for Instagram posts awaiting user confirmation.
- * Stores the generated image URL and caption until the user
- * confirms or declines via inline keyboard buttons.
+ * KV-backed store for Instagram posts awaiting user confirmation.
+ * Holds the generated image URL and caption until the user confirms
+ * or declines via the inline-keyboard buttons on the preview message.
  */
+
+import { kvGet, kvSet, kvDel } from "./kv";
 
 interface PendingPost {
   imageUrl: string;
   caption: string;
   chatId: number;
-  expiresAt: number;
 }
 
-const pendingPosts = new Map<string, PendingPost>();
+const TTL_SECONDS = 10 * 60;
 
-const TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-export function storePendingPost(
+export async function storePendingPost(
   id: string,
   imageUrl: string,
   caption: string,
   chatId: number
-): void {
-  pendingPosts.set(id, {
-    imageUrl,
-    caption,
-    chatId,
-    expiresAt: Date.now() + TTL_MS,
-  });
-  cleanup();
+): Promise<void> {
+  const payload: PendingPost = { imageUrl, caption, chatId };
+  await kvSet(`bot:pending:${id}`, payload, TTL_SECONDS);
 }
 
-export function getPendingPost(id: string): PendingPost | null {
-  const entry = pendingPosts.get(id);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    pendingPosts.delete(id);
-    return null;
-  }
-  return entry;
+export async function getPendingPost(id: string): Promise<PendingPost | null> {
+  return kvGet<PendingPost>(`bot:pending:${id}`);
 }
 
-export function deletePendingPost(id: string): void {
-  pendingPosts.delete(id);
-}
-
-function cleanup() {
-  const now = Date.now();
-  for (const [key, entry] of pendingPosts) {
-    if (now > entry.expiresAt) {
-      pendingPosts.delete(key);
-    }
-  }
+export async function deletePendingPost(id: string): Promise<void> {
+  await kvDel(`bot:pending:${id}`);
 }

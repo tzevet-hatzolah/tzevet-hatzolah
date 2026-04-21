@@ -15,6 +15,7 @@
     "@sanity/icons": "^3.7.4",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^5.20.0",
+    "@upstash/redis": "^1.37.0",
     "next": "16.2.3",
     "next-intl": "^4.9.1",
     "next-sanity": "^12.2.2",

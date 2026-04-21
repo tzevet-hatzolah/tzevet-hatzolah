@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  const buffer = getImage(id);
+  const buffer = await getImage(id);
   if (!buffer) {
     return NextResponse.json({ error: "Image not found" }, { status: 404 });
   }
