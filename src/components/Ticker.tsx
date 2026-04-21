@@ -1,12 +1,16 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState } from "react";
+import { Link } from "@/i18n/navigation";
 
-export default function Ticker({ items }: { items: string[] }) {
+export type TickerItem = { text: string; href?: string };
+
+export default function Ticker({ items }: { items: TickerItem[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
 
-  // Duplicate items enough to fill the viewport seamlessly
+  if (items.length === 0) return null;
+
   const repeated = [...items, ...items, ...items, ...items];
 
   return (
@@ -15,7 +19,6 @@ export default function Ticker({ items }: { items: string[] }) {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Fade edges */}
       <div className="absolute inset-y-0 start-0 w-16 bg-gradient-to-l from-transparent to-navy-950 z-10 pointer-events-none" />
       <div className="absolute inset-y-0 end-0 w-16 bg-gradient-to-r from-transparent to-navy-950 z-10 pointer-events-none" />
 
@@ -24,12 +27,32 @@ export default function Ticker({ items }: { items: string[] }) {
         className="flex gap-8 whitespace-nowrap ticker-track"
         style={{ animationPlayState: paused ? "paused" : "running" }}
       >
-        {repeated.map((text, i) => (
-          <span key={i} className="flex items-center gap-3 text-sm font-medium shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 animate-pulse" />
-            <span className="text-white/80">{text}</span>
-          </span>
-        ))}
+        {repeated.map((item, i) => {
+          const content = (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 animate-pulse" />
+              <span>{item.text}</span>
+            </>
+          );
+          const baseClass =
+            "flex items-center gap-3 text-sm font-medium shrink-0 text-white/80";
+          if (item.href) {
+            return (
+              <Link
+                key={i}
+                href={item.href}
+                className={`${baseClass} hover:text-white transition-colors duration-200`}
+              >
+                {content}
+              </Link>
+            );
+          }
+          return (
+            <span key={i} className={baseClass}>
+              {content}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

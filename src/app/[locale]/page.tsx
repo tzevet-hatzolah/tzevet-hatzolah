@@ -4,7 +4,6 @@ import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import AnimatedCounter from "@/components/AnimatedCounter";
-import Ticker from "@/components/Ticker";
 import HeroVideo from "@/components/HeroVideo";
 import { client } from "@/sanity/lib/client";
 import { siteSettingsQuery, latestNewsQuery } from "@/sanity/lib/queries";
@@ -106,21 +105,10 @@ function HomeContent({
 
   const presetAmounts = [50, 100, 250];
 
-  const tickerItems = [
-    t("ticker.item1"),
-    t("ticker.item2"),
-    t("ticker.item3"),
-    t("ticker.item4"),
-    t("ticker.item5"),
-  ];
-
   const hasNews = latestNews.length > 0;
 
   return (
     <main className="flex flex-col flex-1">
-      {/* ==================== TICKER BAR ==================== */}
-      <Ticker items={tickerItems} />
-
       {/* ==================== 1. HERO ==================== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600 text-white py-20 sm:py-28 md:py-36 lg:py-44 px-5 sm:px-6">
         {/* Video background (from Sanity) */}

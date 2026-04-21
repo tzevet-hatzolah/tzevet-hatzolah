@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import Ticker, { type TickerItem } from "@/components/Ticker";
 
 const navLinks = [
   { href: "/contact", key: "contact" },
@@ -13,13 +14,30 @@ const navLinks = [
   { href: "/about", key: "about" },
 ] as const;
 
-export default function Header() {
+export default function Header({
+  tickerItems,
+}: {
+  tickerItems?: TickerItem[];
+}) {
   const t = useTranslations("nav");
+  const tHome = useTranslations("home.ticker");
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const fallbackTickerItems: TickerItem[] = [
+    { text: tHome("item1") },
+    { text: tHome("item2") },
+    { text: tHome("item3") },
+    { text: tHome("item4") },
+    { text: tHome("item5") },
+  ];
+
+  const items =
+    tickerItems && tickerItems.length > 0 ? tickerItems : fallbackTickerItems;
+
   return (
-    <header className="bg-navy-950/95 backdrop-blur-md text-white sticky top-0 z-50 border-b border-white/5 shadow-[0_2px_20px_rgba(0,0,0,0.15)]">
+    <header className="sticky top-0 z-50">
+      <div className="bg-navy-950/95 backdrop-blur-md text-white border-b border-white/5 shadow-[0_2px_20px_rgba(0,0,0,0.15)]">
       <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-16 md:h-[72px]">
         {/* Logo + org name */}
         <Link href="/" className="flex items-center gap-3 text-white hover:text-white group">
@@ -118,6 +136,8 @@ export default function Header() {
           ))}
         </nav>
       )}
+      </div>
+      <Ticker items={items} />
     </header>
   );
 }

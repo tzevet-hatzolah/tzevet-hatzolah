@@ -12,6 +12,29 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import { client } from "@/sanity/lib/client";
+import { tickerNewsQuery } from "@/sanity/lib/queries";
+import type { TickerItem } from "@/components/Ticker";
+
+type TickerNewsArticle = {
+  title: string;
+  titleEn?: string;
+  slug: string;
+};
+
+async function getTickerItems(locale: string): Promise<TickerItem[]> {
+  try {
+    const articles = await client.fetch<TickerNewsArticle[]>(tickerNewsQuery);
+    return articles
+      .filter((a) => a.slug)
+      .map((a) => ({
+        text: locale === "en" ? a.titleEn || a.title : a.title,
+        href: `/news/${a.slug}`,
+      }));
+  } catch {
+    return [];
+  }
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -55,7 +78,10 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
-  const settings = await getSiteSettings();
+  const [settings, tickerItems] = await Promise.all([
+    getSiteSettings(),
+    getTickerItems(locale),
+  ]);
   const t = await getTranslations({ locale, namespace: "contact" });
 
   return (
@@ -66,7 +92,7 @@ export default async function LocaleLayout({
           __html: jsonLdScript(organizationSchema(settings, locale)),
         }}
       />
-      <Header />
+      <Header tickerItems={tickerItems} />
       {children}
       <Footer />
       {settings?.whatsappNumber && (

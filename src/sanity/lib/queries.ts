@@ -59,6 +59,14 @@ export const latestNewsQuery = groq`
   }
 `;
 
+export const tickerNewsQuery = groq`
+  *[_type == "newsArticle"] | order(publishedAt desc) [0...7]{
+    title,
+    titleEn,
+    "slug": slug.current
+  }
+`;
+
 export const newsArticleBySlugQuery = groq`
   *[_type == "newsArticle" && slug.current == $slug][0]{
     _id,
