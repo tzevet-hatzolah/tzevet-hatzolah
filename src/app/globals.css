@@ -432,6 +432,13 @@
   animation: ticker-scroll 30s linear infinite reverse;
 }
 
+@media (max-width: 640px) {
+  .ticker-track {
+    animation-duration: 15s;
+    gap: 1.5rem;
+  }
+}
+
 /* ============================================
    Enhanced responsiveness
    ============================================ */
