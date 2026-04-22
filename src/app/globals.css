@@ -434,8 +434,7 @@
 
 @media (max-width: 640px) {
   .ticker-track {
-    animation-duration: 15s;
-    gap: 1.5rem;
+    animation-duration: 12s;
   }
 }
 

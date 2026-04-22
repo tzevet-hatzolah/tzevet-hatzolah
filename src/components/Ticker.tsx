@@ -24,7 +24,7 @@ export default function Ticker({ items }: { items: TickerItem[] }) {
 
       <div
         ref={trackRef}
-        className="flex gap-8 whitespace-nowrap ticker-track"
+        className="flex gap-4 sm:gap-8 whitespace-nowrap ticker-track"
         style={{ animationPlayState: paused ? "paused" : "running" }}
       >
         {repeated.map((item, i) => {
@@ -35,7 +35,7 @@ export default function Ticker({ items }: { items: TickerItem[] }) {
             </>
           );
           const baseClass =
-            "flex items-center gap-3 text-sm font-medium shrink-0 text-white/80";
+            "flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium shrink-0 text-white/80";
           if (item.href) {
             return (
               <Link
