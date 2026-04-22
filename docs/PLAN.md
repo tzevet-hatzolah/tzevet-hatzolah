@@ -182,7 +182,7 @@ A Hebrew-first (RTL), public-facing nonprofit website with:
 - [x] `next/image` configured for Sanity CDN (`cdn.sanity.io` in allowed domains)
 - [x] Homepage stats strip — animated counters on scroll (count-up from 0, easeOutExpo, respects `prefers-reduced-motion`)
 - [ ] Homepage latest news — connect to Sanity `newsArticle` (ISR hourly)
-- [ ] Floating WhatsApp button — links to `https://wa.me/<number>` (awaiting number from client)
+- [x] Floating WhatsApp button — `FloatingWhatsApp` component, mounted in `[locale]/layout.tsx`, number pulled from `siteSettings`
 - [ ] Donation page — connect amount presets to Sumit/JGive redirect (blocked on their docs)
 
 ---

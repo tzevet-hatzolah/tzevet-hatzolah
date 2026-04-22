@@ -8,6 +8,7 @@ import { pageBySlugQuery, teamMembersQuery } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
 import { alternateLinks } from "@/lib/seo";
 import SanityPortableText from "@/components/SanityPortableText";
+import PageHeader from "@/components/PageHeader";
 import type { PortableTextBlock } from "next-sanity";
 
 export async function generateMetadata({
@@ -79,15 +80,7 @@ function AboutContent({
 
   return (
     <main className="flex-1">
-      {/* Page header */}
-      <section className="page-header text-white py-16 md:py-20 px-6 text-center">
-        <div className="relative z-10">
-          <div className="section-line mx-auto mb-5" />
-          <h1 className="text-3xl md:text-4xl font-[number:var(--font-weight-black)]">
-            {t("title")}
-          </h1>
-        </div>
-      </section>
+      <PageHeader title={t("title")} />
 
       {/* Hero image */}
       {pageData?.heroImage?.asset && (

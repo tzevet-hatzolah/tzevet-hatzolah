@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+import PageHeader from "@/components/PageHeader";
 import { alternateLinks } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -36,13 +37,7 @@ function DonateContent() {
 
   return (
     <main className="flex-1">
-      <section className="page-header text-white py-12 sm:py-16 md:py-20 px-5 sm:px-6 text-center">
-        <div className="relative z-10">
-          <div className="section-line mx-auto mb-4 sm:mb-5" />
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-[number:var(--font-weight-black)]">{t("title")}</h1>
-          <p className="text-white/60 mt-2 sm:mt-3 text-sm sm:text-lg">{t("subtitle")}</p>
-        </div>
-      </section>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
       <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6">
         <AnimateOnScroll animation="fade-up">
