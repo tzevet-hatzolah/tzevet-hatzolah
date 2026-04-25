@@ -57,9 +57,16 @@ function PrivacyContent() {
             חלה על עסקאות אלה.
           </p>
 
+          <h2 className="mt-8">מחיקת מידע</h2>
+          <p className="text-dark leading-[var(--line-height-body)] mt-4">
+            ניתן לבקש מחיקה של מידע אישי שנאסף על ידינו באמצעות שליחת בקשה
+            לכתובת office@tzevethatzolah.com. נמחק את המידע מהמערכות שלנו תוך
+            30 ימים ממועד קבלת הבקשה, למעט מידע שאנו מחויבים לשמור על פי דין.
+          </p>
+
           <h2 className="mt-8">יצירת קשר</h2>
           <p className="text-dark leading-[var(--line-height-body)] mt-4">
-            לכל שאלה בנושא פרטיות, ניתן לפנות אלינו בכתובת: info@tzevet-hatzolah.org
+            לכל שאלה בנושא פרטיות, ניתן לפנות אלינו בכתובת: office@tzevethatzolah.com
           </p>
         </div>
       </section>
