@@ -1,8 +1,14 @@
-import { TwitterApi } from "twitter-api-v2";
+import { TwitterApi, type SendTweetV2Params } from "twitter-api-v2";
 import type { BotMessage, PublishResult } from "../types";
 import { formatForPlainText } from "../formatter";
 
 const MAX_PHOTOS_PER_TWEET = 4;
+
+type MediaIdTuple =
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string];
 
 function getClient(): TwitterApi {
   const appKey = process.env.TWITTER_API_KEY;
@@ -23,6 +29,14 @@ async function fetchPhotoBuffer(url: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
 export async function publishToTwitter(
   message: BotMessage,
   photoUrls: string[]
@@ -31,23 +45,40 @@ export async function publishToTwitter(
     const client = getClient();
     const text = formatForPlainText(message.text);
 
-    let mediaIds: string[] = [];
-    if (photoUrls.length > 0) {
-      const limited = photoUrls.slice(0, MAX_PHOTOS_PER_TWEET);
-      mediaIds = await Promise.all(
-        limited.map(async (url) => {
-          const buf = await fetchPhotoBuffer(url);
-          return client.v1.uploadMedia(buf, { mimeType: "image/jpeg" });
-        })
-      );
+    if (photoUrls.length === 0) {
+      await client.v2.tweet(text);
+      return { platform: "twitter", success: true };
     }
 
-    if (mediaIds.length === 0) {
-      await client.v2.tweet(text);
-    } else {
-      await client.v2.tweet(text, {
-        media: { media_ids: mediaIds as [string] | [string, string] | [string, string, string] | [string, string, string, string] },
-      });
+    // Upload all photos first so a partial failure aborts the whole publish.
+    const mediaIds = await Promise.all(
+      photoUrls.map(async (url) => {
+        const buf = await fetchPhotoBuffer(url);
+        return client.v1.uploadMedia(buf, { mimeType: "image/jpeg" });
+      })
+    );
+
+    const mediaChunks = chunk(mediaIds, MAX_PHOTOS_PER_TWEET);
+    const total = mediaChunks.length;
+
+    let previousId: string | undefined;
+    for (let i = 0; i < total; i++) {
+      const isFirst = i === 0;
+      const chunkText = isFirst
+        ? total === 1
+          ? text
+          : `${text}\n(1/${total})`
+        : `(${i + 1}/${total})`;
+
+      const payload: SendTweetV2Params = {
+        media: { media_ids: mediaChunks[i] as MediaIdTuple },
+      };
+      if (!isFirst && previousId) {
+        payload.reply = { in_reply_to_tweet_id: previousId };
+      }
+
+      const result = await client.v2.tweet(chunkText, payload);
+      previousId = result.data.id;
     }
 
     return { platform: "twitter", success: true };
