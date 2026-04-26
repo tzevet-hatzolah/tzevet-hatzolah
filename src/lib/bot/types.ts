@@ -12,7 +12,7 @@ export interface PhotoFile {
 }
 
 export interface PublishResult {
-  platform: "telegram" | "facebook" | "instagram" | "sanity";
+  platform: "telegram" | "facebook" | "instagram" | "twitter" | "sanity";
   success: boolean;
   error?: string;
 }

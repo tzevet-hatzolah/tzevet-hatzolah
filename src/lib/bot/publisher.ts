@@ -2,6 +2,7 @@ import type { BotMessage, PublishResult } from "./types";
 import { publishToTelegram, getFileUrl } from "./publishers/telegram";
 import { publishToFacebook, uploadPhotosToFacebook } from "./publishers/facebook";
 import { publishToInstagram } from "./publishers/instagram";
+import { publishToTwitter } from "./publishers/twitter";
 import { publishToSanity } from "./publishers/sanity";
 import type { PlatformName } from "./platform-selection";
 
@@ -22,12 +23,13 @@ export async function publishToAll(
   const telegramWanted = isEnabled("telegram");
   const facebookWanted = isEnabled("facebook");
   const sanityWanted = isEnabled("sanity");
+  const twitterWanted = isEnabled("twitter");
   const instagramWanted = !options?.skipInstagram && isEnabled("instagram");
 
   // Only resolve Telegram file URLs when a consumer actually needs them.
   const needsFileUrls =
     message.photos.length > 0 &&
-    (facebookWanted || sanityWanted || instagramWanted);
+    (facebookWanted || sanityWanted || instagramWanted || twitterWanted);
   const telegramPhotoUrls = needsFileUrls
     ? await resolvePhotoUrls(message)
     : [];
@@ -46,6 +48,7 @@ export async function publishToAll(
   const publishers: Promise<PublishResult>[] = [];
   if (telegramWanted) publishers.push(publishToTelegram(message));
   if (facebookWanted) publishers.push(publishToFacebook(message, telegramPhotoUrls));
+  if (twitterWanted) publishers.push(publishToTwitter(message, telegramPhotoUrls));
   if (sanityWanted) publishers.push(publishToSanity(message, telegramPhotoUrls));
 
   if (instagramWanted && facebookPhotoUrls.length > 0) {
@@ -61,6 +64,7 @@ const PLATFORM_NAMES: Record<string, string> = {
   telegram: "טלגרם",
   facebook: "פייסבוק",
   instagram: "אינסטגרם",
+  twitter: "טוויטר",
   sanity: "אתר",
 };
 

@@ -10,12 +10,18 @@
 
 import { kvGet, kvSet, kvDel } from "./kv";
 
-export type PlatformName = "telegram" | "facebook" | "instagram" | "sanity";
+export type PlatformName =
+  | "telegram"
+  | "facebook"
+  | "instagram"
+  | "twitter"
+  | "sanity";
 
 export const ALL_PLATFORMS: PlatformName[] = [
   "telegram",
   "facebook",
   "instagram",
+  "twitter",
   "sanity",
 ];
 
@@ -23,6 +29,7 @@ export const PLATFORM_LABELS: Record<PlatformName, string> = {
   telegram: "טלגרם",
   facebook: "פייסבוק",
   instagram: "אינסטגרם",
+  twitter: "טוויטר",
   sanity: "אתר",
 };
 
