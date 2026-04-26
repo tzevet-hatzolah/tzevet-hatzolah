@@ -37,11 +37,16 @@ export async function publishToAll(
   // Upload to Facebook first to get Facebook-hosted URLs for Instagram
   // (Instagram can't fetch from Vercel or Telegram, but can fetch from Facebook)
   let facebookPhotoUrls: string[] = [];
+  let facebookUploadError: string | null = null;
   if (instagramWanted && telegramPhotoUrls.length > 0) {
     try {
       facebookPhotoUrls = await uploadPhotosToFacebook(telegramPhotoUrls);
     } catch (e) {
-      console.error("[Publisher] Failed to upload photos to Facebook for Instagram:", e);
+      facebookUploadError = e instanceof Error ? e.message : String(e);
+      console.error(
+        "[Publisher] Failed to upload photos to Facebook for Instagram:",
+        e
+      );
     }
   }
 
@@ -51,8 +56,23 @@ export async function publishToAll(
   if (twitterWanted) publishers.push(publishToTwitter(message, telegramPhotoUrls));
   if (sanityWanted) publishers.push(publishToSanity(message, telegramPhotoUrls));
 
-  if (instagramWanted && facebookPhotoUrls.length > 0) {
-    publishers.push(publishToInstagram(message, facebookPhotoUrls, baseUrl));
+  if (instagramWanted) {
+    if (facebookPhotoUrls.length > 0) {
+      publishers.push(publishToInstagram(message, facebookPhotoUrls, baseUrl));
+    } else if (telegramPhotoUrls.length > 0) {
+      // Instagram can't fetch from Telegram/Vercel, so it depends on the
+      // Facebook host-upload step. If that failed, surface the upstream
+      // error instead of silently dropping Instagram from the summary.
+      publishers.push(
+        Promise.resolve<PublishResult>({
+          platform: "instagram",
+          success: false,
+          error: facebookUploadError
+            ? `העלאת תמונות לפייסבוק נכשלה — ${facebookUploadError}`
+            : "העלאת תמונות לפייסבוק נכשלה",
+        })
+      );
+    }
   }
 
   const results = await Promise.all(publishers);
