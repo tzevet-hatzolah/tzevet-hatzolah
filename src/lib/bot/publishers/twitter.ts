@@ -2,7 +2,6 @@ import { TwitterApi } from "twitter-api-v2";
 import type { BotMessage, PublishResult } from "../types";
 import { formatForPlainText } from "../formatter";
 
-const TWEET_MAX_CHARS = 280;
 const MAX_PHOTOS_PER_TWEET = 4;
 
 function getClient(): TwitterApi {
@@ -24,26 +23,13 @@ async function fetchPhotoBuffer(url: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/**
- * Truncate to Twitter's 280-char limit, breaking on whitespace and adding an
- * ellipsis. Counts by JS string length (UTF-16 code units), which is close
- * enough to Twitter's weighted count for Hebrew text.
- */
-function truncateForTwitter(text: string): string {
-  if (text.length <= TWEET_MAX_CHARS) return text;
-  const sliced = text.slice(0, TWEET_MAX_CHARS - 1);
-  const lastBreak = sliced.search(/\s\S*$/);
-  const cut = lastBreak > TWEET_MAX_CHARS - 40 ? sliced.slice(0, lastBreak) : sliced;
-  return `${cut.trimEnd()}…`;
-}
-
 export async function publishToTwitter(
   message: BotMessage,
   photoUrls: string[]
 ): Promise<PublishResult> {
   try {
     const client = getClient();
-    const text = truncateForTwitter(formatForPlainText(message.text));
+    const text = formatForPlainText(message.text);
 
     let mediaIds: string[] = [];
     if (photoUrls.length > 0) {
