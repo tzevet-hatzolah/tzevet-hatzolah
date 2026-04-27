@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/health/facebook",
+      "schedule": "7 10 * * 1"
+    }
+  ]
+}
