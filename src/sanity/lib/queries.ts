@@ -137,3 +137,21 @@ export const teamMembersQuery = groq`
     order
   }
 `;
+
+// ── Donation Items ─────────────────────────────────────────────────
+export const homepageDonationItemsQuery = groq`
+  *[_type == "donationItem" && showOnHomepage == true] | order(order asc){
+    _id,
+    name,
+    nameEn,
+    description,
+    descriptionEn,
+    "slug": slug.current,
+    cardType,
+    monthlyAmount,
+    months,
+    image,
+    icon
+  }
+`;
+

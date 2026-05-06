@@ -43,9 +43,13 @@
       "link": "Read our story"
     },
     "donate_block": {
-      "title": "Every Donation Saves Lives",
-      "subtitle": "Join thousands of donors who support us every month",
-      "cta": "Donate Now"
+      "title": "Donate Now — Save Lives",
+      "subtitle": "Every donation — monthly or one-time — directly equips another volunteer in the field. Choose the equipment you'd like to help fund, or give any amount.",
+      "cta": "Donate Now",
+      "more": "More ways to give",
+      "donate_now": "Donate",
+      "monthly_format": "₪{amount} × {months} months",
+      "total_format": "Total ₪{total}"
     },
     "news": {
       "title": "News & Updates",

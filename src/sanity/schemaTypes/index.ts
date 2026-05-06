@@ -6,6 +6,7 @@ import { newsArticleType } from "./newsArticleType";
 import { fieldStoryType } from "./fieldStoryType";
 import { teamMemberType } from "./teamMemberType";
 import { siteSettingsType } from "./siteSettingsType";
+import { donationItemType } from "./donationItemType";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -15,5 +16,6 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     fieldStoryType,
     teamMemberType,
     siteSettingsType,
+    donationItemType,
   ],
 };
