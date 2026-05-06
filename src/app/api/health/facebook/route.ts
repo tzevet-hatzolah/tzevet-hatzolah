@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const GRAPH_API = "https://graph.facebook.com/v25.0";
 const TELEGRAM_API = "https://api.telegram.org/bot";
 
@@ -141,6 +144,26 @@ export async function GET(request: NextRequest) {
     if (auth !== `Bearer ${expected}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+  }
+
+  // Debug mode: ?debug=1 returns the visible env-var keys (names only, no values)
+  // so we can see whether FACEBOOK_PAGE_ACCESS_TOKEN is reaching this deployment
+  // and under what name. Auth-gated above, so it only works for cron callers.
+  if (request.nextUrl.searchParams.get("debug") === "1") {
+    const allKeys = Object.keys(process.env).sort();
+    const fbKeys = allKeys.filter((k) => /facebook/i.test(k));
+    const tgKeys = allKeys.filter((k) => /telegram/i.test(k));
+    return NextResponse.json({
+      total_env_keys: allKeys.length,
+      facebook_keys: fbKeys,
+      telegram_keys: tgKeys,
+      facebook_token_set: !!process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
+      facebook_token_length:
+        (process.env.FACEBOOK_PAGE_ACCESS_TOKEN || "").length,
+      telegram_token_set: !!process.env.TELEGRAM_BOT_TOKEN,
+      vercel_env: process.env.VERCEL_ENV,
+      vercel_git_commit_sha: process.env.VERCEL_GIT_COMMIT_SHA,
+    });
   }
 
   const result = await checkFacebookToken();
