@@ -135,7 +135,7 @@ function DonateContent({
         </div>
       </section>
 
-      <section className="py-3 sm:py-5 px-4 sm:px-6">
+      <section className="py-3 sm:py-5 px-4 sm:px-6 pb-24 md:pb-12">
         <div className="max-w-xl mx-auto space-y-6 sm:space-y-7">
           {hasSelection && item ? (
             <>

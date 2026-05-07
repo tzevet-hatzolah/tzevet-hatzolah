@@ -30,6 +30,7 @@ export default function DonationAmountPicker({
   onCustomRawChange,
   onCustomMonthsModeChange,
   onCustomMonthsRawChange,
+  onContinue,
   trustSlot,
 }: {
   mode: PickerMode;
@@ -46,6 +47,7 @@ export default function DonationAmountPicker({
   onCustomRawChange: (raw: string) => void;
   onCustomMonthsModeChange: (custom: boolean) => void;
   onCustomMonthsRawChange: (raw: string) => void;
+  onContinue?: () => void;
   trustSlot?: ReactNode;
 }) {
   const t = useTranslations("donate.picker");
@@ -249,25 +251,27 @@ export default function DonationAmountPicker({
         </>
       ) : null}
 
-      <div className="mt-3 pt-3 border-t border-dark/10 text-sm sm:text-base text-charcoal font-[number:var(--font-weight-bold)] leading-relaxed">
-        {mode === "monthly"
-          ? t("monthly_helper", {
-              monthly: amount.toLocaleString("he-IL"),
-              months,
-              total: (amount * months).toLocaleString("he-IL"),
-            })
-          : t("one_time_helper", { total: amount.toLocaleString("he-IL") })}
+      <div className="mt-3 pt-3 border-t border-dark/10 md:flex md:items-center md:justify-between md:gap-4">
+        <div className="text-sm sm:text-base text-charcoal font-[number:var(--font-weight-bold)] leading-relaxed">
+          {mode === "monthly"
+            ? t("monthly_helper", {
+                monthly: amount.toLocaleString("he-IL"),
+                months,
+                total: (amount * months).toLocaleString("he-IL"),
+              })
+            : t("one_time_helper", { total: amount.toLocaleString("he-IL") })}
+        </div>
+        <button
+          type="button"
+          onClick={onContinue}
+          className="hidden md:inline-flex shrink-0 items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-l from-gold-300 to-gold-500 text-navy-950 text-sm font-[number:var(--font-weight-bold)] shadow-md hover:shadow-lg transition-all duration-200"
+        >
+          <span>{t("continue")}</span>
+          <span aria-hidden="true">↓</span>
+        </button>
       </div>
 
       {trustSlot ? <div className="mt-4">{trustSlot}</div> : null}
-
-      <a
-        href="#donate-form"
-        className="mt-4 flex items-center justify-center gap-2 w-full px-4 py-3 rounded-full bg-gradient-to-l from-gold-300 to-gold-500 text-navy-950 text-sm sm:text-base font-[number:var(--font-weight-bold)] shadow-md hover:shadow-lg transition-all duration-200"
-      >
-        <span>{t("continue")}</span>
-        <span aria-hidden="true">↓</span>
-      </a>
     </div>
   );
 }
