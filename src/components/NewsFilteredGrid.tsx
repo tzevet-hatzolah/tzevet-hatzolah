@@ -94,10 +94,11 @@ export default function NewsFilteredGrid({
               key={article._id}
               animation="fade-up"
               delay={i * 80}
+              className="h-full"
             >
-              <Link href={`/news/${article.slug}`}>
-                <article className="card group cursor-pointer">
-                  <div className="aspect-video relative overflow-hidden img-zoom">
+              <Link href={`/news/${article.slug}`} className="block h-full">
+                <article className="card group cursor-pointer h-full flex flex-col">
+                  <div className="aspect-video relative overflow-hidden img-zoom shrink-0">
                     {article.mainImage?.asset ? (
                       <Image
                         src={urlFor(article.mainImage)
@@ -119,8 +120,8 @@ export default function NewsFilteredGrid({
                       </div>
                     )}
                   </div>
-                  <div className="p-4 sm:p-[var(--spacing-card)]">
-                    <span className="inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
+                  <div className="p-4 sm:p-[var(--spacing-card)] flex flex-col flex-1">
+                    <span className="self-start inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
                       {isEn ? "News" : "חדשות"}
                     </span>
                     <h3 className="mt-2 sm:mt-2.5 text-charcoal text-sm sm:text-base group-hover:text-navy-600 transition-colors duration-300">
@@ -131,7 +132,7 @@ export default function NewsFilteredGrid({
                         {article.excerpt}
                       </p>
                     )}
-                    <p className="text-muted text-[11px] sm:text-xs mt-2 sm:mt-3">
+                    <p className="text-muted text-[11px] sm:text-xs mt-auto pt-2 sm:pt-3">
                       {new Date(article.publishedAt).toLocaleDateString(
                         isEn ? "en-US" : "he-IL",
                         { year: "numeric", month: "long", day: "numeric" }

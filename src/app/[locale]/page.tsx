@@ -254,7 +254,7 @@ function HomeContent({
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <AnimateOnScroll animation="fade-up">
-            <div className="text-center mb-10 sm:mb-14">
+            <div className="text-center mb-8 sm:mb-10">
               <div className="section-line mx-auto mb-4 sm:mb-5" />
               <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-[number:var(--font-weight-black)] mb-3 sm:mb-4">
                 {t("donate_block.title")}
@@ -265,16 +265,16 @@ function HomeContent({
             </div>
           </AnimateOnScroll>
 
-          <DonationGrid items={donationItems} locale={locale} />
-
-          <AnimateOnScroll animation="fade-up" delay={120}>
-            <div className="mt-8 sm:mt-10 max-w-3xl mx-auto">
+          <AnimateOnScroll animation="fade-up" delay={80}>
+            <div className="max-w-3xl mx-auto mb-10 sm:mb-14">
               <TrustStrip
                 registrationNumber={registrationNumber}
                 variant="dark"
               />
             </div>
           </AnimateOnScroll>
+
+          <DonationGrid items={donationItems} locale={locale} />
         </div>
       </section>
 
@@ -301,15 +301,21 @@ function HomeContent({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-7">
             {hasNews
               ? latestNews.map((article, i) => (
-                  <AnimateOnScroll key={article._id} animation="fade-up" delay={i * 120}>
-                    <Link href={`/news/${article.slug}`}>
-                      <article className="card group cursor-pointer">
-                        <div className="aspect-video relative overflow-hidden img-zoom">
+                  <AnimateOnScroll
+                    key={article._id}
+                    animation="fade-up"
+                    delay={i * 120}
+                    className="h-full"
+                  >
+                    <Link href={`/news/${article.slug}`} className="block h-full">
+                      <article className="card group cursor-pointer h-full flex flex-col">
+                        <div className="aspect-video relative overflow-hidden img-zoom shrink-0">
                           {article.mainImage?.asset ? (
                             <Image
                               src={urlFor(article.mainImage).width(600).height(340).auto("format").url()}
                               alt={article.mainImage.alt || (locale === "en" ? article.titleEn || article.title : article.title)}
                               fill
+                              sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                               className="object-cover"
                             />
                           ) : (
@@ -318,14 +324,14 @@ function HomeContent({
                             </div>
                           )}
                         </div>
-                        <div className="p-4 sm:p-[var(--spacing-card)]">
-                          <span className="inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
+                        <div className="p-4 sm:p-[var(--spacing-card)] flex flex-col flex-1">
+                          <span className="self-start inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
                             {t("news.category_news")}
                           </span>
                           <h3 className="mt-2 sm:mt-2.5 text-charcoal text-sm sm:text-base group-hover:text-navy-600 transition-colors duration-300">
                             {locale === "en" ? article.titleEn || article.title : article.title}
                           </h3>
-                          <p className="text-muted text-xs mt-2 sm:mt-3">
+                          <p className="text-muted text-xs mt-auto pt-2 sm:pt-3">
                             {new Date(article.publishedAt).toLocaleDateString(
                               locale === "en" ? "en-US" : "he-IL",
                               { year: "numeric", month: "long", day: "numeric" }
@@ -337,17 +343,22 @@ function HomeContent({
                   </AnimateOnScroll>
                 ))
               : newsPlaceholders.map((item, i) => (
-                  <AnimateOnScroll key={i} animation="fade-up" delay={i * 120}>
-                    <article className="card group cursor-pointer">
-                      <div className="aspect-video bg-gradient-to-br from-stone to-navy-50 flex items-center justify-center text-muted text-sm relative overflow-hidden img-zoom">
+                  <AnimateOnScroll
+                    key={i}
+                    animation="fade-up"
+                    delay={i * 120}
+                    className="h-full"
+                  >
+                    <article className="card group cursor-pointer h-full flex flex-col">
+                      <div className="aspect-video bg-gradient-to-br from-stone to-navy-50 flex items-center justify-center text-muted text-sm relative overflow-hidden img-zoom shrink-0">
                         <span>תמונה</span>
                       </div>
-                      <div className="p-4 sm:p-[var(--spacing-card)]">
-                        <span className="inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
+                      <div className="p-4 sm:p-[var(--spacing-card)] flex flex-col flex-1">
+                        <span className="self-start inline-block bg-gold-50 text-gold-700 text-xs font-bold px-2.5 py-1 rounded-[var(--radius-sm)]">
                           {item.category}
                         </span>
                         <h3 className="mt-2 sm:mt-2.5 text-charcoal text-sm sm:text-base group-hover:text-navy-600 transition-colors duration-300">{item.title}</h3>
-                        <p className="text-muted text-xs mt-2 sm:mt-3">{item.date}</p>
+                        <p className="text-muted text-xs mt-auto pt-2 sm:pt-3">{item.date}</p>
                       </div>
                     </article>
                   </AnimateOnScroll>
