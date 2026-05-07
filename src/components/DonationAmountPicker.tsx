@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import {
   DONATION_MAX_PAYMENTS,
@@ -30,6 +30,7 @@ export default function DonationAmountPicker({
   onCustomRawChange,
   onCustomMonthsModeChange,
   onCustomMonthsRawChange,
+  trustSlot,
 }: {
   mode: PickerMode;
   amount: number;
@@ -45,6 +46,7 @@ export default function DonationAmountPicker({
   onCustomRawChange: (raw: string) => void;
   onCustomMonthsModeChange: (custom: boolean) => void;
   onCustomMonthsRawChange: (raw: string) => void;
+  trustSlot?: ReactNode;
 }) {
   const t = useTranslations("donate.picker");
   const customInputRef = useRef<HTMLInputElement>(null);
@@ -256,6 +258,16 @@ export default function DonationAmountPicker({
             })
           : t("one_time_helper", { total: amount.toLocaleString("he-IL") })}
       </div>
+
+      {trustSlot ? <div className="mt-4">{trustSlot}</div> : null}
+
+      <a
+        href="#donate-form"
+        className="mt-4 flex items-center justify-center gap-2 w-full px-4 py-3 rounded-full bg-gradient-to-l from-gold-300 to-gold-500 text-navy-950 text-sm sm:text-base font-[number:var(--font-weight-bold)] shadow-md hover:shadow-lg transition-all duration-200"
+      >
+        <span>{t("continue")}</span>
+        <span aria-hidden="true">↓</span>
+      </a>
     </div>
   );
 }

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
-import PageHeader from "@/components/PageHeader";
 import DonateForm from "@/components/DonateForm";
 import DonateSummary from "@/components/DonateSummary";
 import DonateInteractive from "@/components/DonateInteractive";
@@ -122,9 +121,21 @@ function DonateContent({
 
   return (
     <main className="flex-1">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <section className="page-header relative text-white text-center overflow-hidden py-3 sm:py-4 px-5 sm:px-6">
+        <div className="relative z-10 max-w-3xl mx-auto">
+          <div className="section-line mx-auto mb-2" />
+          <h1 className="text-lg sm:text-xl md:text-2xl font-[number:var(--font-weight-black)] drop-shadow-sm">
+            {t("title")}
+          </h1>
+          {t("subtitle") && (
+            <p className="text-white/70 text-xs sm:text-sm mt-1 max-w-xl mx-auto">
+              {t("subtitle")}
+            </p>
+          )}
+        </div>
+      </section>
 
-      <section className="py-10 sm:py-14 md:py-16 px-4 sm:px-6">
+      <section className="py-3 sm:py-5 px-4 sm:px-6">
         <div className="max-w-xl mx-auto space-y-6 sm:space-y-7">
           {hasSelection && item ? (
             <>

@@ -152,7 +152,8 @@
       "months_custom_error": "Months must be between 1 and 36",
       "monthly_helper": "₪{monthly} / month for {months} months · total ₪{total}",
       "one_time_helper": "One-time donation · ₪{total}",
-      "min_error": "Minimum amount ₪{min}"
+      "min_error": "Minimum amount ₪{min}",
+      "continue": "Continue to payment details"
     },
     "title": "Donate",
     "subtitle": "Your donation enables us to continue saving lives",

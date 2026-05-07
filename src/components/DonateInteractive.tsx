@@ -44,15 +44,12 @@ export default function DonateInteractive({
           onCustomRawChange={setCustomRaw}
           onCustomMonthsModeChange={setCustomMonthsMode}
           onCustomMonthsRawChange={setCustomMonthsRaw}
+          trustSlot={<TrustStrip registrationNumber={registrationNumber} />}
         />
       </AnimateOnScroll>
 
-      <AnimateOnScroll animation="fade-up" delay={100}>
-        <TrustStrip registrationNumber={registrationNumber} />
-      </AnimateOnScroll>
-
       <AnimateOnScroll animation="fade-up" delay={180}>
-        <div className="card p-5 sm:p-7 md:p-8">
+        <div id="donate-form" className="card p-5 sm:p-7 md:p-8 scroll-mt-24">
           <DonateForm total={total} payments={payments} itemSlug={null} />
         </div>
       </AnimateOnScroll>
