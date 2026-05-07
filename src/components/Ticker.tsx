@@ -15,16 +15,17 @@ export default function Ticker({ items }: { items: TickerItem[] }) {
 
   return (
     <div
+      dir="ltr"
       className="relative overflow-hidden bg-navy-950 text-white py-2.5 select-none"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="absolute inset-y-0 start-0 w-16 bg-gradient-to-l from-transparent to-navy-950 z-10 pointer-events-none" />
-      <div className="absolute inset-y-0 end-0 w-16 bg-gradient-to-r from-transparent to-navy-950 z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-navy-950 to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-navy-950 to-transparent z-10 pointer-events-none" />
 
       <div
         ref={trackRef}
-        className="flex gap-4 sm:gap-8 whitespace-nowrap ticker-track"
+        className="flex w-max whitespace-nowrap ticker-track"
         style={{ animationPlayState: paused ? "paused" : "running" }}
       >
         {repeated.map((item, i) => {
@@ -35,12 +36,13 @@ export default function Ticker({ items }: { items: TickerItem[] }) {
             </>
           );
           const baseClass =
-            "flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium shrink-0 text-white/80";
+            "flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium shrink-0 text-white/80 me-4 sm:me-8";
           if (item.href) {
             return (
               <Link
                 key={i}
                 href={item.href}
+                dir="rtl"
                 className={`${baseClass} hover:text-white transition-colors duration-200`}
               >
                 {content}
@@ -48,7 +50,7 @@ export default function Ticker({ items }: { items: TickerItem[] }) {
             );
           }
           return (
-            <span key={i} className={baseClass}>
+            <span key={i} dir="rtl" className={baseClass}>
               {content}
             </span>
           );

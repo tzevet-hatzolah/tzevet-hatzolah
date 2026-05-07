@@ -433,12 +433,12 @@
 }
 
 .ticker-track {
-  animation: ticker-scroll 30s linear infinite reverse;
+  animation: ticker-scroll 300s linear infinite reverse;
 }
 
 @media (max-width: 640px) {
   .ticker-track {
-    animation-duration: 12s;
+    animation-duration: 200s;
   }
 }
 
