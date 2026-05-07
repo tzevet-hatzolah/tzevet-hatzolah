@@ -48,8 +48,22 @@
       "cta": "לתרומה עכשיו",
       "more": "אפשרויות תרומה נוספות",
       "donate_now": "לתרום",
-      "monthly_format": "₪{amount} ×‎ {months} חודשים",
-      "total_format": "סה״כ ₪{total}"
+      "payment_plan_format": "₪{amount} ×‎ {payments} תשלומים",
+      "single_payment_format": "תשלום אחד · ₪{total}",
+      "total_format": "סה״כ ₪{total}",
+      "popular": "הכי פופולרי",
+      "modal": {
+        "badge": "פריט תרומה",
+        "impact_label": "ההשפעה שלכם",
+        "plan_label": "מספר תשלומים",
+        "single_payment": "תשלום אחד",
+        "custom": "אחר",
+        "custom_placeholder": "הקלידו מספר",
+        "custom_error": "מינימום ₪{min} לתשלום (עד {max} תשלומים)",
+        "total_label": "סה״כ לתשלום",
+        "cta": "המשך לתשלום",
+        "close": "סגור"
+      }
     },
     "news": {
       "title": "חדשות ועדכונים",

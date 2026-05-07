@@ -48,8 +48,22 @@
       "cta": "Donate Now",
       "more": "More ways to give",
       "donate_now": "Donate",
-      "monthly_format": "₪{amount} × {months} months",
-      "total_format": "Total ₪{total}"
+      "payment_plan_format": "₪{amount} × {payments} payments",
+      "single_payment_format": "Single payment · ₪{total}",
+      "total_format": "Total ₪{total}",
+      "popular": "Most popular",
+      "modal": {
+        "badge": "Donation item",
+        "impact_label": "Your impact",
+        "plan_label": "Number of payments",
+        "single_payment": "Single payment",
+        "custom": "Other",
+        "custom_placeholder": "Enter a number",
+        "custom_error": "Minimum ₪{min} per payment (up to {max} payments)",
+        "total_label": "Total",
+        "cta": "Continue to payment",
+        "close": "Close"
+      }
     },
     "news": {
       "title": "News & Updates",

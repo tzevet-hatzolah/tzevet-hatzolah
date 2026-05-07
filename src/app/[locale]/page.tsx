@@ -5,6 +5,7 @@ import Image from "next/image";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import HeroVideo from "@/components/HeroVideo";
+import DonationGrid from "@/components/DonationGrid";
 import { client } from "@/sanity/lib/client";
 import {
   siteSettingsQuery,
@@ -12,6 +13,10 @@ import {
   homepageDonationItemsQuery,
 } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
+import {
+  type DonationItem,
+  FALLBACK_DONATION_ITEMS,
+} from "@/lib/donation-types";
 
 type SiteSettings = {
   statsVolunteers?: number;
@@ -37,115 +42,6 @@ type NewsArticle = {
   mainImage?: { asset: { _ref: string }; alt?: string };
   excerpt?: string;
 };
-
-type DonationItem = {
-  _id: string;
-  name: string;
-  nameEn?: string;
-  description: string;
-  descriptionEn?: string;
-  slug: string;
-  cardType: "amount" | "custom";
-  monthlyAmount?: number;
-  months?: number;
-  image?: { asset: { _ref: string }; alt?: string } | null;
-  icon?: DonationIconKey;
-};
-
-type DonationIconKey =
-  | "heart"
-  | "kit"
-  | "aed"
-  | "ambulance"
-  | "cross"
-  | "shield"
-  | "phone"
-  | "volunteer";
-
-const FALLBACK_DONATION_ITEMS: DonationItem[] = [
-  {
-    _id: "fallback-custom",
-    name: "תרומה בסכום חופשי",
-    nameEn: "Give any amount",
-    description:
-      "תרמו בכל סכום שתבחרו — חודשי או חד-פעמי. כל שקל מסייע לנו להגיע לעוד אדם בזמן.",
-    descriptionEn:
-      "Donate any amount — monthly or one-time. Every shekel helps us reach one more person in time.",
-    slug: "custom",
-    cardType: "custom",
-    icon: "heart",
-  },
-  {
-    _id: "fallback-kit",
-    name: "ערכת עזרה ראשונה למתנדב",
-    nameEn: "Volunteer first-aid kit",
-    description:
-      "ערכה אישית למתנדב חדש: חבישות, מסכת הנשמה, כפפות וציוד בסיס לטיפול ראשוני בזירת אירוע.",
-    descriptionEn:
-      "A personal kit for a new volunteer: bandages, breathing mask, gloves, and core gear for first-response treatment at the scene.",
-    slug: "kit",
-    cardType: "amount",
-    monthlyAmount: 120,
-    months: 12,
-    icon: "kit",
-  },
-  {
-    _id: "fallback-aed",
-    name: "דפיברילטור נייד (AED)",
-    nameEn: "Portable defibrillator (AED)",
-    description:
-      "מכשיר החייאה אוטומטי שמאפשר למתנדב לתת מענה מציל-חיים בדקות הקריטיות שלפני הגעת אמבולנס.",
-    descriptionEn:
-      "An automated CPR device that lets a volunteer deliver life-saving care in the critical minutes before an ambulance arrives.",
-    slug: "aed",
-    cardType: "amount",
-    monthlyAmount: 450,
-    months: 18,
-    icon: "aed",
-  },
-  {
-    _id: "fallback-training",
-    name: "הכשרת מתנדב חדש",
-    nameEn: "New volunteer training",
-    description:
-      "מימון קורס הכשרה למתנדב חדש בשטח: עזרה ראשונה, נהלי חירום, התמודדות עם טראומה ואירועי רב-נפגעים.",
-    descriptionEn:
-      "Funds a full training course for a new field volunteer: first aid, emergency procedures, trauma response and mass-casualty preparation.",
-    slug: "training",
-    cardType: "amount",
-    monthlyAmount: 80,
-    months: 12,
-    icon: "volunteer",
-  },
-  {
-    _id: "fallback-dispatch",
-    name: "תמיכה במוקד החירום 24/7",
-    nameEn: "24/7 emergency dispatch",
-    description:
-      "תרומה למוקד החירום שלנו, שמסיים בכל דקה ומפעיל את המתנדב הקרוב ביותר לזירה — בכל שעה, בכל יום בשנה.",
-    descriptionEn:
-      "Supports our emergency dispatch center — running every minute, routing the nearest volunteer to the scene, every hour of every day.",
-    slug: "dispatch",
-    cardType: "amount",
-    monthlyAmount: 200,
-    months: 18,
-    icon: "phone",
-  },
-  {
-    _id: "fallback-ambulance",
-    name: "ציוד מציל חיים לאמבולנס",
-    nameEn: "Ambulance life-saving equipment",
-    description:
-      "ציוד רפואי מתקדם לאמבולנס מבצעי — מוניטור, מכשירי החייאה ופריטי טיפול לאירועים מורכבים.",
-    descriptionEn:
-      "Advanced medical gear for an active ambulance — patient monitor, resuscitation tools and supplies for complex incidents.",
-    slug: "ambulance",
-    cardType: "amount",
-    monthlyAmount: 800,
-    months: 24,
-    icon: "ambulance",
-  },
-];
 
 async function getPageMedia(): Promise<PageMedia> {
   try {
@@ -355,28 +251,7 @@ function HomeContent({
             </div>
           </AnimateOnScroll>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-            {donationItems.map((item, i) => (
-              <DonationOptionCard
-                key={item._id}
-                item={item}
-                locale={locale}
-                delay={i * 90}
-              />
-            ))}
-          </div>
-
-          <AnimateOnScroll animation="fade-up" delay={500}>
-            <div className="text-center mt-9 sm:mt-12">
-              <Link
-                href="/donate"
-                className="inline-flex items-center gap-2 text-white/80 hover:text-gold-300 text-sm sm:text-base font-medium transition-colors duration-300"
-              >
-                {t("donate_block.more")}
-                <span className="text-lg leading-none">&larr;</span>
-              </Link>
-            </div>
-          </AnimateOnScroll>
+          <DonationGrid items={donationItems} locale={locale} />
         </div>
       </section>
 
@@ -484,178 +359,6 @@ function StatItem({
     </div>
   );
 }
-
-function DonationOptionCard({
-  item,
-  locale,
-  delay,
-}: {
-  item: DonationItem;
-  locale: string;
-  delay: number;
-}) {
-  const t = useTranslations("home.donate_block");
-  const isCustom = item.cardType === "custom";
-
-  const monthly = item.monthlyAmount;
-  const months = item.months ?? 18;
-  const total = !isCustom && monthly ? monthly * months : 0;
-
-  const href =
-    isCustom || !monthly
-      ? "/donate"
-      : `/donate?amount=${monthly}&recurring=true&item=${item.slug}`;
-
-  const name = locale === "en" && item.nameEn ? item.nameEn : item.name;
-  const description =
-    locale === "en" && item.descriptionEn ? item.descriptionEn : item.description;
-
-  const Icon = DONATION_ICONS[item.icon ?? "heart"] ?? DONATION_ICONS.heart;
-
-  const imageUrl = item.image?.asset
-    ? urlFor(item.image).width(640).height(400).auto("format").url()
-    : null;
-
-  return (
-    <AnimateOnScroll animation="fade-up" delay={delay}>
-      <Link href={href} className="block h-full group">
-        <div
-          className={`relative h-full flex flex-col rounded-[var(--radius-xl)] overflow-hidden transition-all duration-300 hover-lift ${
-            isCustom
-              ? "bg-gradient-to-br from-gold-300 to-gold-500 text-navy-950 ring-1 ring-gold-300/50"
-              : "bg-warm-white text-charcoal ring-1 ring-white/10"
-          } shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)]`}
-        >
-          {imageUrl ? (
-            <div className="relative h-32 sm:h-36 overflow-hidden img-zoom">
-              <Image
-                src={imageUrl}
-                alt={item.image?.alt || name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-            </div>
-          ) : (
-            <div
-              className={`flex items-center justify-center h-28 sm:h-32 ${
-                isCustom
-                  ? "bg-gold-50/40"
-                  : "bg-gradient-to-br from-stone to-navy-50"
-              }`}
-            >
-              <Icon
-                className={
-                  isCustom
-                    ? "text-navy-800"
-                    : "text-navy-600 group-hover:text-red-600 transition-colors duration-300"
-                }
-              />
-            </div>
-          )}
-
-          <div className="flex-1 flex flex-col p-5 sm:p-6">
-            <h3
-              className={`text-base sm:text-lg leading-snug mb-2 ${
-                isCustom ? "text-navy-950" : "text-charcoal"
-              }`}
-            >
-              {name}
-            </h3>
-
-            <p
-              className={`text-xs sm:text-sm leading-relaxed mb-5 line-clamp-3 ${
-                isCustom ? "text-navy-950/80" : "text-dark/80"
-              }`}
-            >
-              {description}
-            </p>
-
-            {!isCustom && monthly ? (
-              <div className="mb-5 mt-auto">
-                <div className="text-2xl sm:text-3xl font-[number:var(--font-weight-black)] text-gold-700 leading-none mb-1.5">
-                  {t("monthly_format", {
-                    amount: monthly.toLocaleString("he-IL"),
-                    months,
-                  })}
-                </div>
-                <div className="text-xs text-muted">
-                  {t("total_format", { total: total.toLocaleString("he-IL") })}
-                </div>
-              </div>
-            ) : (
-              <div className="mt-auto" />
-            )}
-
-            <span
-              className={`inline-flex items-center justify-center font-bold rounded-[var(--radius-md)] py-2.5 sm:py-3 text-sm sm:text-base transition-all duration-300 ${
-                isCustom
-                  ? "bg-navy-800 text-white group-hover:bg-navy-950"
-                  : "bg-red-600 text-white group-hover:bg-red-800 group-hover:shadow-[var(--shadow-glow-red)]"
-              }`}
-            >
-              {t("donate_now")}
-            </span>
-          </div>
-        </div>
-      </Link>
-    </AnimateOnScroll>
-  );
-}
-
-const DONATION_ICONS: Record<DonationIconKey, React.FC<{ className?: string }>> = {
-  heart: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  ),
-  kit: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="3" y="7" width="18" height="13" rx="2" />
-      <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-      <path d="M12 11v6M9 14h6" />
-    </svg>
-  ),
-  aed: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      <polyline points="13 8 11 12 14 12 12 16" />
-    </svg>
-  ),
-  ambulance: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M2 17h2v-6a2 2 0 0 1 2-2h7v8h6" />
-      <path d="M14 9h4l3 4v4h-2" />
-      <circle cx="7.5" cy="17.5" r="2" />
-      <circle cx="17.5" cy="17.5" r="2" />
-      <path d="M9 5v3M7.5 6.5h3" />
-    </svg>
-  ),
-  cross: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="3" y="3" width="18" height="18" rx="3" />
-      <path d="M12 7v10M7 12h10" />
-    </svg>
-  ),
-  shield: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6l8-3z" />
-      <path d="M9 12l2 2 4-4" />
-    </svg>
-  ),
-  phone: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
-    </svg>
-  ),
-  volunteer: ({ className }) => (
-    <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <circle cx="12" cy="7" r="3.5" />
-      <path d="M5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1" />
-      <path d="M19 6v3M17.5 7.5h3" />
-    </svg>
-  ),
-};
 
 const newsPlaceholders = [
   { category: "עדכון שטח", title: "כותרת לדוגמה", date: "15 ינואר 2025" },

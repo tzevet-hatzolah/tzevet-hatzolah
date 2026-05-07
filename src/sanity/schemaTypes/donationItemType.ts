@@ -42,6 +42,29 @@ export const donationItemType = defineType({
       validation: (rule) => rule.max(220),
     }),
     defineField({
+      name: "impactText",
+      title: "ההשפעה שלכם — שורת השפעה (Impact line — Hebrew)",
+      type: "string",
+      description:
+        "שורת השפעה קצרה שמופיעה בחלון התרומה. דוגמה: \"מצילה חיים בעשרות אירועים\".",
+      validation: (rule) => rule.max(120),
+    }),
+    defineField({
+      name: "impactTextEn",
+      title: "Impact line (English)",
+      type: "string",
+      description:
+        "Short impact statement shown in the donation modal, e.g. \"Saves lives at dozens of incidents\".",
+      validation: (rule) => rule.max(120),
+    }),
+    defineField({
+      name: "highlight",
+      title: "סמן ככרטיס מומלץ (Mark as recommended)",
+      type: "boolean",
+      description: "מסמן את הכרטיס בתווית \"הכי פופולרי\" בדף הבית.",
+      initialValue: false,
+    }),
+    defineField({
       name: "slug",
       title: "Slug (used in donation URL)",
       type: "slug",
@@ -63,34 +86,40 @@ export const donationItemType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "monthlyAmount",
-      title: "סכום חודשי בש״ח (Monthly amount, ₪)",
+      name: "totalAmount",
+      title: "עלות הפריט בש״ח (Total cost, ₪)",
       type: "number",
       description:
-        "הסכום החודשי שהתורם יחויב. השדה בשימוש רק עבור כרטיסי 'ציוד / סכום קבוע'.",
+        "העלות הכוללת של הפריט (לדוגמה, ₪8,100 לדפיברילטור). התורם בוחר בחלון כיצד לחלק לתשלומים.",
       hidden: ({ document }) => document?.cardType !== "amount",
       validation: (rule) =>
         rule.custom((value, context) => {
           const doc = context.document as { cardType?: string } | undefined;
           if (doc?.cardType !== "amount") return true;
-          if (typeof value !== "number" || value < 1) return "Required for fixed-amount cards";
+          if (typeof value !== "number" || value < 18)
+            return "Total must be at least ₪18";
           return true;
         }),
     }),
     defineField({
-      name: "months",
-      title: "מספר חודשים (Number of months)",
+      name: "defaultPayments",
+      title: "מספר תשלומים מומלץ (Recommended number of payments)",
       type: "number",
       description:
-        "אורך מחזור החיוב. ברירת מחדל: 18 חודשים. בשימוש רק עבור כרטיסי 'ציוד / סכום קבוע'.",
+        "מספר התשלומים שמוצג בכרטיס בדף הבית. התורם יוכל לשנות בחלון. ברירת מחדל: 18 תשלומים.",
       initialValue: 18,
       hidden: ({ document }) => document?.cardType !== "amount",
       validation: (rule) =>
         rule.custom((value, context) => {
-          const doc = context.document as { cardType?: string } | undefined;
+          const doc = context.document as {
+            cardType?: string;
+            totalAmount?: number;
+          } | undefined;
           if (doc?.cardType !== "amount") return true;
-          if (typeof value !== "number" || value < 1 || value > 60)
-            return "Months must be between 1 and 60";
+          if (typeof value !== "number" || value < 1 || value > 36)
+            return "Payments must be between 1 and 36";
+          if (typeof doc.totalAmount === "number" && doc.totalAmount / value < 18)
+            return "Resulting monthly payment must be at least ₪18";
           return true;
         }),
     }),
@@ -137,14 +166,16 @@ export const donationItemType = defineType({
     select: {
       title: "name",
       cardType: "cardType",
-      monthly: "monthlyAmount",
-      months: "months",
+      total: "totalAmount",
+      payments: "defaultPayments",
       media: "image",
     },
-    prepare({ title, cardType, monthly, months, media }) {
+    prepare({ title, cardType, total, payments, media }) {
+      const n = payments ?? 18;
+      const monthly = total ? Math.round(total / n) : 0;
       const subtitle =
-        cardType === "amount" && monthly
-          ? `₪${monthly} × ${months ?? 18}`
+        cardType === "amount" && total
+          ? `₪${monthly} × ${n} = ₪${monthly * n}`
           : "סכום חופשי";
       return { title, subtitle, media };
     },

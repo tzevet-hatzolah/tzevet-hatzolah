@@ -146,12 +146,15 @@ export const homepageDonationItemsQuery = groq`
     nameEn,
     description,
     descriptionEn,
+    impactText,
+    impactTextEn,
     "slug": slug.current,
     cardType,
-    monthlyAmount,
-    months,
+    totalAmount,
+    defaultPayments,
     image,
-    icon
+    icon,
+    highlight
   }
 `;
 

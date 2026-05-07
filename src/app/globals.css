@@ -39,6 +39,10 @@
   --color-dark:       #44433F;
   --color-charcoal:   #1E1D1A;
 
+  /* High-visibility chartreuse — matches volunteer vests in field photography.
+     Reserved for live/operational signals: pulse dots, urgency badges. */
+  --color-hi-vis: #E8F62F;
+
   /* --- Semantic aliases --- */
   --color-background:    var(--color-warm-white);
   --color-surface:       var(--color-stone);
@@ -501,4 +505,69 @@
 
 .img-zoom:hover > * {
   transform: scale(1.08);
+}
+
+/* Hi-vis chartreuse pulse dot (live/operational signal) */
+@keyframes hi-vis-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(232, 246, 47, 0.55); }
+  50%      { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(232, 246, 47, 0); }
+}
+
+.hi-vis-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-hi-vis);
+  box-shadow: 0 0 0 0 rgba(232, 246, 47, 0.55);
+  animation: hi-vis-pulse 1.6s var(--ease-out-expo) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hi-vis-dot { animation: none; }
+}
+
+/* Navy-tinted duotone — applied to a wrapper around an <img>, the image
+   is pushed toward the brand palette so chartreuse vests pop against navy. */
+.duotone-navy {
+  position: relative;
+  isolation: isolate;
+}
+
+.duotone-navy > img,
+.duotone-navy > video {
+  filter: grayscale(0.3) contrast(1.05);
+}
+
+.duotone-navy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(12, 26, 56, 0.55), rgba(32, 64, 133, 0.25));
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Modal entry animations */
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-slide-up {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.modal-backdrop {
+  animation: modal-fade-in 0.25s var(--ease-out-expo) both;
+}
+
+.modal-panel {
+  animation: modal-slide-up 0.3s var(--ease-out-expo) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop, .modal-panel { animation: none; }
 }
