@@ -114,6 +114,7 @@ export default function NewsFilteredGrid({
                           (isEn ? article.titleEn || article.title : article.title)
                         }
                         fill
+                        sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                         className="object-cover"
                       />
                     ) : (

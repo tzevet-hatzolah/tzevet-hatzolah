@@ -21,7 +21,7 @@ export default function TrustStrip({
 
   const isDark = variant === "dark";
   const wrapper = isDark
-    ? "bg-white/[0.04] border border-white/10 backdrop-blur-sm"
+    ? "bg-navy-950/60 border border-white/10 backdrop-blur-md shadow-[var(--shadow-elevated)]"
     : "bg-stone/50 border border-dark/[0.05]";
   const iconWrap = isDark
     ? "bg-gold-300/15 text-gold-300 ring-1 ring-gold-300/25"
