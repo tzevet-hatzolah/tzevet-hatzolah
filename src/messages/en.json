@@ -26,16 +26,17 @@
   },
   "home": {
     "hero": {
-      "badge": "Volunteer Rescue Organization · Active 24/7",
-      "title": "We are here every moment —\nSaving lives every day",
-      "subtitle": "Tzevet Hatzolah operates around the clock with hundreds of certified volunteers across the country.",
+      "badge": "Volunteer Emergency Organization · Always on call",
+      "title_line1": "Four minutes.",
+      "title_line2": "That's all the time we have.",
+      "subtitle": "In the critical seconds between the call and the ambulance — hundreds of volunteers save lives.",
       "cta_donate": "Donate — Click Here",
       "cta_about": "Learn More"
     },
     "stats": {
-      "volunteers": "Active Volunteers",
-      "calls_per_year": "Calls per Year",
-      "years_active": "Years Active"
+      "volunteers": "Volunteers always on call",
+      "calls_per_year": "Calls handled per year",
+      "years_active": "Years saving lives"
     },
     "mission": {
       "title": "Who We Are",
@@ -183,13 +184,43 @@
     "whatsapp": "Message us on WhatsApp"
   },
   "about": {
-    "title": "About Tzevet Hatzolah"
+    "title": "About Tzevet Hatzolah",
+    "timeline": {
+      "title": "How a call unfolds",
+      "subtitle": "Four minutes. From the call to first treatment.",
+      "steps": {
+        "step1_time": "00:00",
+        "step1_title": "Call received",
+        "step1_desc": "Dispatch 1221 broadcasts the alert",
+        "step2_time": "00:30",
+        "step2_title": "Volunteers respond",
+        "step2_desc": "First responder confirms en route",
+        "step3_time": "02:30",
+        "step3_title": "First on scene",
+        "step3_desc": "Treatment begins before the ambulance",
+        "step4_time": "08:00",
+        "step4_title": "Evacuation",
+        "step4_desc": "Ambulance arrives"
+      }
+    }
   },
   "activities": {
     "title": "Our Activities"
   },
   "news_page": {
-    "title": "News & Stories"
+    "title": "News & Stories",
+    "filters": {
+      "all": "All",
+      "empty": "No articles in this category",
+      "traffic_label": "Traffic accidents",
+      "traffic_keywords": "accident,traffic,road,vehicle,collision",
+      "children_label": "Children",
+      "children_keywords": "child,children,baby,infant,toddler",
+      "medical_label": "Medical event",
+      "medical_keywords": "cpr,cardiac,medical,heart,injury",
+      "violence_label": "Violence",
+      "violence_keywords": "shooting,stabbing,violence,assault"
+    }
   },
   "stories_page": {
     "title": "Field Stories",

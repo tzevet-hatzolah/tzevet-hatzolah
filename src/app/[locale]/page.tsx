@@ -6,6 +6,7 @@ import AnimateOnScroll from "@/components/AnimateOnScroll";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import HeroVideo from "@/components/HeroVideo";
 import DonationGrid from "@/components/DonationGrid";
+import TrustStrip from "@/components/TrustStrip";
 import { client } from "@/sanity/lib/client";
 import {
   siteSettingsQuery,
@@ -22,6 +23,7 @@ type SiteSettings = {
   statsVolunteers?: number;
   statsCallsPerYear?: number;
   statsYearsActive?: number;
+  registrationNumber?: string;
 } | null;
 
 type SanityImage = { asset: { _ref: string }; alt?: string } | null;
@@ -80,6 +82,8 @@ export default async function HomePage({
     yearsActive: settings?.statsYearsActive ?? 15,
   };
 
+  const registrationNumber = settings?.registrationNumber ?? "580540565";
+
   const donationItems =
     donationItemsRaw && donationItemsRaw.length >= 6
       ? donationItemsRaw
@@ -91,6 +95,7 @@ export default async function HomePage({
       latestNews={latestNews ?? []}
       donationItems={donationItems}
       locale={locale}
+      registrationNumber={registrationNumber}
       heroVideoUrl={pageMedia?.heroVideoUrl}
       heroPosterUrl={pageMedia?.heroPosterUrl}
       missionVideoUrl={pageMedia?.missionVideoUrl}
@@ -104,6 +109,7 @@ function HomeContent({
   latestNews,
   donationItems,
   locale,
+  registrationNumber,
   heroVideoUrl,
   heroPosterUrl,
   missionVideoUrl,
@@ -113,6 +119,7 @@ function HomeContent({
   latestNews: NewsArticle[];
   donationItems: DonationItem[];
   locale: string;
+  registrationNumber: string;
   heroVideoUrl?: string | null;
   heroPosterUrl?: string | null;
   missionVideoUrl?: string | null;
@@ -141,13 +148,16 @@ function HomeContent({
 
         <div className="max-w-3xl mx-auto text-center relative z-10">
           {/* Badge */}
-          <span className="inline-block bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 text-sm sm:text-base font-bold px-5 sm:px-7 py-2 sm:py-2.5 rounded-full mb-6 sm:mb-7 shadow-[var(--shadow-glow-gold)] animate-fade-up">
+          <span className="inline-flex items-center gap-2 bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 text-sm sm:text-base font-bold px-5 sm:px-7 py-2 sm:py-2.5 rounded-full mb-6 sm:mb-7 shadow-[var(--shadow-glow-gold)] animate-fade-up">
+            <span className="hi-vis-dot" aria-hidden />
             {t("hero.badge")}
           </span>
 
           {/* Headline */}
-          <h1 className="text-white text-3xl sm:text-4xl md:text-[length:var(--font-size-display)] font-[number:var(--font-weight-black)] leading-[var(--line-height-display)] whitespace-pre-line animate-fade-up delay-100 [text-shadow:0_2px_20px_rgba(0,0,0,0.5)]">
-            {t("hero.title")}
+          <h1 className="text-white text-3xl sm:text-4xl md:text-[length:var(--font-size-display)] font-[number:var(--font-weight-black)] leading-[var(--line-height-display)] animate-fade-up delay-100 [text-shadow:0_2px_20px_rgba(0,0,0,0.5)]">
+            {t("hero.title_line1")}
+            <br />
+            <span className="text-gold-300">{t("hero.title_line2")}</span>
           </h1>
 
           {/* Subtitle */}
@@ -188,7 +198,11 @@ function HomeContent({
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center relative z-10">
           {/* Image/video */}
           <AnimateOnScroll animation="slide-right" className="order-2 md:order-1">
-            <div className="bg-gradient-to-br from-stone to-navy-50 rounded-[var(--radius-xl)] aspect-video flex items-center justify-center text-muted border border-navy-100/50 shadow-[var(--shadow-card)] overflow-hidden img-zoom">
+            <div
+              className={`bg-gradient-to-br from-stone to-navy-50 rounded-[var(--radius-xl)] aspect-video flex items-center justify-center text-muted border border-navy-100/50 shadow-[var(--shadow-card)] overflow-hidden img-zoom${
+                missionVideoUrl || missionImage?.asset ? " duotone-navy" : ""
+              }`}
+            >
               {missionVideoUrl ? (
                 <video
                   controls
@@ -252,6 +266,15 @@ function HomeContent({
           </AnimateOnScroll>
 
           <DonationGrid items={donationItems} locale={locale} />
+
+          <AnimateOnScroll animation="fade-up" delay={120}>
+            <div className="mt-8 sm:mt-10 max-w-3xl mx-auto">
+              <TrustStrip
+                registrationNumber={registrationNumber}
+                variant="dark"
+              />
+            </div>
+          </AnimateOnScroll>
         </div>
       </section>
 

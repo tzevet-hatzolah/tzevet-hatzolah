@@ -2,8 +2,10 @@ import { useTranslations } from "next-intl";
 
 export default function TrustStrip({
   registrationNumber,
+  variant = "light",
 }: {
   registrationNumber: string;
+  variant?: "light" | "dark";
 }) {
   const t = useTranslations("donate.trust_strip");
 
@@ -17,18 +19,33 @@ export default function TrustStrip({
     { key: "tax", icon: <ReceiptIcon />, text: t("tax") },
   ];
 
+  const isDark = variant === "dark";
+  const wrapper = isDark
+    ? "bg-white/[0.04] border border-white/10 backdrop-blur-sm"
+    : "bg-stone/50 border border-dark/[0.05]";
+  const iconWrap = isDark
+    ? "bg-gold-300/15 text-gold-300 ring-1 ring-gold-300/25"
+    : "bg-navy-50 text-navy-600 ring-1 ring-navy-100";
+  const textColor = isDark ? "text-white/90" : "text-charcoal/90";
+
   return (
-    <div className="rounded-[var(--radius-xl)] bg-stone/50 border border-dark/[0.05] px-3 sm:px-4 py-3 sm:py-3.5">
+    <div
+      className={`rounded-[var(--radius-xl)] px-3 sm:px-4 py-3 sm:py-3.5 ${wrapper}`}
+    >
       <ul className="grid grid-cols-3 gap-2 sm:gap-3">
         {items.map((item) => (
           <li
             key={item.key}
             className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 text-center sm:text-start"
           >
-            <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-navy-50 text-navy-600 ring-1 ring-navy-100">
+            <span
+              className={`shrink-0 inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full ${iconWrap}`}
+            >
               {item.icon}
             </span>
-            <span className="text-[10px] sm:text-xs leading-tight text-charcoal/90 font-[number:var(--font-weight-bold)]">
+            <span
+              className={`text-[10px] sm:text-xs leading-tight font-[number:var(--font-weight-bold)] ${textColor}`}
+            >
               {item.text}
             </span>
           </li>

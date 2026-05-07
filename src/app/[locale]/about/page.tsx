@@ -109,6 +109,8 @@ function AboutContent({
             </div>
           )}
 
+          <CallTimeline />
+
           {/* Team members */}
           {teamMembers.length > 0 && (
             <div className="mt-16">
@@ -155,5 +157,45 @@ function AboutContent({
         </div>
       </section>
     </main>
+  );
+}
+
+function CallTimeline() {
+  const t = useTranslations("about.timeline");
+  const steps = [1, 2, 3, 4] as const;
+
+  return (
+    <section className="mt-14 sm:mt-16">
+      <div className="text-center mb-8 sm:mb-10">
+        <div className="section-line mx-auto mb-4" />
+        <h2 className="text-xl sm:text-2xl md:text-3xl text-charcoal mb-2">
+          {t("title")}
+        </h2>
+        <p className="text-muted text-sm sm:text-base">{t("subtitle")}</p>
+      </div>
+
+      <div className="relative">
+        {/* horizontal track — sits at the vertical center of the pills (pill = 56px → 28px) */}
+        <div
+          aria-hidden
+          className="hidden sm:block absolute inset-x-0 top-[28px] h-[2px] bg-gradient-to-l from-gold-500 via-gold-300 to-gold-500 rounded-full"
+        />
+        <ol className="relative grid grid-cols-1 sm:grid-cols-4 gap-6 sm:gap-4">
+          {steps.map((n) => (
+            <li key={n} className="text-center">
+              <div className="mx-auto w-14 h-14 rounded-full bg-white border-2 border-gold-500 text-navy-950 font-[number:var(--font-weight-black)] text-xs flex items-center justify-center shadow-[0_4px_12px_rgba(248,224,72,0.25)]">
+                {t(`steps.step${n}_time`)}
+              </div>
+              <h3 className="mt-3 text-charcoal text-sm font-bold">
+                {t(`steps.step${n}_title`)}
+              </h3>
+              <p className="mt-1 text-dark text-xs leading-relaxed">
+                {t(`steps.step${n}_desc`)}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
   );
 }

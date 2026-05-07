@@ -47,7 +47,15 @@ function bodyKeyFor(issue: ReceiptIssue):
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^\+?\d[\d\s-]{6,15}$/;
+
+function isValidPhone(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (!/^[\d+\s\-()]+$/.test(trimmed)) return false;
+  if (!/^[+\d(]/.test(trimmed)) return false;
+  if (!/[\d)]$/.test(trimmed)) return false;
+  const digits = trimmed.replace(/\D/g, "");
+  return digits.length >= 9 && digits.length <= 15;
+}
 
 export default function DonateForm({
   total,
@@ -119,7 +127,7 @@ export default function DonateForm({
   const validateHard = (): FormErrors => {
     const e: FormErrors = {};
     if (!EMAIL_RE.test(email)) e.email = t("errors.invalid_email");
-    if (!PHONE_RE.test(phone)) e.phone = t("errors.invalid_phone");
+    if (!isValidPhone(phone)) e.phone = t("errors.invalid_phone");
     const rawCard = cardRef.current?.value ?? "";
     if (!rawCard.trim()) {
       e.cardNumber = t("errors.required");
@@ -156,7 +164,7 @@ export default function DonateForm({
         return "";
       case "phone":
         if (v.length === 0) return t("errors.required");
-        if (!PHONE_RE.test(v)) return t("errors.invalid_phone");
+        if (!isValidPhone(v)) return t("errors.invalid_phone");
         return "";
     }
   };

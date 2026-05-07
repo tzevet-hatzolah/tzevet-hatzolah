@@ -70,6 +70,12 @@ export default function Header({
               }`}
             >
               {t(key)}
+              {pathname === href && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-1/4 bottom-1 h-[2px] rounded-full bg-[var(--color-hi-vis)] shadow-[0_0_8px_rgba(232,246,47,0.6)]"
+                />
+              )}
             </Link>
           ))}
           <Link href="/donate" className="btn-donate text-sm py-2 px-6 mr-3">
