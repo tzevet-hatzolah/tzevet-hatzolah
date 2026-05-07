@@ -1,5 +1,6 @@
 import type { BotMessage, PublishResult } from "../types";
 import { getWriteClient } from "@/sanity/lib/writeClient";
+import type { NewsCategory } from "@/lib/news-categories";
 
 const CREDIT_MATCH = /דוברות\s+צוות\s+הצלה|tzevet\s+hatzolah\s+spokesperson/i;
 
@@ -150,6 +151,7 @@ export async function publishToSanity(
       title: parsed.title,
       slug: { _type: "slug", current: makeSlug() },
       publishedAt: new Date().toISOString(),
+      categories: ["other"],
       ...(parsed.excerpt ? { excerpt: parsed.excerpt } : {}),
       body: linesToPortableText(parsed.bodyLines),
       ...(mainImage ? { mainImage } : {}),
@@ -163,9 +165,9 @@ export async function publishToSanity(
         : {}),
     };
 
-    await writeClient.create(doc);
+    const created = await writeClient.create(doc);
 
-    return { platform: "sanity", success: true };
+    return { platform: "sanity", success: true, docId: created._id };
   } catch (error) {
     return {
       platform: "sanity",
@@ -173,4 +175,12 @@ export async function publishToSanity(
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+/** Overwrite the categories array on an existing news article. */
+export async function updateNewsArticleCategories(
+  docId: string,
+  categories: NewsCategory[]
+): Promise<void> {
+  await getWriteClient().patch(docId).set({ categories }).commit();
 }

@@ -213,13 +213,11 @@
       "all": "All",
       "empty": "No articles in this category",
       "traffic_label": "Traffic accidents",
-      "traffic_keywords": "accident,traffic,road,vehicle,collision",
+      "home_accidents_label": "Home accidents",
       "children_label": "Children",
-      "children_keywords": "child,children,baby,infant,toddler",
       "medical_label": "Medical event",
-      "medical_keywords": "cpr,cardiac,medical,heart,injury",
       "violence_label": "Violence",
-      "violence_keywords": "shooting,stabbing,violence,assault"
+      "terror_label": "Terror attack"
     }
   },
   "stories_page": {

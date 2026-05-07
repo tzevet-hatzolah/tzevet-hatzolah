@@ -7,7 +7,7 @@
     "home": "דף הבית",
     "about": "אודות",
     "activities": "פעילות",
-    "news": "חדשות",
+    "news": "חדשות ועדכונים",
     "stories": "סיפורים מהשטח",
     "donate": "תרמו עכשיו",
     "contact": "צור קשר"
@@ -187,17 +187,17 @@
     "title": "אודות צוות הצלה",
     "timeline": {
       "title": "איך נראית קריאה",
-      "subtitle": "ארבע דקות. מהקריאה ועד הטיפול.",
+      "subtitle": "שתיים וחצי דקות. מהקריאה ועד הטיפול.",
       "steps": {
         "step1_time": "00:00",
         "step1_title": "הקריאה מתקבלת",
-        "step1_desc": "מוקד 1221 משדר התראה",
+        "step1_desc": "מוקד 101 משדר את הקריאה",
         "step2_time": "00:30",
-        "step2_title": "מתנדבים יוצאים",
+        "step2_title": "כוננים יוצאים",
         "step2_desc": "הראשון מאשר ״בדרך״",
         "step3_time": "02:30",
         "step3_title": "ראשון בזירה",
-        "step3_desc": "טיפול לפני האמבולנס",
+        "step3_desc": "טיפול רפואי ראשוני",
         "step4_time": "08:00",
         "step4_title": "פינוי",
         "step4_desc": "אמבולנס מגיע"
@@ -208,18 +208,16 @@
     "title": "הפעילויות שלנו"
   },
   "news_page": {
-    "title": "חדשות וסיפורים",
+    "title": "חדשות ועדכונים",
     "filters": {
       "all": "הכל",
       "empty": "לא נמצאו כתבות בקטגוריה זו",
       "traffic_label": "תאונות דרכים",
-      "traffic_keywords": "תאונה,תאונת דרכים,רכב,כביש,פגיעה",
+      "home_accidents_label": "תאונות ביתיות",
       "children_label": "ילדים",
-      "children_keywords": "ילד,ילדים,תינוק,תינוקת,פעוט",
       "medical_label": "אירוע רפואי",
-      "medical_keywords": "החייאה,התקף,רפואי,לב,פציעה",
       "violence_label": "אלימות",
-      "violence_keywords": "ירי,דקירה,אלימות,פצוע"
+      "terror_label": "פח״ע"
     }
   },
   "stories_page": {

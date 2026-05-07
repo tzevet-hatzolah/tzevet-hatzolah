@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { NEWS_CATEGORIES } from "@/lib/news-categories";
 
 export const newsArticleType = defineType({
   name: "newsArticle",
@@ -28,6 +29,18 @@ export const newsArticleType = defineType({
       title: "Published At",
       type: "datetime",
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "categories",
+      title: "קטגוריות (Categories)",
+      description: "ניתן לבחור יותר מקטגוריה אחת",
+      type: "array",
+      of: [{ type: "string" }],
+      options: {
+        list: NEWS_CATEGORIES,
+      },
+      initialValue: ["other"],
+      validation: (rule) => rule.required().min(1),
     }),
     defineField({
       name: "mainImage",

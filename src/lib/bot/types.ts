@@ -15,4 +15,6 @@ export interface PublishResult {
   platform: "telegram" | "facebook" | "instagram" | "twitter" | "sanity";
   success: boolean;
   error?: string;
+  /** Sanity-only: the document ID of the newly created news article. */
+  docId?: string;
 }

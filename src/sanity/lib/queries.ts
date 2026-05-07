@@ -43,7 +43,8 @@ export const newsArticlesQuery = groq`
     "slug": slug.current,
     publishedAt,
     mainImage,
-    excerpt
+    excerpt,
+    categories
   }
 `;
 

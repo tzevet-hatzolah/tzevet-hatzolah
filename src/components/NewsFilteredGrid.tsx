@@ -7,6 +7,15 @@ import { Link } from "@/i18n/navigation";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { urlFor } from "@/sanity/lib/image";
 
+export type NewsCategory =
+  | "traffic"
+  | "home_accidents"
+  | "children"
+  | "medical"
+  | "violence"
+  | "terror"
+  | "other";
+
 export type NewsArticle = {
   _id: string;
   title: string;
@@ -15,15 +24,18 @@ export type NewsArticle = {
   publishedAt: string;
   mainImage?: { asset: { _ref: string }; alt?: string };
   excerpt?: string;
+  categories?: NewsCategory[];
 };
 
-type FilterKey = "all" | "traffic" | "children" | "medical" | "violence";
+type FilterKey = "all" | Exclude<NewsCategory, "other">;
 
 const FILTERABLE: Exclude<FilterKey, "all">[] = [
   "traffic",
+  "home_accidents",
   "children",
   "medical",
   "violence",
+  "terror",
 ];
 
 export default function NewsFilteredGrid({
@@ -37,34 +49,18 @@ export default function NewsFilteredGrid({
   const isEn = locale === "en";
   const [active, setActive] = useState<FilterKey>("all");
 
-  const filters = useMemo(() => {
-    return [
-      { key: "all" as FilterKey, label: t("all"), keywords: [] as string[] },
-      ...FILTERABLE.map((key) => ({
-        key: key as FilterKey,
-        label: t(`${key}_label`),
-        keywords: t(`${key}_keywords`)
-          .split(",")
-          .map((k) => k.trim().toLowerCase())
-          .filter(Boolean),
-      })),
-    ];
-  }, [t]);
+  const filters = useMemo(
+    () => [
+      { key: "all" as FilterKey, label: t("all") },
+      ...FILTERABLE.map((key) => ({ key, label: t(`${key}_label`) })),
+    ],
+    [t]
+  );
 
   const filtered = useMemo(() => {
     if (active === "all") return articles;
-    const filter = filters.find((f) => f.key === active);
-    if (!filter || filter.keywords.length === 0) return articles;
-    return articles.filter((a) => {
-      const haystack = [
-        isEn ? a.titleEn || a.title : a.title,
-        a.excerpt ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return filter.keywords.some((k) => haystack.includes(k));
-    });
-  }, [active, articles, filters, isEn]);
+    return articles.filter((a) => a.categories?.includes(active));
+  }, [active, articles]);
 
   return (
     <>

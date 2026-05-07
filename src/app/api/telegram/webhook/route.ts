@@ -33,9 +33,20 @@ import {
   getPendingPost,
   deletePendingPost,
 } from "@/lib/bot/pending-instagram";
+import {
+  storePendingCategorization,
+  getPendingCategorization,
+  deletePendingCategorization,
+} from "@/lib/bot/pending-categorization";
+import { updateNewsArticleCategories } from "@/lib/bot/publishers/sanity";
+import {
+  NEWS_CATEGORIES,
+  NEWS_CATEGORY_VALUES,
+  type NewsCategory,
+} from "@/lib/news-categories";
 import { formatForPlainText } from "@/lib/bot/formatter";
 import { broadcastToOthers, getSenderName } from "@/lib/bot/broadcast";
-import type { BotMessage, PhotoFile } from "@/lib/bot/types";
+import type { BotMessage, PhotoFile, PublishResult } from "@/lib/bot/types";
 
 export async function POST(request: NextRequest) {
   // Verify webhook secret
@@ -126,6 +137,7 @@ export async function POST(request: NextRequest) {
             group.text,
             summary
           );
+          await maybeSendCategoryPicker(results, group.chatId);
         } catch (error) {
           console.error("Media group publish error:", error);
           await sendBotReply(
@@ -167,6 +179,7 @@ export async function POST(request: NextRequest) {
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
       await broadcastToOthers(senderId, senderName, text, summary);
+      await maybeSendCategoryPicker(results, chatId);
 
       if (!instagramEnabled) {
         // User has Instagram disabled — don't prompt for it.
@@ -203,6 +216,7 @@ export async function POST(request: NextRequest) {
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
       await broadcastToOthers(senderId, senderName, text, summary);
+      await maybeSendCategoryPicker(results, chatId);
     }
 
     return NextResponse.json({ ok: true });
@@ -276,6 +290,88 @@ async function handleCallbackQuery(
     await answerCallbackQuery(callbackQuery.id, "בוטל");
     if (messageId) {
       await editMessageText(chatId, messageId, "בחירת הפלטפורמות בוטלה.");
+    }
+    return;
+  }
+
+  if (data.startsWith("cat_tog:")) {
+    const [, pendingId, value] = data.split(":");
+    const messageId = callbackQuery.message?.message_id;
+    const current = parseCategorySelectionFromKeyboard(
+      callbackQuery.message?.reply_markup
+    );
+    if (NEWS_CATEGORY_VALUES.includes(value as NewsCategory)) {
+      const cat = value as NewsCategory;
+      if (current.has(cat)) current.delete(cat);
+      else current.add(cat);
+    }
+    await answerCallbackQuery(callbackQuery.id);
+    if (messageId) {
+      await editInlineKeyboard(
+        chatId,
+        messageId,
+        buildCategoryKeyboard(pendingId, current)
+      );
+    }
+    return;
+  }
+
+  if (data.startsWith("cat_ok:")) {
+    const pendingId = data.replace("cat_ok:", "");
+    const messageId = callbackQuery.message?.message_id;
+    const selection = parseCategorySelectionFromKeyboard(
+      callbackQuery.message?.reply_markup
+    );
+
+    if (selection.size === 0) {
+      await answerCallbackQuery(callbackQuery.id, "בחר לפחות קטגוריה אחת");
+      return;
+    }
+
+    const pending = await getPendingCategorization(pendingId);
+    await answerCallbackQuery(callbackQuery.id);
+
+    if (!pending) {
+      if (messageId) {
+        await editMessageText(
+          chatId,
+          messageId,
+          "פג תוקף — לא ניתן לעדכן את הקטגוריות."
+        );
+      }
+      return;
+    }
+
+    try {
+      await updateNewsArticleCategories(pending.docId, Array.from(selection));
+      await deletePendingCategorization(pendingId);
+      if (messageId) {
+        const labels = NEWS_CATEGORIES.filter((c) => selection.has(c.value))
+          .map((c) => c.title)
+          .join(", ");
+        await editMessageText(chatId, messageId, `✅ קטגוריות עודכנו: ${labels}`);
+      }
+    } catch (e) {
+      console.error("[Webhook] Failed to update categories:", e);
+      if (messageId) {
+        const msg = e instanceof Error ? e.message : String(e);
+        await editMessageText(chatId, messageId, `❌ עדכון קטגוריות נכשל: ${msg}`);
+      }
+    }
+    return;
+  }
+
+  if (data.startsWith("cat_skip:")) {
+    const pendingId = data.replace("cat_skip:", "");
+    const messageId = callbackQuery.message?.message_id;
+    await deletePendingCategorization(pendingId);
+    await answerCallbackQuery(callbackQuery.id);
+    if (messageId) {
+      await editMessageText(
+        chatId,
+        messageId,
+        "דולג — הכתבה נשמרה תחת ״אחר״."
+      );
     }
     return;
   }
@@ -372,6 +468,61 @@ function formatSelectionSummary(selection: Set<PlatformName>): string {
     return "ההעלאות הבאות יפורסמו לכל הפלטפורמות.";
   }
   return `ההעלאות הבאות יפורסמו רק ל: ${names.join(", ")}.`;
+}
+
+function shortId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function buildCategoryKeyboard(
+  pendingId: string,
+  selection: Set<NewsCategory>
+) {
+  const toggleRows = NEWS_CATEGORIES.map((c) => [
+    {
+      text: `${selection.has(c.value) ? "✅" : "⬜️"} ${c.title}`,
+      callbackData: `cat_tog:${pendingId}:${c.value}`,
+    },
+  ]);
+  return [
+    ...toggleRows,
+    [
+      { text: "אישור", callbackData: `cat_ok:${pendingId}` },
+      { text: "דלג", callbackData: `cat_skip:${pendingId}` },
+    ],
+  ];
+}
+
+function parseCategorySelectionFromKeyboard(rm?: {
+  inline_keyboard: InlineKeyboardButton[][];
+}): Set<NewsCategory> {
+  const result = new Set<NewsCategory>();
+  if (!rm) return result;
+  for (const row of rm.inline_keyboard) {
+    for (const btn of row) {
+      const cb = btn.callback_data;
+      if (!cb || !cb.startsWith("cat_tog:")) continue;
+      const value = cb.split(":")[2] as NewsCategory;
+      if (btn.text.startsWith("✅")) result.add(value);
+    }
+  }
+  return result;
+}
+
+/** If Sanity succeeded, prompt the user to pick categories for the new article. */
+async function maybeSendCategoryPicker(
+  results: PublishResult[],
+  chatId: number
+) {
+  const sanity = results.find((r) => r.platform === "sanity" && r.success);
+  if (!sanity?.docId) return;
+  const pendingId = shortId();
+  await storePendingCategorization(pendingId, sanity.docId);
+  await sendInlineKeyboard(
+    chatId,
+    "בחר קטגוריות לכתבה (אפשר יותר מאחת):",
+    buildCategoryKeyboard(pendingId, new Set())
+  );
 }
 
 async function openPlatformPicker(senderId: number, chatId: number) {
