@@ -79,6 +79,80 @@
     }
   },
   "donate": {
+    "summary": {
+      "heading": "Your selection",
+      "edit": "Edit",
+      "plan_format": "{amount} × {payments} payments",
+      "single_payment_format": "Single payment · ₪{total}",
+      "total_label": "Total"
+    },
+    "form": {
+      "donor_section": "Donor details",
+      "name_label": "Full name",
+      "name_placeholder": "First and last name",
+      "id_label": "Israeli ID number",
+      "id_helper": "Required for a tax-deductible (Section 46) receipt",
+      "email_label": "Email",
+      "phone_label": "Phone",
+      "payment_section": "Payment details",
+      "card_label": "Card number",
+      "exp_label": "Expiration",
+      "exp_month_placeholder": "MM",
+      "exp_year_placeholder": "YY",
+      "cvv_label": "CVV",
+      "consent": "I confirm I've read the Privacy Policy and Terms of Use",
+      "submit_one_time": "Donate ₪{total}",
+      "submit_recurring": "Confirm donation · ₪{monthly} × {payments}",
+      "errors": {
+        "required": "Required",
+        "full_name": "Please enter your first and last name",
+        "invalid_id": "Invalid ID",
+        "invalid_email": "Invalid email address",
+        "invalid_phone": "Invalid phone number",
+        "invalid_card": "Invalid card number",
+        "invalid_month": "Month must be 1–12",
+        "expired_card": "Card has expired",
+        "consent_required": "Please accept the terms to continue",
+        "charge_failed": "Payment failed. Please try again or contact us.",
+        "network": "Network error. Please try again."
+      },
+      "warn": {
+        "title": "Please note",
+        "body_name_missing": "No full name was entered. Without a full name, we cannot issue a tax-deductible (Section 46) receipt.",
+        "body_id_missing": "No ID number was entered. Without an ID, we cannot issue a tax-deductible (Section 46) receipt.",
+        "body_id_invalid": "The ID number you entered is not valid. Without a valid ID, we cannot issue a tax-deductible (Section 46) receipt.",
+        "body_name_missing_id_missing": "No name or ID was entered. Without these details, we cannot issue a tax-deductible (Section 46) receipt.",
+        "body_name_missing_id_invalid": "No full name was entered, and the ID you entered is not valid. Without valid details, we cannot issue a tax-deductible (Section 46) receipt.",
+        "outro": "You can proceed with the donation without a receipt, or go back to complete the details.",
+        "proceed": "Proceed without receipt",
+        "fix": "Go back to complete the details"
+      }
+    },
+    "trust_strip": {
+      "ssl": "SSL Secure",
+      "amuta": "Reg. {number}",
+      "tax": "Section 46 · Tax-deductible"
+    },
+    "no_selection": {
+      "heading": "General donation",
+      "subtitle": "Pick a recommended amount or enter your own.",
+      "back_link": "Back to homepage to fund a piece of life-saving equipment"
+    },
+    "picker": {
+      "mode_one_time": "One-time",
+      "mode_monthly": "Monthly",
+      "amount_label": "Amount",
+      "currency_prefix": "₪",
+      "custom_label": "Custom amount",
+      "custom_placeholder": "Amount in ₪",
+      "months_label": "Number of months",
+      "months_custom": "Other",
+      "months_custom_placeholder": "1–36",
+      "months_custom_error": "Months must be between 1 and 36",
+      "monthly_helper": "₪{monthly} / month for {months} months · total ₪{total}",
+      "one_time_helper": "One-time donation · ₪{total}",
+      "min_error": "Minimum amount ₪{min}"
+    },
     "title": "Donate",
     "subtitle": "Your donation enables us to continue saving lives",
     "amount_label": "Choose an amount",

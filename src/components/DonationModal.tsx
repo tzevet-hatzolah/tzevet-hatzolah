@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import Image from "next/image";
@@ -12,15 +13,18 @@ import {
   monthlyFor,
   maxPaymentsFor,
 } from "@/lib/donation-types";
+import { useIsClient } from "@/lib/use-is-client";
 import { DONATION_ICONS } from "@/components/DonationIcons";
 
 export default function DonationModal({
   item,
   locale,
+  initialPayments,
   onClose,
 }: {
   item: DonationItem;
   locale: string;
+  initialPayments?: number;
   onClose: () => void;
 }) {
   const t = useTranslations("home.donate_block.modal");
@@ -30,12 +34,13 @@ export default function DonationModal({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const total = item.totalAmount ?? 0;
-  const defaultPayments = item.defaultPayments ?? 18;
+  const defaultPayments = initialPayments ?? item.defaultPayments ?? 18;
   const maxPayments = maxPaymentsFor(total);
 
   const [payments, setPayments] = useState<number>(defaultPayments);
   const [customMode, setCustomMode] = useState(false);
   const [customRaw, setCustomRaw] = useState("");
+  const isClient = useIsClient();
 
   const selectablePresets = useMemo(
     () => DONATION_PAYMENT_OPTIONS.filter((p) => p <= maxPayments),
@@ -101,15 +106,18 @@ export default function DonationModal({
     params.set("payments", String(payments));
     params.set("item", item.slug);
     router.push(`/donate?${params.toString()}`);
+    onClose();
   };
 
   const onBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
 
-  return (
+  if (!isClient) return null;
+
+  return createPortal(
     <div
-      className="modal-backdrop fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+      className="modal-backdrop fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="donation-modal-title"
@@ -300,6 +308,7 @@ export default function DonationModal({
           </span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

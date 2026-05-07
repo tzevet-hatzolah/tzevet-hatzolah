@@ -3,7 +3,23 @@ import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import PageHeader from "@/components/PageHeader";
+import DonateForm from "@/components/DonateForm";
+import DonateSummary from "@/components/DonateSummary";
+import DonateInteractive from "@/components/DonateInteractive";
+import TrustStrip from "@/components/TrustStrip";
+import { client } from "@/sanity/lib/client";
+import {
+  donationItemBySlugQuery,
+  siteSettingsQuery,
+} from "@/sanity/lib/queries";
 import { alternateLinks } from "@/lib/seo";
+import {
+  type DonationItem,
+  DONATION_MIN_MONTHLY,
+  DONATION_MAX_PAYMENTS,
+  FALLBACK_DONATION_ITEMS,
+  monthlyFor,
+} from "@/lib/donation-types";
 
 export async function generateMetadata({
   params,
@@ -19,98 +35,126 @@ export async function generateMetadata({
   };
 }
 
-export default async function DonatePage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+type SiteSettings = { registrationNumber?: string } | null;
 
-  return <DonateContent />;
+const DEFAULT_PAYMENTS = 18;
+
+function parseSelection(searchParams: Record<string, string | string[] | undefined>) {
+  const totalRaw = searchParams.total;
+  const paymentsRaw = searchParams.payments;
+  const itemSlug = typeof searchParams.item === "string" ? searchParams.item : null;
+
+  const total =
+    typeof totalRaw === "string" ? parseInt(totalRaw, 10) : NaN;
+  const payments =
+    typeof paymentsRaw === "string" ? parseInt(paymentsRaw, 10) : NaN;
+
+  if (
+    Number.isFinite(total) &&
+    total >= DONATION_MIN_MONTHLY &&
+    Number.isFinite(payments) &&
+    payments >= 1 &&
+    payments <= DONATION_MAX_PAYMENTS &&
+    monthlyFor(total, payments) >= DONATION_MIN_MONTHLY
+  ) {
+    return { total, payments, itemSlug };
+  }
+  return null;
 }
 
-function DonateContent() {
+export default async function DonatePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ locale }, sp] = await Promise.all([params, searchParams]);
+  setRequestLocale(locale);
+
+  const selection = parseSelection(sp);
+
+  const [sanityItem, settings] = await Promise.all([
+    selection?.itemSlug
+      ? client
+          .fetch<DonationItem | null>(donationItemBySlugQuery, {
+            slug: selection.itemSlug,
+          })
+          .catch(() => null)
+      : Promise.resolve(null),
+    client.fetch<SiteSettings>(siteSettingsQuery).catch(() => null),
+  ]);
+
+  const item =
+    sanityItem ??
+    (selection?.itemSlug
+      ? FALLBACK_DONATION_ITEMS.find((f) => f.slug === selection.itemSlug) ?? null
+      : null);
+
+  const registrationNumber = settings?.registrationNumber ?? "580540565";
+
+  return (
+    <DonateContent
+      locale={locale}
+      selection={selection}
+      item={item}
+      registrationNumber={registrationNumber}
+    />
+  );
+}
+
+function DonateContent({
+  locale,
+  selection,
+  item,
+  registrationNumber,
+}: {
+  locale: string;
+  selection: { total: number; payments: number; itemSlug: string | null } | null;
+  item: DonationItem | null;
+  registrationNumber: string;
+}) {
   const t = useTranslations("donate");
 
-  const presetAmounts = [50, 100, 250, 500];
+  const hasSelection = selection !== null;
+  const total = selection?.total ?? 0;
+  const payments = selection?.payments ?? DEFAULT_PAYMENTS;
 
   return (
     <main className="flex-1">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
-      <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6">
-        <AnimateOnScroll animation="fade-up">
-          <div className="max-w-xl mx-auto">
-            {/* Donation card */}
-            <div className="card p-5 sm:p-8 md:p-10">
-              {/* Donation type toggle */}
-              <div className="flex rounded-[var(--radius-lg)] overflow-hidden border border-dark/10 mb-6 sm:mb-8">
-                <button className="flex-1 py-3 sm:py-3.5 text-xs sm:text-sm font-bold bg-gradient-to-r from-navy-600 to-navy-800 text-white transition-all duration-300">
-                  {t("one_time")}
-                </button>
-                <button className="flex-1 py-3 sm:py-3.5 text-xs sm:text-sm font-medium bg-white text-dark hover:bg-stone/50 transition-all duration-300">
-                  {t("recurring")}
-                </button>
-              </div>
+      <section className="py-10 sm:py-14 md:py-16 px-4 sm:px-6">
+        <div className="max-w-xl mx-auto space-y-6 sm:space-y-7">
+          {hasSelection && item ? (
+            <>
+              <AnimateOnScroll animation="fade-up">
+                <DonateSummary
+                  item={item}
+                  total={total}
+                  payments={payments}
+                  locale={locale}
+                />
+              </AnimateOnScroll>
 
-              {/* Amount presets */}
-              <p className="text-xs sm:text-sm font-medium text-charcoal mb-2 sm:mb-3">
-                {t("amount_label")}
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
-                {presetAmounts.map((amount) => (
-                  <button
-                    key={amount}
-                    className="border-2 border-gold-500/50 rounded-[var(--radius-md)] py-2.5 sm:py-3.5 text-base sm:text-lg font-bold text-charcoal hover:bg-gold-50 hover:border-gold-500 hover:shadow-[0_2px_12px_rgba(201,168,0,0.15)] transition-all duration-300"
-                  >
-                    {t("currency")}{amount}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="number"
-                placeholder={t("custom_amount")}
-                className="w-full border border-dark/10 rounded-[var(--radius-md)] px-3 sm:px-4 py-3 sm:py-3.5 text-dark bg-warm-white mb-6 sm:mb-8 focus:outline-none focus:ring-2 focus:ring-navy-400/40 focus:border-navy-400 transition-all duration-300 text-sm sm:text-base"
-              />
+              <AnimateOnScroll animation="fade-up" delay={100}>
+                <TrustStrip registrationNumber={registrationNumber} />
+              </AnimateOnScroll>
 
-              {/* Donor type */}
-              <p className="text-xs sm:text-sm font-medium text-charcoal mb-2 sm:mb-3">
-                {t("donor_type.label")}
-              </p>
-              <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8">
-                <button className="flex-1 bg-gradient-to-r from-navy-600 to-navy-800 text-white rounded-[var(--radius-md)] py-3 sm:py-3.5 text-xs sm:text-sm font-bold shadow-[0_2px_12px_rgba(32,64,133,0.2)] transition-all duration-300">
-                  {t("donor_type.israeli")}
-                </button>
-                <button className="flex-1 border-2 border-dark/10 text-dark rounded-[var(--radius-md)] py-3 sm:py-3.5 text-xs sm:text-sm font-medium hover:border-dark/25 transition-all duration-300">
-                  {t("donor_type.international")}
-                </button>
-              </div>
-
-              {/* Submit */}
-              <button className="btn-donate w-full text-base sm:text-lg py-3.5 sm:py-4">
-                {t("cta")}
-              </button>
-
-              {/* Trust signals */}
-              <div className="flex justify-center gap-5 sm:gap-8 mt-5 sm:mt-7 text-[11px] sm:text-xs text-muted">
-                <span className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  {t("trust.secure")}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                  {t("trust.registration")}
-                </span>
-              </div>
-            </div>
-
-            {/* Integration note */}
-            <div className="mt-6 sm:mt-8 card p-5 sm:p-6 text-center text-xs sm:text-sm text-muted">
-              <p>Sumit / JGive integration pending — redirect or iframe will be added here</p>
-            </div>
-          </div>
-        </AnimateOnScroll>
+              <AnimateOnScroll animation="fade-up" delay={180}>
+                <div className="card p-5 sm:p-7 md:p-8">
+                  <DonateForm
+                    total={total}
+                    payments={payments}
+                    itemSlug={selection.itemSlug}
+                  />
+                </div>
+              </AnimateOnScroll>
+            </>
+          ) : (
+            <DonateInteractive registrationNumber={registrationNumber} />
+          )}
+        </div>
       </section>
     </main>
   );

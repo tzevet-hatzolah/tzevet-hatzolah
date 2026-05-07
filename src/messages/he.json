@@ -47,7 +47,7 @@
       "subtitle": "כל תרומה — חודשית או חד-פעמית — מצוידת ישירות במתנדב נוסף בשטח. בחרו את הציוד שתרצו לסייע לרכוש, או תרמו בסכום חופשי.",
       "cta": "לתרומה עכשיו",
       "more": "אפשרויות תרומה נוספות",
-      "donate_now": "לתרום",
+      "donate_now": "לתרומה מצילת חיים",
       "payment_plan_format": "₪{amount} ×‎ {payments} תשלומים",
       "single_payment_format": "תשלום אחד · ₪{total}",
       "total_format": "סה״כ ₪{total}",
@@ -95,6 +95,80 @@
     "trust": {
       "secure": "תשלום מאובטח",
       "registration": "עמותה רשומה"
+    },
+    "summary": {
+      "heading": "מה בחרתם",
+      "edit": "ערוך",
+      "plan_format": "{amount} ×‎ {payments} תשלומים",
+      "single_payment_format": "תשלום אחד · ₪{total}",
+      "total_label": "סה״כ לתשלום"
+    },
+    "form": {
+      "donor_section": "פרטי התורם",
+      "name_label": "שם מלא",
+      "name_placeholder": "שם פרטי ושם משפחה",
+      "id_label": "תעודת זהות",
+      "id_helper": "נדרש להפקת קבלה לפי סעיף 46",
+      "email_label": "אימייל",
+      "phone_label": "טלפון",
+      "payment_section": "פרטי תשלום",
+      "card_label": "מספר כרטיס",
+      "exp_label": "תוקף",
+      "exp_month_placeholder": "חודש",
+      "exp_year_placeholder": "שנה",
+      "cvv_label": "CVV",
+      "consent": "אני מאשר/ת שקראתי את מדיניות הפרטיות ותנאי השימוש",
+      "submit_one_time": "תרמו ₪{total}",
+      "submit_recurring": "אשרו תרומה · ₪{monthly} × {payments}",
+      "errors": {
+        "required": "שדה חובה",
+        "full_name": "נא להזין שם מלא (פרטי ומשפחה)",
+        "invalid_id": "ת״ז לא תקינה",
+        "invalid_email": "כתובת אימייל לא תקינה",
+        "invalid_phone": "מספר טלפון לא תקין",
+        "invalid_card": "מספר כרטיס לא תקין",
+        "invalid_month": "חודש חייב להיות בין 1 ל-12",
+        "expired_card": "תוקף הכרטיס פג",
+        "consent_required": "יש לאשר את התנאים כדי להמשיך",
+        "charge_failed": "התשלום נכשל. נסו שוב או צרו קשר.",
+        "network": "תקלה בחיבור. נסו שוב."
+      },
+      "warn": {
+        "title": "שימו לב",
+        "body_name_missing": "לא הוזן שם מלא. ללא שם מלא לא תופק קבלה מוכרת לצורכי מס לפי סעיף 46.",
+        "body_id_missing": "לא הוזנה תעודת זהות. ללא ת״ז לא תופק קבלה מוכרת לצורכי מס לפי סעיף 46.",
+        "body_id_invalid": "תעודת הזהות שהוזנה אינה תקינה. ללא ת״ז תקינה לא תופק קבלה מוכרת לצורכי מס לפי סעיף 46.",
+        "body_name_missing_id_missing": "לא הוזנו שם מלא ותעודת זהות. ללא פרטים אלו לא תופק קבלה מוכרת לצורכי מס לפי סעיף 46.",
+        "body_name_missing_id_invalid": "לא הוזן שם מלא, ותעודת הזהות שהוזנה אינה תקינה. ללא פרטים תקינים לא תופק קבלה מוכרת לצורכי מס לפי סעיף 46.",
+        "outro": "ניתן להמשיך בתרומה ללא קבלה, או לחזור ולהשלים את הפרטים.",
+        "proceed": "המשך ללא קבלה",
+        "fix": "חזרה להשלמת הפרטים"
+      }
+    },
+    "trust_strip": {
+      "ssl": "תשלום מאובטח SSL",
+      "amuta": "ע״ר {number}",
+      "tax": "סעיף 46 · זיכוי מס"
+    },
+    "no_selection": {
+      "heading": "תרומה כללית",
+      "subtitle": "ניתן לבחור מסכומים מומלצים, או להזין סכום משלכם.",
+      "back_link": "חזרו לדף הבית לבחירת ציוד מציל חיים"
+    },
+    "picker": {
+      "mode_one_time": "חד-פעמית",
+      "mode_monthly": "חודשית",
+      "amount_label": "סכום חודשי",
+      "currency_prefix": "₪",
+      "custom_label": "סכום אחר",
+      "custom_placeholder": "סכום בש״ח",
+      "months_label": "מספר חודשים",
+      "months_custom": "אחר",
+      "months_custom_placeholder": "1–36",
+      "months_custom_error": "מספר חודשים בין 1 ל-36",
+      "monthly_helper": "₪{monthly} / חודש למשך {months} חודשים · סה״כ ₪{total}",
+      "one_time_helper": "תרומה חד-פעמית · ₪{total}",
+      "min_error": "סכום מינימלי ₪{min}"
     }
   },
   "contact": {

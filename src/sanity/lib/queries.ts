@@ -158,3 +158,21 @@ export const homepageDonationItemsQuery = groq`
   }
 `;
 
+export const donationItemBySlugQuery = groq`
+  *[_type == "donationItem" && slug.current == $slug][0]{
+    _id,
+    name,
+    nameEn,
+    description,
+    descriptionEn,
+    impactText,
+    impactTextEn,
+    "slug": slug.current,
+    cardType,
+    totalAmount,
+    defaultPayments,
+    image,
+    icon
+  }
+`;
+

@@ -28,6 +28,7 @@ export type DonationItem = {
 export const DONATION_PAYMENT_OPTIONS = [1, 6, 12, 18, 24, 36] as const;
 
 export const DONATION_MIN_MONTHLY = 18;
+export const DONATION_MIN_ONE_TIME = 18;
 export const DONATION_MAX_PAYMENTS = 36;
 
 export function maxPaymentsFor(total: number): number {
@@ -61,7 +62,7 @@ export const FALLBACK_DONATION_ITEMS: DonationItem[] = [
       "ערכה אישית למתנדב חדש: חבישות, מסכת הנשמה, כפפות וציוד בסיס לטיפול ראשוני בזירת אירוע.",
     descriptionEn:
       "A personal kit for a new volunteer: bandages, breathing mask, gloves, and core gear for first-response treatment at the scene.",
-    impactText: "מצוידת מתנדב לעשרות אירועי חירום בשנה",
+    impactText: "מתנדב המצויד לטיפול בעשרות אירועי חירום בשנה",
     impactTextEn: "Equips a volunteer for dozens of emergency calls a year",
     slug: "kit",
     cardType: "amount",
