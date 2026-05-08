@@ -246,39 +246,7 @@ function HomeContent({
         </div>
       </section>
 
-      {/* ==================== 4. DONATION OPTIONS ==================== */}
-      <section className="relative py-14 sm:py-20 md:py-[var(--spacing-section)] px-4 sm:px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(248,224,72,0.07)_0%,transparent_55%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(195,26,45,0.06)_0%,transparent_55%)]" />
-
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <AnimateOnScroll animation="fade-up">
-            <div className="text-center mb-8 sm:mb-10">
-              <div className="section-line mx-auto mb-4 sm:mb-5" />
-              <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-[number:var(--font-weight-black)] mb-3 sm:mb-4">
-                {t("donate_block.title")}
-              </h2>
-              <p className="text-white/70 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-                {t("donate_block.subtitle")}
-              </p>
-            </div>
-          </AnimateOnScroll>
-
-          <AnimateOnScroll animation="fade-up" delay={80}>
-            <div className="max-w-3xl mx-auto mb-10 sm:mb-14">
-              <TrustStrip
-                registrationNumber={registrationNumber}
-                variant="dark"
-              />
-            </div>
-          </AnimateOnScroll>
-
-          <DonationGrid items={donationItems} locale={locale} />
-        </div>
-      </section>
-
-      {/* ==================== 5. LATEST NEWS ==================== */}
+      {/* ==================== 4. LATEST NEWS ==================== */}
       <section className="py-14 sm:py-20 md:py-[var(--spacing-section)] px-5 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <AnimateOnScroll animation="fade-up">
@@ -364,6 +332,38 @@ function HomeContent({
                   </AnimateOnScroll>
                 ))}
           </div>
+        </div>
+      </section>
+
+      {/* ==================== 5. DONATION OPTIONS ==================== */}
+      <section className="relative py-14 sm:py-20 md:py-[var(--spacing-section)] px-4 sm:px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(248,224,72,0.07)_0%,transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(195,26,45,0.06)_0%,transparent_55%)]" />
+
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <AnimateOnScroll animation="fade-up">
+            <div className="text-center mb-8 sm:mb-10">
+              <div className="section-line mx-auto mb-4 sm:mb-5" />
+              <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-[number:var(--font-weight-black)] mb-3 sm:mb-4">
+                {t("donate_block.title")}
+              </h2>
+              <p className="text-white/70 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+                {t("donate_block.subtitle")}
+              </p>
+            </div>
+          </AnimateOnScroll>
+
+          <AnimateOnScroll animation="fade-up" delay={80}>
+            <div className="max-w-3xl mx-auto mb-10 sm:mb-14">
+              <TrustStrip
+                registrationNumber={registrationNumber}
+                variant="dark"
+              />
+            </div>
+          </AnimateOnScroll>
+
+          <DonationGrid items={donationItems} locale={locale} />
         </div>
       </section>
     </main>
