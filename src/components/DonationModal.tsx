@@ -105,6 +105,8 @@ export default function DonationModal({
     params.set("total", String(billedTotal));
     params.set("payments", String(payments));
     params.set("item", item.slug);
+    // Restore body scroll lock before navigating so Next.js can scroll to top.
+    document.body.style.overflow = "";
     router.push(`/donate?${params.toString()}`);
     onClose();
   };

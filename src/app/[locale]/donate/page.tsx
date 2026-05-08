@@ -5,6 +5,7 @@ import AnimateOnScroll from "@/components/AnimateOnScroll";
 import DonateForm from "@/components/DonateForm";
 import DonateSummary from "@/components/DonateSummary";
 import DonateInteractive from "@/components/DonateInteractive";
+import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
 import TrustStrip from "@/components/TrustStrip";
 import { client } from "@/sanity/lib/client";
 import {
@@ -121,6 +122,7 @@ function DonateContent({
 
   return (
     <main className="flex-1">
+      <ScrollToTopOnMount />
       <section className="page-header relative text-white text-center overflow-hidden py-3 sm:py-4 px-5 sm:px-6">
         <div className="relative z-10 max-w-3xl mx-auto">
           <div className="section-line mx-auto mb-2" />
