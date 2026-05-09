@@ -42,7 +42,7 @@ export default function DonationGrid({
         <div className="text-center mt-9 sm:mt-12">
           <Link
             href="/donate"
-            className="inline-flex items-center gap-2 text-white/80 hover:text-gold-300 text-sm sm:text-base font-medium transition-colors duration-300"
+            className="inline-flex items-center gap-2 text-navy-600 hover:text-navy-950 text-sm sm:text-base font-medium transition-colors duration-300"
           >
             {t("more")}
             <span className="text-lg leading-none">&larr;</span>

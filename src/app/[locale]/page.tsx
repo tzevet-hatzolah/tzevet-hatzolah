@@ -247,17 +247,17 @@ function HomeContent({
       </section>
 
       {/* ==================== 4. LATEST NEWS ==================== */}
-      <section className="py-14 sm:py-20 md:py-[var(--spacing-section)] px-5 sm:px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="relative py-14 sm:py-20 md:py-[var(--spacing-section)] px-5 sm:px-6 bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600 text-white overflow-hidden">
+        <div className="relative z-10 max-w-5xl mx-auto">
           <AnimateOnScroll animation="fade-up">
             <div className="flex items-end justify-between mb-8 sm:mb-10">
               <div>
                 <div className="section-line mb-3 sm:mb-4" />
-                <h2 className="text-xl sm:text-2xl md:text-3xl">{t("news.title")}</h2>
+                <h2 className="text-white text-xl sm:text-2xl md:text-3xl">{t("news.title")}</h2>
               </div>
               <Link
                 href="/news"
-                className="text-navy-400 text-xs sm:text-sm font-medium hover:text-navy-600 transition-colors duration-300 flex items-center gap-1.5"
+                className="text-white/70 text-xs sm:text-sm font-medium hover:text-gold-300 transition-colors duration-300 flex items-center gap-1.5"
               >
                 {t("news.view_all")}
                 <span className="text-lg leading-none">&larr;</span>
@@ -336,19 +336,15 @@ function HomeContent({
       </section>
 
       {/* ==================== 5. DONATION OPTIONS ==================== */}
-      <section className="relative py-14 sm:py-20 md:py-[var(--spacing-section)] px-4 sm:px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-800 to-navy-600" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(248,224,72,0.07)_0%,transparent_55%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(195,26,45,0.06)_0%,transparent_55%)]" />
-
+      <section className="relative py-14 sm:py-20 md:py-[var(--spacing-section)] px-4 sm:px-6 overflow-hidden bg-white">
         <div className="relative z-10 max-w-6xl mx-auto">
           <AnimateOnScroll animation="fade-up">
             <div className="text-center mb-8 sm:mb-10">
               <div className="section-line mx-auto mb-4 sm:mb-5" />
-              <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-[number:var(--font-weight-black)] mb-3 sm:mb-4">
+              <h2 className="text-charcoal text-2xl sm:text-3xl md:text-4xl font-[number:var(--font-weight-black)] mb-3 sm:mb-4">
                 {t("donate_block.title")}
               </h2>
-              <p className="text-white/70 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              <p className="text-dark/75 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
                 {t("donate_block.subtitle")}
               </p>
             </div>
@@ -358,7 +354,7 @@ function HomeContent({
             <div className="max-w-3xl mx-auto mb-10 sm:mb-14">
               <TrustStrip
                 registrationNumber={registrationNumber}
-                variant="dark"
+                variant="light"
               />
             </div>
           </AnimateOnScroll>
