@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { monthlyFor } from "@/lib/donation-types";
 import { isValidIsraeliId } from "@/lib/israeli-id";
 import { brandLabel, detectCardBrand, isValidCardNumber } from "@/lib/card";
@@ -480,7 +480,30 @@ export default function DonateForm({
           onChange={(e) => setConsent(e.target.checked)}
           className="mt-0.5 w-4 h-4 accent-gold-500 shrink-0"
         />
-        <span>{t("consent")}</span>
+        <span>
+          {t.rich("consent", {
+            privacy: (chunks) => (
+              <Link
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gold-600"
+              >
+                {chunks}
+              </Link>
+            ),
+            terms: (chunks) => (
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gold-600"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
+        </span>
       </label>
       {errors.consent ? (
         <p className="text-xs text-red-600 -mt-3">{errors.consent}</p>

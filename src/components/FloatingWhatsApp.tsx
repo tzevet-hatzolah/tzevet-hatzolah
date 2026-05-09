@@ -1,11 +1,17 @@
+"use client";
+
+import { usePathname } from "@/i18n/navigation";
+
 type Props = {
   phoneNumber: string;
   label: string;
 };
 
 export default function FloatingWhatsApp({ phoneNumber, label }: Props) {
+  const pathname = usePathname();
   const digits = phoneNumber.replace(/\D/g, "");
   if (!digits) return null;
+  if (pathname.startsWith("/donate")) return null;
   const href = `https://wa.me/${digits}`;
 
   return (

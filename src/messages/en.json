@@ -101,7 +101,7 @@
       "exp_month_placeholder": "MM",
       "exp_year_placeholder": "YY",
       "cvv_label": "CVV",
-      "consent": "I confirm I've read the Privacy Policy and Terms of Use",
+      "consent": "I confirm I've read the <privacy>Privacy Policy</privacy> and <terms>Terms of Use</terms>",
       "submit_one_time": "Donate ₪{total}",
       "submit_recurring": "Confirm donation · ₪{monthly} × {payments}",
       "errors": {
