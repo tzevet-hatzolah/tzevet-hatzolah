@@ -40,7 +40,7 @@ function PrivacyContent() {
         <div className="max-w-3xl mx-auto">
           <h2>מדיניות פרטיות – צוות הצלה</h2>
           <p className="text-dark leading-[var(--line-height-body)] mt-4">
-            ארגון &quot;צוות הצלה&quot; (להלן: <strong>&quot;העמותה&quot;</strong>) מכבד את פרטיות המשתמשים באתר
+            ארגון &quot;צוות הצלה - עזרה ראשונה בישראל&quot; (להלן: <strong>&quot;העמותה&quot;</strong>) מכבד את פרטיות המשתמשים באתר
             (להלן: <strong>&quot;האתר&quot;</strong>). מסמך זה מפרט את הדרך שבה העמותה אוספת, משתמשת
             ומגינה על המידע שנמסר לה.
           </p>
