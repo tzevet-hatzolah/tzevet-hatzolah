@@ -7,6 +7,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import Ticker, { type TickerItem } from "@/components/Ticker";
 
 const navLinks = [
+  { href: "/", key: "home" },
   { href: "/contact", key: "contact" },
   { href: "/activities", key: "activities" },
   { href: "/stories", key: "stories" },
