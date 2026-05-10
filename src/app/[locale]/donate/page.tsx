@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { useTranslations } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
@@ -92,14 +93,36 @@ export default async function DonatePage({
       : null);
 
   const registrationNumber = settings?.registrationNumber ?? "580540565";
+  const sumitEnabled = Boolean(
+    process.env.NEXT_PUBLIC_SUMIT_COMPANY_ID &&
+      process.env.NEXT_PUBLIC_SUMIT_PUBLIC_KEY
+  );
+  const errorCode = typeof sp.error === "string" ? sp.error : null;
 
   return (
-    <DonateContent
-      locale={locale}
-      selection={selection}
-      item={item}
-      registrationNumber={registrationNumber}
-    />
+    <>
+      {sumitEnabled ? (
+        <>
+          {/* jQuery is required by Sumit's BindFormSubmit example. Until they
+              confirm framework-free usage, load it scoped to /donate only. */}
+          <Script
+            src="https://code.jquery.com/jquery-3.7.1.min.js"
+            strategy="afterInteractive"
+          />
+          <Script
+            src="https://app.sumit.co.il/scripts/payments.js"
+            strategy="afterInteractive"
+          />
+        </>
+      ) : null}
+      <DonateContent
+        locale={locale}
+        selection={selection}
+        item={item}
+        registrationNumber={registrationNumber}
+        errorCode={errorCode}
+      />
+    </>
   );
 }
 
@@ -108,11 +131,13 @@ function DonateContent({
   selection,
   item,
   registrationNumber,
+  errorCode,
 }: {
   locale: string;
   selection: { total: number; payments: number; itemSlug: string | null } | null;
   item: DonationItem | null;
   registrationNumber: string;
+  errorCode: string | null;
 }) {
   const t = useTranslations("donate");
 
@@ -139,6 +164,14 @@ function DonateContent({
 
       <section className="py-3 sm:py-5 px-4 sm:px-6 pb-24 md:pb-12">
         <div className="max-w-xl mx-auto space-y-6 sm:space-y-7">
+          {errorCode ? (
+            <div
+              role="alert"
+              className="rounded-[var(--radius-md)] border border-red-400/40 bg-red-50 px-4 py-3 text-sm text-red-800"
+            >
+              {t("charge_error")}
+            </div>
+          ) : null}
           {hasSelection && item ? (
             <>
               <AnimateOnScroll animation="fade-up">

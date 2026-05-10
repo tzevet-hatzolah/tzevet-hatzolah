@@ -6,6 +6,13 @@
  * if the product is two digits, its digits are summed (or equivalently, subtract 9).
  * The total must be divisible by 10.
  */
+
+// Marker used when a donor opts out of providing a real Israeli ID. Sumit's
+// citizenid field needs *something*; "999999999" is the standard placeholder
+// across Israeli payment integrations. Treated as opt-out everywhere — no
+// סעיף 46 receipt, never validated as a real ID.
+export const ID_OPT_OUT_MARKER = "999999999";
+
 export function isValidIsraeliId(input: string): boolean {
   if (typeof input !== "string") return false;
   const digits = input.replace(/\D/g, "");

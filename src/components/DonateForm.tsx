@@ -2,12 +2,28 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { monthlyFor } from "@/lib/donation-types";
-import { isValidIsraeliId } from "@/lib/israeli-id";
+import { isValidIsraeliId, ID_OPT_OUT_MARKER } from "@/lib/israeli-id";
 import { brandLabel, detectCardBrand, isValidCardNumber } from "@/lib/card";
 import { useIsClient } from "@/lib/use-is-client";
+
+const SUMIT_COMPANY_ID = process.env.NEXT_PUBLIC_SUMIT_COMPANY_ID ?? "";
+const SUMIT_PUBLIC_KEY = process.env.NEXT_PUBLIC_SUMIT_PUBLIC_KEY ?? "";
+const SUMIT_ENABLED = Boolean(SUMIT_COMPANY_ID && SUMIT_PUBLIC_KEY);
+
+type OfficeGuyGlobal = {
+  Payments?: {
+    BindFormSubmit?: (cfg: {
+      CompanyID: number;
+      APIPublicKey: string;
+      FormSelector?: string;
+      ResponseCallback?: (res: unknown) => void;
+      ResponseLanguage?: string;
+    }) => void;
+  };
+};
 
 type FormErrors = Partial<Record<
   | "name"
@@ -48,6 +64,12 @@ function bodyKeyFor(issue: ReceiptIssue):
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Alternative payment URLs — replace with real destinations when available.
+const BIT_URL = "#";
+const NEDARIM_URL = "#";
+const JGIVE_URL = "#";
+const BANK_TRANSFER_URL = "#";
+
 function isValidPhone(raw: string): boolean {
   const trimmed = raw.trim();
   if (!/^[\d+\s\-()]+$/.test(trimmed)) return false;
@@ -68,6 +90,7 @@ export default function DonateForm({
 }) {
   const t = useTranslations("donate.form");
   const router = useRouter();
+  const locale = useLocale();
 
   const [name, setName] = useState("");
   const [idNumber, setIdNumber] = useState("");
@@ -78,13 +101,100 @@ export default function DonateForm({
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [receiptIssue, setReceiptIssue] = useState<ReceiptIssue | null>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [sumitReady, setSumitReady] = useState(false);
 
+  const formRef = useRef<HTMLFormElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const idRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLInputElement>(null);
   const expMonthRef = useRef<HTMLInputElement>(null);
   const expYearRef = useRef<HTMLInputElement>(null);
   const cvvRef = useRef<HTMLInputElement>(null);
+  const optionsWrapRef = useRef<HTMLDivElement>(null);
+  // Set to true right before we deliberately let a submit event through to
+  // Sumit's Payments JS. The next onSubmit consumes the flag and skips
+  // re-validation so it doesn't loop.
+  const allowNativeSubmitRef = useRef(false);
+
+  useEffect(() => {
+    if (!SUMIT_ENABLED) return;
+    let cancelled = false;
+    function tryBind() {
+      if (cancelled) return;
+      const og = (window as unknown as { OfficeGuy?: OfficeGuyGlobal })
+        .OfficeGuy;
+      const jq = (window as unknown as { jQuery?: unknown }).jQuery;
+      if (!og?.Payments?.BindFormSubmit || !jq || !formRef.current) {
+        window.setTimeout(tryBind, 100);
+        return;
+      }
+      og.Payments.BindFormSubmit({
+        CompanyID: Number(SUMIT_COMPANY_ID),
+        APIPublicKey: SUMIT_PUBLIC_KEY,
+        FormSelector: '[data-og="form"]',
+        ResponseLanguage: "he",
+        ResponseCallback: (res) => {
+          // Sumit's auto-resubmit is suppressed when ResponseCallback is set,
+          // so we own the post-tokenization step. Inject the token as a
+          // hidden field and submit natively (form.submit() bypasses our
+          // React onSubmitCapture, so no re-tokenization loop).
+          const r = res as
+            | {
+                Status?: number;
+                Data?: { SingleUseToken?: string };
+                UserErrorMessage?: string | null;
+              }
+            | null;
+          const form = formRef.current;
+          if (r?.Status === 0 && r.Data?.SingleUseToken && form) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "og-token";
+            input.value = r.Data.SingleUseToken;
+            form.appendChild(input);
+            form.submit();
+            return;
+          }
+          console.warn("[sumit:tokenize_failed]", res);
+          // setSubmitting(false) re-renders, which lets React reconcile the
+          // controlled name/id inputs back to state — undoing any DOM-level
+          // override applied in onProceedAnyway.
+          setReceiptIssue(null);
+          setSubmitting(false);
+          setErrors({
+            submit: r?.UserErrorMessage || t("errors.charge_failed"),
+          });
+        },
+      });
+      setSumitReady(true);
+    }
+    tryBind();
+    return () => {
+      cancelled = true;
+    };
+    // `t` is stable from useTranslations — adding it would just re-bind on
+    // every render with no behavior change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!optionsOpen) return;
+    function handleDocClick(e: MouseEvent) {
+      if (!optionsWrapRef.current?.contains(e.target as Node)) {
+        setOptionsOpen(false);
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOptionsOpen(false);
+    }
+    document.addEventListener("mousedown", handleDocClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleDocClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [optionsOpen]);
 
   const monthly = monthlyFor(total, payments);
 
@@ -222,13 +332,13 @@ export default function DonateForm({
     return { nameMissing, idStatus };
   };
 
-  const submitDonation = async (sanitize: boolean) => {
+  const submitViaJson = async (sanitize: boolean) => {
     setErrors({});
     setSubmitting(true);
     const trimmedName = name.trim();
     const cleanName = sanitize && !isFullName(trimmedName) ? "" : trimmedName;
     const cleanId =
-      sanitize && !isValidIsraeliId(idNumber) ? "" : idNumber;
+      sanitize && !isValidIsraeliId(idNumber) ? ID_OPT_OUT_MARKER : idNumber;
     try {
       const res = await fetch("/api/donate/charge", {
         method: "POST",
@@ -237,6 +347,7 @@ export default function DonateForm({
           total,
           payments,
           itemSlug,
+          locale,
           donor: {
             name: cleanName,
             idNumber: cleanId,
@@ -258,10 +369,23 @@ export default function DonateForm({
     }
   };
 
-  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const stopHere = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+  };
+
+  const onSubmitCapture = (e: FormEvent<HTMLFormElement>) => {
+    if (allowNativeSubmitRef.current) {
+      // Programmatic resubmit after the receipt-warning "proceed anyway" path.
+      // Skip re-validation and let the event reach Sumit's listener.
+      allowNativeSubmitRef.current = false;
+      return;
+    }
+
     const fieldErrors = validateHard();
     if (Object.keys(fieldErrors).length > 0) {
+      stopHere(e);
       setErrors(fieldErrors);
       const cardOrder: Array<[CardField, React.RefObject<HTMLInputElement | null>]> = [
         ["cardNumber", cardRef],
@@ -281,16 +405,57 @@ export default function DonateForm({
 
     const issue = checkReceiptIssue();
     if (issue) {
+      stopHere(e);
       setReceiptIssue(issue);
       return;
     }
 
-    await submitDonation(false);
+    if (SUMIT_ENABLED) {
+      if (!sumitReady) {
+        stopHere(e);
+        setErrors({ submit: t("errors.network") });
+        return;
+      }
+      setSubmitting(true);
+      // Do NOT stop here — let the submit event propagate to Sumit's
+      // jQuery-bound listener on the form (target phase), which will
+      // tokenize the card and resubmit with og-token attached.
+      return;
+    }
+
+    // Stub mode (no Sumit envs): keep the JSON fetch path.
+    stopHere(e);
+    void submitViaJson(false);
   };
 
   const onProceedAnyway = async () => {
-    setReceiptIssue(null);
-    await submitDonation(true);
+    if (!SUMIT_ENABLED) {
+      // submitViaJson sanitizes the JSON body locally; React state stays as
+      // the donor typed it, so no 999999999 ever appears in the visible field.
+      setReceiptIssue(null);
+      await submitViaJson(true);
+      return;
+    }
+    if (!sumitReady) {
+      setReceiptIssue(null);
+      setErrors({ submit: t("errors.network") });
+      return;
+    }
+    // Override the visible identity inputs at the DOM level (not React state)
+    // so Sumit's BindFormSubmit reads the opt-out marker, but the donor never
+    // sees 999999999 in their ID field. The modal stays mounted to cover the
+    // form during tokenization; on success Sumit navigates away, on failure
+    // the ResponseCallback closes the modal and React reconciles the
+    // controlled inputs back to state.
+    if (!isFullName(name.trim()) && nameRef.current) {
+      nameRef.current.value = "";
+    }
+    if (!isValidIsraeliId(idNumber) && idRef.current) {
+      idRef.current.value = ID_OPT_OUT_MARKER;
+    }
+    setSubmitting(true);
+    allowNativeSubmitRef.current = true;
+    formRef.current?.requestSubmit();
   };
 
   const onGoFix = () => {
@@ -315,7 +480,35 @@ export default function DonateForm({
 
   return (
     <>
-      <form onSubmit={onSubmit} noValidate className="space-y-5 sm:space-y-6">
+      <form
+        ref={formRef}
+        onSubmitCapture={onSubmitCapture}
+        onSubmit={(e) => {
+          // Belt-and-suspenders: in stub mode, never let a submit through to
+          // the browser default — keeps card fields off the wire even if
+          // hydration hasn't finished or Sumit's listener isn't bound.
+          if (!SUMIT_ENABLED) e.preventDefault();
+        }}
+        // Sumit's BindFormSubmit binds to forms marked with data-og="form".
+        data-og="form"
+        {...(SUMIT_ENABLED
+          ? { action: "/api/donate/charge", method: "post" }
+          : {})}
+        noValidate
+        className="space-y-5 sm:space-y-6"
+      >
+      {/* Mirror the donation parameters into the form post body so the
+          server-side handler has everything it needs after Sumit's
+          tokenization round-trip. */}
+      <input type="hidden" name="total" value={total} readOnly />
+      <input type="hidden" name="payments" value={payments} readOnly />
+      <input
+        type="hidden"
+        name="itemSlug"
+        value={itemSlug ?? ""}
+        readOnly
+      />
+      <input type="hidden" name="locale" value={locale} readOnly />
       <fieldset className="space-y-3 sm:space-y-4">
         <legend className="text-sm font-[number:var(--font-weight-bold)] text-charcoal mb-2">
           {t("donor_section")}
@@ -325,6 +518,7 @@ export default function DonateForm({
           <input
             ref={nameRef}
             type="text"
+            name="name"
             autoComplete="name"
             placeholder={t("name_placeholder")}
             value={name}
@@ -337,10 +531,18 @@ export default function DonateForm({
           />
         </Field>
 
-        <Field label={t("id_label")} helper={t("id_helper")} error={errors.idNumber}>
+        <Field
+          label={t("id_label")}
+          helper={t("id_helper")}
+          error={errors.idNumber}
+          tooltip={t("id_tooltip")}
+          tooltipAria={t("id_tooltip_aria")}
+        >
           <input
             ref={idRef}
             type="text"
+            name="citizenid"
+            data-og="citizenid"
             inputMode="numeric"
             autoComplete="off"
             value={idNumber}
@@ -358,6 +560,7 @@ export default function DonateForm({
           <Field label={t("email_label")} error={errors.email}>
             <input
               type="email"
+              name="email"
               autoComplete="email"
               dir="ltr"
               value={email}
@@ -373,6 +576,7 @@ export default function DonateForm({
           <Field label={t("phone_label")} error={errors.phone}>
             <input
               type="tel"
+              name="phone"
               autoComplete="tel"
               dir="ltr"
               value={phone}
@@ -517,11 +721,85 @@ export default function DonateForm({
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || (SUMIT_ENABLED && !sumitReady)}
         className="btn-donate w-full text-base sm:text-lg py-3.5 sm:py-4 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {submitting ? "…" : submitLabel}
       </button>
+
+      <div className="flex items-center gap-3" aria-hidden>
+        <span className="h-px flex-1 bg-dark/10" />
+        <span className="text-[11px] sm:text-xs text-muted uppercase tracking-wide">
+          {t("alt_or")}
+        </span>
+        <span className="h-px flex-1 bg-dark/10" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <a
+          href={BIT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-outline text-center text-sm sm:text-base py-3"
+        >
+          {t("alt_bit")}
+        </a>
+        <div ref={optionsWrapRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setOptionsOpen((v) => !v)}
+            aria-expanded={optionsOpen}
+            aria-haspopup="menu"
+            className="btn-outline w-full text-sm sm:text-base py-3 inline-flex items-center justify-center gap-1.5"
+          >
+            <span>{t("alt_more")}</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${optionsOpen ? "rotate-180" : ""}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+          {optionsOpen ? (
+            <div
+              role="menu"
+              className="absolute z-20 inset-x-0 bottom-full mb-1 rounded-[var(--radius-md)] bg-warm-white border border-dark/10 shadow-[var(--shadow-elevated)] overflow-hidden"
+            >
+              <a
+                href={NEDARIM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                role="menuitem"
+                className="block px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start"
+              >
+                {t("alt_nedarim")}
+              </a>
+              <a
+                href={JGIVE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                role="menuitem"
+                className="block px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start border-t border-dark/5"
+              >
+                {t("alt_jgive")}
+              </a>
+              <a
+                href={BANK_TRANSFER_URL}
+                role="menuitem"
+                className="block px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start border-t border-dark/5"
+              >
+                {t("alt_bank")}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </div>
     </form>
 
     {receiptIssue ? (
@@ -532,6 +810,8 @@ export default function DonateForm({
         submitting={submitting}
       />
     ) : null}
+
+    {submitting && !receiptIssue ? <ProcessingModal /> : null}
     </>
   );
 }
@@ -556,14 +836,14 @@ function ReceiptWarningModal({
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onFix();
+      if (e.key === "Escape" && !submitting) onFix();
     };
     document.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = original;
       document.removeEventListener("keydown", onKey);
     };
-  }, [onFix]);
+  }, [onFix, submitting]);
 
   if (!isClient) return null;
 
@@ -583,49 +863,144 @@ function ReceiptWarningModal({
       onMouseDown={onBackdrop}
     >
       <div className="modal-panel relative w-full max-w-md bg-warm-white rounded-[var(--radius-xl)] shadow-[var(--shadow-elevated)] p-6 sm:p-7 my-auto">
-        <div className="flex items-start gap-3 mb-3">
-          <div className="shrink-0 w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12 9v4M12 17h.01" />
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            </svg>
+        {submitting ? (
+          <div className="flex flex-col items-center text-center py-2">
+            <div
+              className="w-12 h-12 rounded-full border-[3px] border-navy-100 border-t-navy-600 animate-spin"
+              aria-hidden
+            />
+            <h3
+              id="receipt-warn-title"
+              className="mt-5 text-lg sm:text-xl font-[number:var(--font-weight-black)] text-navy-950"
+            >
+              {t("processing_title")}
+            </h3>
+            <p
+              id="receipt-warn-body"
+              className="mt-2 text-sm text-dark/75 leading-relaxed"
+            >
+              {t("processing_body")}
+            </p>
+            <div className="mt-5 flex items-center gap-1.5" aria-hidden>
+              <span className="w-1.5 h-1.5 rounded-full bg-navy-400 animate-pulse" />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-navy-400 animate-pulse"
+                style={{ animationDelay: "150ms" }}
+              />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-navy-400 animate-pulse"
+                style={{ animationDelay: "300ms" }}
+              />
+            </div>
           </div>
-          <h3
-            id="receipt-warn-title"
-            className="text-lg sm:text-xl font-[number:var(--font-weight-black)] text-navy-950 mt-1"
-          >
-            {t("title")}
-          </h3>
-        </div>
+        ) : (
+          <>
+            <div className="flex items-start gap-3 mb-3">
+              <div className="shrink-0 w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 9v4M12 17h.01" />
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                </svg>
+              </div>
+              <h3
+                id="receipt-warn-title"
+                className="text-lg sm:text-xl font-[number:var(--font-weight-black)] text-navy-950 mt-1"
+              >
+                {t("title")}
+              </h3>
+            </div>
 
-        <p
-          id="receipt-warn-body"
-          className="text-sm text-dark/85 leading-relaxed mb-1"
+            <p
+              id="receipt-warn-body"
+              className="text-sm text-dark/85 leading-relaxed mb-1"
+            >
+              {t(bodyKey)}
+            </p>
+            <p className="text-sm text-dark/75 leading-relaxed mb-6">
+              {t("outro")}
+            </p>
+
+            <div className="flex flex-col gap-2.5">
+              <button
+                ref={fixBtnRef}
+                type="button"
+                onClick={onFix}
+                className="btn-primary w-full text-sm sm:text-base py-3"
+              >
+                {t("fix")}
+              </button>
+              <button
+                type="button"
+                onClick={onProceed}
+                className="w-full text-xs sm:text-sm text-dark/70 hover:text-charcoal underline-offset-2 hover:underline py-2"
+              >
+                {t.rich("proceed", {
+                  emph: (chunks) => (
+                    <span className="font-[number:var(--font-weight-bold)] text-charcoal underline">
+                      {chunks}
+                    </span>
+                  ),
+                })}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function ProcessingModal() {
+  const t = useTranslations("donate.form.warn");
+  const isClient = useIsClient();
+
+  useEffect(() => {
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, []);
+
+  if (!isClient) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="processing-title"
+      aria-describedby="processing-body"
+      aria-busy="true"
+    >
+      <div className="relative w-full max-w-md bg-warm-white rounded-[var(--radius-xl)] shadow-[var(--shadow-elevated)] p-7 sm:p-8 text-center">
+        <div
+          className="mx-auto w-12 h-12 rounded-full border-[3px] border-navy-100 border-t-navy-600 animate-spin"
+          aria-hidden
+        />
+        <h3
+          id="processing-title"
+          className="mt-5 text-lg sm:text-xl font-[number:var(--font-weight-black)] text-navy-950"
         >
-          {t(bodyKey)}
+          {t("processing_title")}
+        </h3>
+        <p
+          id="processing-body"
+          className="mt-2 text-sm text-dark/75 leading-relaxed"
+        >
+          {t("processing_body")}
         </p>
-        <p className="text-sm text-dark/75 leading-relaxed mb-6">
-          {t("outro")}
-        </p>
-
-        <div className="flex flex-col gap-2.5">
-          <button
-            ref={fixBtnRef}
-            type="button"
-            onClick={onFix}
-            disabled={submitting}
-            className="btn-primary w-full text-sm sm:text-base py-3 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {t("fix")}
-          </button>
-          <button
-            type="button"
-            onClick={onProceed}
-            disabled={submitting}
-            className="w-full text-xs sm:text-sm text-dark/70 hover:text-charcoal underline-offset-2 hover:underline py-2 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {submitting ? "…" : t("proceed")}
-          </button>
+        <div className="mt-5 flex items-center justify-center gap-1.5" aria-hidden>
+          <span className="w-1.5 h-1.5 rounded-full bg-navy-400 animate-pulse" />
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-navy-400 animate-pulse"
+            style={{ animationDelay: "150ms" }}
+          />
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-navy-400 animate-pulse"
+            style={{ animationDelay: "300ms" }}
+          />
         </div>
       </div>
     </div>,
@@ -638,20 +1013,29 @@ function Field({
   helper,
   error,
   className,
+  tooltip,
+  tooltipAria,
   children,
 }: {
   label: string;
   helper?: string;
   error?: string;
   className?: string;
+  tooltip?: string;
+  tooltipAria?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className={className ?? ""}>
       <div className="flex items-baseline justify-between gap-2 mb-1.5">
-        <label className="text-xs sm:text-sm font-[number:var(--font-weight-bold)] text-charcoal">
-          {label}
-        </label>
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs sm:text-sm font-[number:var(--font-weight-bold)] text-charcoal">
+            {label}
+          </label>
+          {tooltip ? (
+            <InfoTooltip text={tooltip} ariaLabel={tooltipAria ?? tooltip} />
+          ) : null}
+        </div>
         {helper ? (
           <span className="text-[10px] sm:text-[11px] text-muted">{helper}</span>
         ) : null}
@@ -661,6 +1045,54 @@ function Field({
         <p className="text-[11px] text-red-600 mt-1">{error}</p>
       ) : null}
     </div>
+  );
+}
+
+function InfoTooltip({ text, ariaLabel }: { text: string; ariaLabel: string }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleDocClick(e: MouseEvent) {
+      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleDocClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleDocClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  return (
+    <span ref={wrapperRef} className="relative inline-flex items-center">
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        className="w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-full bg-navy-50 text-navy-600 inline-flex items-center justify-center text-[10px] sm:text-[11px] font-[number:var(--font-weight-bold)] leading-none hover:bg-navy-100 focus:outline-none focus:ring-2 focus:ring-navy-400/40 transition-colors"
+      >
+        i
+      </button>
+      {open ? (
+        <span
+          role="tooltip"
+          className="absolute top-full mt-2 z-20 w-60 sm:w-64 rounded-[var(--radius-md)] bg-charcoal text-warm-white text-[11px] leading-relaxed font-[number:var(--font-weight-regular)] p-2.5 shadow-[var(--shadow-elevated)]"
+          style={{ insetInlineStart: "-0.5rem" }}
+        >
+          {text}
+        </span>
+      ) : null}
+    </span>
   );
 }
 

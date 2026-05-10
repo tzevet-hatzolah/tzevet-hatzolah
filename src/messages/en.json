@@ -80,6 +80,7 @@
     }
   },
   "donate": {
+    "charge_error": "Payment was not completed. Please check your card details and try again, or contact us.",
     "summary": {
       "heading": "Your selection",
       "edit": "Edit",
@@ -93,6 +94,8 @@
       "name_placeholder": "First and last name",
       "id_label": "Israeli ID number",
       "id_helper": "Required for a tax-deductible (Section 46) receipt",
+      "id_tooltip": "The Israeli Tax Authority requires the donor's ID number to issue a Section 46 tax-deductible receipt. Your ID is stored securely and never shared with third parties.",
+      "id_tooltip_aria": "More information about the ID number",
       "email_label": "Email",
       "phone_label": "Phone",
       "payment_section": "Payment details",
@@ -104,6 +107,12 @@
       "consent": "I confirm I've read the <privacy>Privacy Policy</privacy> and <terms>Terms of Use</terms>",
       "submit_one_time": "Donate ₪{total}",
       "submit_recurring": "Confirm donation · ₪{monthly} × {payments}",
+      "alt_or": "or",
+      "alt_bit": "Donate via Bit",
+      "alt_more": "More options",
+      "alt_nedarim": "Nedarim",
+      "alt_jgive": "Jgive",
+      "alt_bank": "Bank transfer",
       "errors": {
         "required": "Required",
         "full_name": "Please enter your first and last name",
@@ -125,8 +134,10 @@
         "body_name_missing_id_missing": "No name or ID was entered. Without these details, we cannot issue a tax-deductible (Section 46) receipt.",
         "body_name_missing_id_invalid": "No full name was entered, and the ID you entered is not valid. Without valid details, we cannot issue a tax-deductible (Section 46) receipt.",
         "outro": "You can proceed with the donation without a receipt, or go back to complete the details.",
-        "proceed": "Proceed without receipt",
-        "fix": "Go back to complete the details"
+        "proceed": "Proceed with an <emph>anonymous donation</emph> without a receipt",
+        "fix": "Go back to complete the details",
+        "processing_title": "Processing your donation…",
+        "processing_body": "Verifying your payment details with our processor. Please don't close this window."
       }
     },
     "trust_strip": {
