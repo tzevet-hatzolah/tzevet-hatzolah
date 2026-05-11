@@ -7,6 +7,8 @@ import {
   DONATION_MIN_MONTHLY,
   DONATION_MIN_ONE_TIME,
 } from "@/lib/donation-types";
+import PaymentMethods from "@/components/PaymentMethods";
+import { paypalDonateUrl } from "@/lib/payment-links";
 
 export type PickerMode = "one_time" | "monthly";
 
@@ -31,6 +33,8 @@ export default function DonationAmountPicker({
   onCustomMonthsModeChange,
   onCustomMonthsRawChange,
   onContinue,
+  onBit,
+  onNedarim,
   trustSlot,
 }: {
   mode: PickerMode;
@@ -47,7 +51,9 @@ export default function DonationAmountPicker({
   onCustomRawChange: (raw: string) => void;
   onCustomMonthsModeChange: (custom: boolean) => void;
   onCustomMonthsRawChange: (raw: string) => void;
-  onContinue?: () => void;
+  onContinue: () => void;
+  onBit: () => void;
+  onNedarim: () => void;
   trustSlot?: ReactNode;
 }) {
   const t = useTranslations("donate.picker");
@@ -251,8 +257,8 @@ export default function DonationAmountPicker({
         </>
       ) : null}
 
-      <div className="mt-3 pt-3 border-t border-dark/10 md:flex md:items-center md:justify-between md:gap-4">
-        <div className="text-sm sm:text-base text-charcoal font-[number:var(--font-weight-bold)] leading-relaxed">
+      <div className="mt-3 pt-3 border-t border-dark/10">
+        <div className="text-sm sm:text-base text-charcoal font-[number:var(--font-weight-bold)] leading-relaxed mb-3">
           {mode === "monthly"
             ? t("monthly_helper", {
                 monthly: amount.toLocaleString("he-IL"),
@@ -261,14 +267,13 @@ export default function DonationAmountPicker({
               })
             : t("one_time_helper", { total: amount.toLocaleString("he-IL") })}
         </div>
-        <button
-          type="button"
-          onClick={onContinue}
-          className="hidden md:inline-flex shrink-0 items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-l from-gold-300 to-gold-500 text-navy-950 text-sm font-[number:var(--font-weight-bold)] shadow-md hover:shadow-lg transition-all duration-200"
-        >
-          <span>{t("continue")}</span>
-          <span aria-hidden="true">↓</span>
-        </button>
+        <PaymentMethods
+          isRecurring={mode === "monthly"}
+          paypalUrl={paypalDonateUrl(amount)}
+          onCredit={onContinue}
+          onBit={onBit}
+          onNedarim={onNedarim}
+        />
       </div>
 
       {trustSlot ? <div className="mt-4">{trustSlot}</div> : null}

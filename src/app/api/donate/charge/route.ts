@@ -24,7 +24,9 @@ function validate(p: ChargePayload): string | null {
   if (!Number.isFinite(p.payments) || p.payments < 1 || p.payments > 36)
     return "invalid_payments";
   if (!EMAIL_RE.test(p.donor.email)) return "invalid_email";
-  if (!PHONE_RE.test(p.donor.phone)) return "invalid_phone";
+  if (p.donor.phone.length > 0 && !PHONE_RE.test(p.donor.phone)) {
+    return "invalid_phone";
+  }
   // name + idNumber are soft (donor may have opted out of Section 46 receipt).
   // The opt-out marker bypasses checksum validation by design.
   if (

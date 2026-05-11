@@ -31,6 +31,32 @@ export function brandLabel(brand: CardBrand | null): string | null {
   return brand ? BRAND_LABELS[brand] : null;
 }
 
+function groupSizes(brand: CardBrand | null): number[] {
+  if (brand === "amex") return [4, 6, 5];
+  if (brand === "diners") return [4, 6, 4];
+  return [4, 4, 4, 4, 3];
+}
+
+export function maxCardDigits(brand: CardBrand | null): number {
+  if (brand === "amex") return 15;
+  if (brand === "diners") return 14;
+  return 19;
+}
+
+export function formatCardNumber(raw: string, brand: CardBrand | null): string {
+  const digits = raw.replace(/\D/g, "").slice(0, maxCardDigits(brand));
+  const sizes = groupSizes(brand);
+  const parts: string[] = [];
+  let i = 0;
+  for (const len of sizes) {
+    if (i >= digits.length) break;
+    parts.push(digits.slice(i, i + len));
+    i += len;
+  }
+  if (i < digits.length) parts.push(digits.slice(i));
+  return parts.join(" ");
+}
+
 export function isValidCardNumber(raw: string): boolean {
   const n = raw.replace(/\D/g, "");
   if (n.length < 12 || n.length > 19) return false;

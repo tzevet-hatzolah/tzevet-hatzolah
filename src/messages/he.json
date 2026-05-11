@@ -124,6 +124,7 @@
       "consent": "אני מאשר/ת שקראתי את <privacy>מדיניות הפרטיות</privacy> ו<terms>תנאי השימוש</terms>",
       "submit_one_time": "תרמו ₪{total}",
       "submit_recurring": "אשרו תרומה · ₪{monthly} × {payments}",
+      "submit_bit": "לתרומת ₪{total} ב-bit",
       "alt_or": "או",
       "alt_bit": "תרומה ב-Bit",
       "alt_more": "אפשרויות נוספות",
@@ -169,7 +170,7 @@
     },
     "picker": {
       "mode_one_time": "חד-פעמית",
-      "mode_monthly": "חודשית",
+      "mode_monthly": "חודשית - ללא תפיסת מסגרת",
       "amount_label": "סכום חודשי",
       "currency_prefix": "₪",
       "custom_label": "סכום אחר",
@@ -181,7 +182,17 @@
       "monthly_helper": "₪{monthly} / חודש למשך {months} חודשים · סה״כ ₪{total}",
       "one_time_helper": "תרומה חד-פעמית · ₪{total}",
       "min_error": "סכום מינימלי ₪{min}",
-      "continue": "המשך לפרטי תשלום"
+      "continue": "לתשלום באשראי",
+      "pay_methods_label": "אמצעי תשלום",
+      "pay_credit": "לתשלום באשראי",
+      "pay_alt_or": "או באמצעות",
+      "pay_bit": "תרומה ב-Bit",
+      "pay_paypal": "תרומה ב-PayPal",
+      "pay_more": "אפשרויות נוספות",
+      "pay_nedarim": "נדרים פלוס",
+      "pay_jgive": "Jgive",
+      "pay_bank": "העברה בנקאית",
+      "paypal_recurring_hint": "בעמוד של PayPal — אל תשכחו לסמן ✓ את „להפוך זאת לתרומה פעם בחודש״."
     }
   },
   "contact": {

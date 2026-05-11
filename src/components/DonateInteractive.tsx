@@ -9,6 +9,7 @@ import DonationAmountPicker, {
   GENERAL_MONTHLY_COMMITMENT,
   ONE_TIME_PRESETS,
 } from "@/components/DonationAmountPicker";
+import NedarimIframeModal from "@/components/NedarimIframeModal";
 import TrustStrip from "@/components/TrustStrip";
 
 export default function DonateInteractive({
@@ -29,10 +30,13 @@ export default function DonateInteractive({
   const payments = mode === "monthly" ? months : 1;
 
   const formRef = useRef<HTMLDivElement>(null);
-  const [formRevealed, setFormRevealed] = useState(false);
+  const [formRevealed, setFormRevealed] = useState<null | "credit" | "bit">(
+    null
+  );
+  const [nedarimOpen, setNedarimOpen] = useState(false);
 
-  const handleContinue = () => {
-    setFormRevealed(true);
+  const revealForm = (mode: "credit" | "bit") => {
+    setFormRevealed(mode);
     requestAnimationFrame(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -61,7 +65,9 @@ export default function DonateInteractive({
           onCustomRawChange={setCustomRaw}
           onCustomMonthsModeChange={setCustomMonthsMode}
           onCustomMonthsRawChange={setCustomMonthsRaw}
-          onContinue={handleContinue}
+          onContinue={() => revealForm("credit")}
+          onBit={() => revealForm("bit")}
+          onNedarim={() => setNedarimOpen(true)}
           trustSlot={<TrustStrip registrationNumber={registrationNumber} />}
         />
       </AnimateOnScroll>
@@ -73,9 +79,27 @@ export default function DonateInteractive({
             id="donate-form"
             className="card p-5 sm:p-7 md:p-8 scroll-mt-40"
           >
-            <DonateForm total={total} payments={payments} itemSlug={null} />
+            <DonateForm
+              key={formRevealed}
+              total={total}
+              payments={payments}
+              itemSlug={null}
+              paymentMode={formRevealed}
+            />
           </div>
         </AnimateOnScroll>
+      ) : null}
+
+      {nedarimOpen ? (
+        <NedarimIframeModal
+          total={total}
+          payments={payments}
+          name=""
+          idNumber=""
+          email=""
+          phone=""
+          onClose={() => setNedarimOpen(false)}
+        />
       ) : null}
 
       {!formRevealed ? (
@@ -94,7 +118,7 @@ export default function DonateInteractive({
             </div>
             <button
               type="button"
-              onClick={handleContinue}
+              onClick={() => revealForm("credit")}
               className="shrink-0 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-gradient-to-l from-gold-300 to-gold-500 text-navy-950 text-sm font-[number:var(--font-weight-bold)] shadow-md"
             >
               <span>{t("continue")}</span>

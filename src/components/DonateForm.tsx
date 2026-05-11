@@ -6,8 +6,15 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { monthlyFor } from "@/lib/donation-types";
 import { isValidIsraeliId, ID_OPT_OUT_MARKER } from "@/lib/israeli-id";
-import { brandLabel, detectCardBrand, isValidCardNumber } from "@/lib/card";
+import {
+  brandLabel,
+  detectCardBrand,
+  formatCardNumber,
+  isValidCardNumber,
+  maxCardDigits,
+} from "@/lib/card";
 import { useIsClient } from "@/lib/use-is-client";
+import { EMAIL_RE, isFullName, isValidPhone } from "@/lib/donor-validation";
 
 const SUMIT_COMPANY_ID = process.env.NEXT_PUBLIC_SUMIT_COMPANY_ID ?? "";
 const SUMIT_PUBLIC_KEY = process.env.NEXT_PUBLIC_SUMIT_PUBLIC_KEY ?? "";
@@ -44,10 +51,6 @@ type CardField = "cardNumber" | "expMonth" | "expYear" | "cvv";
 type IdStatus = "ok" | "missing" | "invalid";
 type ReceiptIssue = { nameMissing: boolean; idStatus: IdStatus };
 
-function isFullName(raw: string): boolean {
-  return raw.trim().split(/\s+/).filter(Boolean).length >= 2;
-}
-
 function bodyKeyFor(issue: ReceiptIssue):
   | "body_name_missing"
   | "body_id_missing"
@@ -62,32 +65,19 @@ function bodyKeyFor(issue: ReceiptIssue):
   return "body_id_invalid";
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Alternative payment URLs — replace with real destinations when available.
-const BIT_URL = "#";
-const NEDARIM_URL = "#";
-const JGIVE_URL = "#";
-const BANK_TRANSFER_URL = "#";
-
-function isValidPhone(raw: string): boolean {
-  const trimmed = raw.trim();
-  if (!/^[\d+\s\-()]+$/.test(trimmed)) return false;
-  if (!/^[+\d(]/.test(trimmed)) return false;
-  if (!/[\d)]$/.test(trimmed)) return false;
-  const digits = trimmed.replace(/\D/g, "");
-  return digits.length >= 9 && digits.length <= 15;
-}
 
 export default function DonateForm({
   total,
   payments,
   itemSlug,
+  paymentMode = "credit",
 }: {
   total: number;
   payments: number;
   itemSlug?: string | null;
+  paymentMode?: "credit" | "bit";
 }) {
+  const isBit = paymentMode === "bit";
   const t = useTranslations("donate.form");
   const router = useRouter();
   const locale = useLocale();
@@ -101,7 +91,6 @@ export default function DonateForm({
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [receiptIssue, setReceiptIssue] = useState<ReceiptIssue | null>(null);
-  const [optionsOpen, setOptionsOpen] = useState(false);
   const [sumitReady, setSumitReady] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -111,7 +100,6 @@ export default function DonateForm({
   const expMonthRef = useRef<HTMLInputElement>(null);
   const expYearRef = useRef<HTMLInputElement>(null);
   const cvvRef = useRef<HTMLInputElement>(null);
-  const optionsWrapRef = useRef<HTMLDivElement>(null);
   // Set to true right before we deliberately let a submit event through to
   // Sumit's Payments JS. The next onSubmit consumes the flag and skips
   // re-validation so it doesn't loop.
@@ -178,24 +166,6 @@ export default function DonateForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!optionsOpen) return;
-    function handleDocClick(e: MouseEvent) {
-      if (!optionsWrapRef.current?.contains(e.target as Node)) {
-        setOptionsOpen(false);
-      }
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOptionsOpen(false);
-    }
-    document.addEventListener("mousedown", handleDocClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleDocClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [optionsOpen]);
-
   const monthly = monthlyFor(total, payments);
 
   const computeExpErrors = (
@@ -237,20 +207,29 @@ export default function DonateForm({
   const validateHard = (): FormErrors => {
     const e: FormErrors = {};
     if (!EMAIL_RE.test(email)) e.email = t("errors.invalid_email");
-    if (!isValidPhone(phone)) e.phone = t("errors.invalid_phone");
-    const rawCard = cardRef.current?.value ?? "";
-    if (!rawCard.trim()) {
-      e.cardNumber = t("errors.required");
-    } else if (!isValidCardNumber(rawCard)) {
-      e.cardNumber = t("errors.invalid_card");
+    if (isBit && phone.trim().length === 0) {
+      e.phone = t("errors.required");
+    } else if (phone.trim().length > 0 && !isValidPhone(phone)) {
+      e.phone = t("errors.invalid_phone");
     }
-    if (!cvvRef.current?.value.trim()) e.cvv = t("errors.required");
-    const exp = computeExpErrors(
-      expMonthRef.current?.value ?? "",
-      expYearRef.current?.value ?? ""
-    );
-    if (exp.expMonth) e.expMonth = exp.expMonth;
-    if (exp.expYear) e.expYear = exp.expYear;
+    if (isBit && !isFullName(name.trim())) {
+      e.name = t("errors.full_name");
+    }
+    if (!isBit) {
+      const rawCard = cardRef.current?.value ?? "";
+      if (!rawCard.trim()) {
+        e.cardNumber = t("errors.required");
+      } else if (!isValidCardNumber(rawCard)) {
+        e.cardNumber = t("errors.invalid_card");
+      }
+      if (!cvvRef.current?.value.trim()) e.cvv = t("errors.required");
+      const exp = computeExpErrors(
+        expMonthRef.current?.value ?? "",
+        expYearRef.current?.value ?? ""
+      );
+      if (exp.expMonth) e.expMonth = exp.expMonth;
+      if (exp.expYear) e.expYear = exp.expYear;
+    }
     if (!consent) e.consent = t("errors.consent_required");
     return e;
   };
@@ -273,7 +252,7 @@ export default function DonateForm({
         if (!EMAIL_RE.test(v)) return t("errors.invalid_email");
         return "";
       case "phone":
-        if (v.length === 0) return t("errors.required");
+        if (v.length === 0) return "";
         if (!isValidPhone(v)) return t("errors.invalid_phone");
         return "";
     }
@@ -290,11 +269,22 @@ export default function DonateForm({
     setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
   };
 
-  const handleCardChange = (field: CardField) => () => {
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleCardChange =
+    (field: CardField) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+      if (field === "expMonth" || field === "expYear" || field === "cvv") {
+        const max = field === "cvv" ? 4 : 2;
+        const digits = e.target.value.replace(/\D/g, "").slice(0, max);
+        if (e.target.value !== digits) e.target.value = digits;
+        if (field === "expMonth" && digits.length === 2) {
+          expYearRef.current?.focus();
+        } else if (field === "expYear" && digits.length === 2) {
+          cvvRef.current?.focus();
+        }
+      }
+    };
 
   const handleCardBlur =
     (field: CardField) => (e: React.FocusEvent<HTMLInputElement>) => {
@@ -339,27 +329,36 @@ export default function DonateForm({
     const cleanName = sanitize && !isFullName(trimmedName) ? "" : trimmedName;
     const cleanId =
       sanitize && !isValidIsraeliId(idNumber) ? ID_OPT_OUT_MARKER : idNumber;
+    const endpoint = isBit ? "/api/donate/bit/create" : "/api/donate/charge";
+    const payload: Record<string, unknown> = {
+      total,
+      itemSlug,
+      locale,
+      donor: {
+        name: cleanName,
+        idNumber: cleanId,
+        email,
+        phone,
+      },
+    };
+    if (!isBit) {
+      payload.payments = payments;
+      payload.method = paymentMode;
+    }
     try {
-      const res = await fetch("/api/donate/charge", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          total,
-          payments,
-          itemSlug,
-          locale,
-          donor: {
-            name: cleanName,
-            idNumber: cleanId,
-            email,
-            phone,
-          },
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         setErrors({ submit: t("errors.charge_failed") });
         setSubmitting(false);
+        return;
+      }
+      if (isBit && data.redirect) {
+        window.location.href = data.redirect;
         return;
       }
       router.push(data.redirect ?? "/todah");
@@ -407,6 +406,12 @@ export default function DonateForm({
     if (issue) {
       stopHere(e);
       setReceiptIssue(issue);
+      return;
+    }
+
+    if (isBit) {
+      stopHere(e);
+      void submitViaJson(false);
       return;
     }
 
@@ -470,13 +475,14 @@ export default function DonateForm({
     }, 50);
   };
 
-  const submitLabel =
-    payments === 1
-      ? t("submit_one_time", { total: total.toLocaleString("he-IL") })
-      : t("submit_recurring", {
-          monthly: monthly.toLocaleString("he-IL"),
-          payments,
-        });
+  const submitLabel = isBit
+    ? t("submit_bit", { total: total.toLocaleString("he-IL") })
+    : payments === 1
+    ? t("submit_one_time", { total: total.toLocaleString("he-IL") })
+    : t("submit_recurring", {
+        monthly: monthly.toLocaleString("he-IL"),
+        payments,
+      });
 
   return (
     <>
@@ -484,14 +490,15 @@ export default function DonateForm({
         ref={formRef}
         onSubmitCapture={onSubmitCapture}
         onSubmit={(e) => {
-          // Belt-and-suspenders: in stub mode, never let a submit through to
-          // the browser default — keeps card fields off the wire even if
-          // hydration hasn't finished or Sumit's listener isn't bound.
-          if (!SUMIT_ENABLED) e.preventDefault();
+          // Belt-and-suspenders: in stub mode or Bit mode, never let a submit
+          // through to the browser default — keeps card fields off the wire
+          // even if hydration hasn't finished or Sumit's listener isn't bound.
+          if (!SUMIT_ENABLED || isBit) e.preventDefault();
         }}
         // Sumit's BindFormSubmit binds to forms marked with data-og="form".
-        data-og="form"
-        {...(SUMIT_ENABLED
+        // Skip the marker in Bit mode so Sumit ignores the form entirely.
+        {...(isBit ? {} : { "data-og": "form" })}
+        {...(SUMIT_ENABLED && !isBit
           ? { action: "/api/donate/charge", method: "post" }
           : {})}
         noValidate
@@ -514,7 +521,7 @@ export default function DonateForm({
           {t("donor_section")}
         </legend>
 
-        <Field label={t("name_label")} error={errors.name}>
+        <Field label={t("name_label")} error={errors.name} required={isBit}>
           <input
             ref={nameRef}
             type="text"
@@ -557,7 +564,7 @@ export default function DonateForm({
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <Field label={t("email_label")} error={errors.email}>
+          <Field label={t("email_label")} error={errors.email} required>
             <input
               type="email"
               name="email"
@@ -573,7 +580,11 @@ export default function DonateForm({
               required
             />
           </Field>
-          <Field label={t("phone_label")} error={errors.phone}>
+          <Field
+            label={t("phone_label")}
+            error={errors.phone}
+            required={isBit}
+          >
             <input
               type="tel"
               name="phone"
@@ -586,14 +597,12 @@ export default function DonateForm({
               }}
               onBlur={handleBlur("phone")}
               className={`${inputClass(Boolean(errors.phone))} text-start`}
-              required
             />
           </Field>
         </div>
       </fieldset>
 
-      {/* Payment fields — wired with Sumit's data-og attributes for when keys land.
-          Currently passive (no Sumit JS loaded yet); /api/donate/charge stubs the charge. */}
+      {!isBit ? (
       <fieldset className="space-y-3 sm:space-y-4 pt-2">
         <legend className="text-sm font-[number:var(--font-weight-bold)] text-charcoal mb-2">
           {t("payment_section")}
@@ -603,6 +612,7 @@ export default function DonateForm({
           label={t("card_label")}
           helper={brandLabel(detectCardBrand(cardNumber)) ?? undefined}
           error={errors.cardNumber}
+          required
         >
           <input
             ref={cardRef}
@@ -615,12 +625,31 @@ export default function DonateForm({
             placeholder="0000 0000 0000 0000"
             value={cardNumber}
             onChange={(e) => {
-              setCardNumber(e.target.value);
+              const input = e.target;
+              const caret = input.selectionStart ?? input.value.length;
+              const digitsBeforeCaret = input.value
+                .slice(0, caret)
+                .replace(/\D/g, "").length;
+              const rawDigits = input.value.replace(/\D/g, "");
+              const nextBrand = detectCardBrand(rawDigits);
+              const formatted = formatCardNumber(rawDigits, nextBrand);
+              setCardNumber(formatted);
               if (errors.cardNumber) {
                 setErrors((prev) => ({ ...prev, cardNumber: undefined }));
               }
+              requestAnimationFrame(() => {
+                if (!cardRef.current) return;
+                let pos = 0;
+                let seen = 0;
+                while (pos < formatted.length && seen < digitsBeforeCaret) {
+                  if (/\d/.test(formatted[pos]!)) seen++;
+                  pos++;
+                }
+                cardRef.current.setSelectionRange(pos, pos);
+              });
             }}
             onBlur={handleCardBlur("cardNumber")}
+            maxLength={maxCardDigits(detectCardBrand(cardNumber)) + 4}
             className={`${inputClass(Boolean(errors.cardNumber))} text-start tabular-nums tracking-wide`}
           />
         </Field>
@@ -630,6 +659,7 @@ export default function DonateForm({
             label={t("exp_label")}
             className="col-span-2"
             error={errors.expMonth || errors.expYear}
+            required
           >
             <div className="grid grid-cols-2 gap-2">
               <input
@@ -660,7 +690,7 @@ export default function DonateForm({
               />
             </div>
           </Field>
-          <Field label={t("cvv_label")} error={errors.cvv}>
+          <Field label={t("cvv_label")} error={errors.cvv} required>
             <input
               ref={cvvRef}
               type="text"
@@ -676,12 +706,18 @@ export default function DonateForm({
           </Field>
         </div>
       </fieldset>
+      ) : null}
 
       <label className="flex items-start gap-3 text-xs sm:text-sm text-dark/85 leading-relaxed">
         <input
           type="checkbox"
           checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
+          onChange={(e) => {
+            setConsent(e.target.checked);
+            if (e.target.checked && errors.consent) {
+              setErrors((prev) => ({ ...prev, consent: undefined }));
+            }
+          }}
           className="mt-0.5 w-4 h-4 accent-gold-500 shrink-0"
         />
         <span>
@@ -721,85 +757,11 @@ export default function DonateForm({
 
       <button
         type="submit"
-        disabled={submitting || (SUMIT_ENABLED && !sumitReady)}
+        disabled={submitting || (!isBit && SUMIT_ENABLED && !sumitReady)}
         className="btn-donate w-full text-base sm:text-lg py-3.5 sm:py-4 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {submitting ? "…" : submitLabel}
       </button>
-
-      <div className="flex items-center gap-3" aria-hidden>
-        <span className="h-px flex-1 bg-dark/10" />
-        <span className="text-[11px] sm:text-xs text-muted uppercase tracking-wide">
-          {t("alt_or")}
-        </span>
-        <span className="h-px flex-1 bg-dark/10" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <a
-          href={BIT_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-outline text-center text-sm sm:text-base py-3"
-        >
-          {t("alt_bit")}
-        </a>
-        <div ref={optionsWrapRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setOptionsOpen((v) => !v)}
-            aria-expanded={optionsOpen}
-            aria-haspopup="menu"
-            className="btn-outline w-full text-sm sm:text-base py-3 inline-flex items-center justify-center gap-1.5"
-          >
-            <span>{t("alt_more")}</span>
-            <svg
-              className={`w-4 h-4 transition-transform ${optionsOpen ? "rotate-180" : ""}`}
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-          {optionsOpen ? (
-            <div
-              role="menu"
-              className="absolute z-20 inset-x-0 bottom-full mb-1 rounded-[var(--radius-md)] bg-warm-white border border-dark/10 shadow-[var(--shadow-elevated)] overflow-hidden"
-            >
-              <a
-                href={NEDARIM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                role="menuitem"
-                className="block px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start"
-              >
-                {t("alt_nedarim")}
-              </a>
-              <a
-                href={JGIVE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                role="menuitem"
-                className="block px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start border-t border-dark/5"
-              >
-                {t("alt_jgive")}
-              </a>
-              <a
-                href={BANK_TRANSFER_URL}
-                role="menuitem"
-                className="block px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start border-t border-dark/5"
-              >
-                {t("alt_bank")}
-              </a>
-            </div>
-          ) : null}
-        </div>
-      </div>
     </form>
 
     {receiptIssue ? (
@@ -1015,6 +977,7 @@ function Field({
   className,
   tooltip,
   tooltipAria,
+  required,
   children,
 }: {
   label: string;
@@ -1023,6 +986,7 @@ function Field({
   className?: string;
   tooltip?: string;
   tooltipAria?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -1031,6 +995,11 @@ function Field({
         <div className="flex items-center gap-1.5">
           <label className="text-xs sm:text-sm font-[number:var(--font-weight-bold)] text-charcoal">
             {label}
+            {required ? (
+              <span className="text-red-600 ms-0.5" aria-hidden>
+                *
+              </span>
+            ) : null}
           </label>
           {tooltip ? (
             <InfoTooltip text={tooltip} ariaLabel={tooltipAria ?? tooltip} />
