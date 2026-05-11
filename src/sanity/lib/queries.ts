@@ -14,6 +14,7 @@ export const siteSettingsQuery = groq`
     statsVolunteers,
     statsCallsPerYear,
     statsYearsActive,
+    statsResponseVehicles,
     accessibilityCoordinator,
     accessibilityCoordinatorEmail,
     accessibilityCoordinatorPhone
@@ -36,7 +37,7 @@ export const pageBySlugQuery = groq`
 
 // ── News Articles ──────────────────────────────────────────────────
 export const newsArticlesQuery = groq`
-  *[_type == "newsArticle"] | order(publishedAt desc) [$start...$end]{
+  *[_type == "newsArticle"] | order(publishedAt desc){
     _id,
     title,
     titleEn,
@@ -44,7 +45,9 @@ export const newsArticlesQuery = groq`
     publishedAt,
     mainImage,
     excerpt,
-    categories
+    categories,
+    "bodyText": pt::text(body),
+    "bodyTextEn": pt::text(bodyEn)
   }
 `;
 
@@ -176,4 +179,3 @@ export const donationItemBySlugQuery = groq`
     icon
   }
 `;
-

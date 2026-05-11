@@ -31,10 +31,7 @@ export default async function NewsPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const articles = await client.fetch<NewsArticle[]>(newsArticlesQuery, {
-    start: 0,
-    end: 50,
-  });
+  const articles = await client.fetch<NewsArticle[]>(newsArticlesQuery);
 
   return <NewsContent articles={articles ?? []} locale={locale} />;
 }

@@ -12,7 +12,8 @@ export type NewsCategory =
   | "home_accidents"
   | "children"
   | "medical"
-  | "violence"
+  | "fires"
+  | "security"
   | "terror"
   | "other";
 
@@ -24,6 +25,8 @@ export type NewsArticle = {
   publishedAt: string;
   mainImage?: { asset: { _ref: string }; alt?: string };
   excerpt?: string;
+  bodyText?: string;
+  bodyTextEn?: string;
   categories?: NewsCategory[];
 };
 
@@ -34,7 +37,8 @@ const FILTERABLE: Exclude<FilterKey, "all">[] = [
   "home_accidents",
   "children",
   "medical",
-  "violence",
+  "fires",
+  "security",
   "terror",
 ];
 
@@ -48,6 +52,8 @@ export default function NewsFilteredGrid({
   const t = useTranslations("news_page.filters");
   const isEn = locale === "en";
   const [active, setActive] = useState<FilterKey>("all");
+  const [query, setQuery] = useState("");
+  const hasQuery = query.trim().length > 0;
 
   const filters = useMemo(
     () => [
@@ -58,31 +64,64 @@ export default function NewsFilteredGrid({
   );
 
   const filtered = useMemo(() => {
-    if (active === "all") return articles;
-    return articles.filter((a) => a.categories?.includes(active));
-  }, [active, articles]);
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+
+    return articles.filter((article) => {
+      const matchesCategory =
+        active === "all" || article.categories?.includes(active);
+
+      if (!matchesCategory) return false;
+      if (!normalizedQuery) return true;
+
+      const searchableText = [
+        article.title,
+        article.titleEn,
+        article.excerpt,
+        article.bodyText,
+        article.bodyTextEn,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase();
+
+      return searchableText.includes(normalizedQuery);
+    });
+  }, [active, articles, query]);
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
-        {filters.map((f) => {
-          const isActive = f.key === active;
-          return (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setActive(f.key)}
-              className={`text-xs sm:text-sm font-[number:var(--font-weight-medium)] rounded-full px-3.5 sm:px-4 py-1.5 border-2 transition-all duration-300 ${
-                isActive
-                  ? "border-gold-500 bg-gold-300/15 text-charcoal font-[number:var(--font-weight-bold)]"
-                  : "border-dark/10 bg-white text-dark hover:border-gold-500/40 hover:bg-gold-50"
-              }`}
-              aria-pressed={isActive}
-            >
-              {f.label}
-            </button>
-          );
-        })}
+      <div className="mb-6 sm:mb-8 flex flex-col-reverse gap-3 md:flex-row md:items-center md:justify-start">
+        <label className="block w-full shrink-0 md:w-[190px]">
+          <span className="sr-only">{t("search_label")}</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("search_placeholder")}
+            className="w-full rounded-full border-2 border-dark/10 bg-white px-4 py-1.5 text-sm text-dark outline-none transition-colors duration-300 placeholder:text-muted/70 focus:border-gold-500"
+          />
+        </label>
+
+        <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1 md:overflow-visible md:pb-0">
+          {filters.map((f) => {
+            const isActive = f.key === active && !(f.key === "all" && hasQuery);
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setActive(f.key)}
+                className={`shrink-0 text-xs sm:text-sm font-[number:var(--font-weight-medium)] rounded-full px-3 sm:px-3.5 py-1 border-2 transition-all duration-300 ${
+                  isActive
+                    ? "border-gold-500 bg-gold-300/15 text-charcoal font-[number:var(--font-weight-bold)]"
+                    : "border-dark/10 bg-white text-dark hover:border-gold-500/40 hover:bg-gold-50"
+                }`}
+                aria-pressed={isActive}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {filtered.length === 0 ? (

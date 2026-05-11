@@ -23,6 +23,7 @@ type SiteSettings = {
   statsVolunteers?: number;
   statsCallsPerYear?: number;
   statsYearsActive?: number;
+  statsResponseVehicles?: number;
   registrationNumber?: string;
 } | null;
 
@@ -80,6 +81,7 @@ export default async function HomePage({
     volunteers: settings?.statsVolunteers ?? 500,
     callsPerYear: settings?.statsCallsPerYear ?? 10000,
     yearsActive: settings?.statsYearsActive ?? 15,
+    responseVehicles: settings?.statsResponseVehicles ?? 120,
   };
 
   const registrationNumber = settings?.registrationNumber ?? "580540565";
@@ -115,7 +117,12 @@ function HomeContent({
   missionVideoUrl,
   missionImage,
 }: {
-  stats: { volunteers: number; callsPerYear: number; yearsActive: number };
+  stats: {
+    volunteers: number;
+    callsPerYear: number;
+    yearsActive: number;
+    responseVehicles: number;
+  };
   latestNews: NewsArticle[];
   donationItems: DonationItem[];
   locale: string;
@@ -185,9 +192,10 @@ function HomeContent({
 
       {/* ==================== 2. STATS STRIP ==================== */}
       <section className="relative bg-gradient-to-r from-gold-300 via-gold-300 to-gold-500/80 py-5 sm:py-7 md:py-9 px-4 sm:px-6 shadow-[var(--shadow-glow-gold)]">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 sm:gap-4 text-center">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 text-center">
           <StatItem label={t("stats.volunteers")} value={stats.volunteers} prefix="+" locale={locale} />
           <StatItem label={t("stats.calls_per_year")} value={stats.callsPerYear} prefix="+" locale={locale} />
+          <StatItem label={t("stats.response_vehicles")} value={stats.responseVehicles} prefix="+" locale={locale} />
           <StatItem label={t("stats.years_active")} value={stats.yearsActive} locale={locale} />
         </div>
       </section>

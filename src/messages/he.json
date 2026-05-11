@@ -26,16 +26,17 @@
   },
   "home": {
     "hero": {
-      "badge": "ארגון חירום התנדבותי · בכוננות בכל רגע",
+      "badge": "צוות הצלה ·  נלחמים על החיים",
       "title_line1": "שתי דקות.",
       "title_line2": "זה הזמן שיש לנו.",
-      "subtitle": "בשניות הקריטיות שבין הקריאה לבין האמבולנס — מאות מתנדבים מצילים חיים.",
+      "subtitle": "בשניות הקריטיות שבין קבלת הקריאה להגעת האמבולנס — מאות מתנדבים מצילים חיים.",
       "cta_donate": "לשותפות בהצלת חיים",
       "cta_about": "קראו עוד"
     },
     "stats": {
       "volunteers": "מתנדבים בכוננות בכל רגע",
       "calls_per_year": "קריאות מטופלות בשנה",
+      "response_vehicles": "רכבי הצלה בכוננות",
       "years_active": "שנות פעילות מצילות חיים"
     },
     "mission": {
@@ -235,11 +236,14 @@
     "filters": {
       "all": "הכל",
       "empty": "לא נמצאו כתבות בקטגוריה זו",
+      "search_label": "חיפוש כתבות",
+      "search_placeholder": "חיפוש חופשי בכתבות",
       "traffic_label": "תאונות דרכים",
       "home_accidents_label": "תאונות ביתיות",
       "children_label": "ילדים",
       "medical_label": "אירוע רפואי",
-      "violence_label": "אלימות",
+      "fires_label": "שריפות",
+      "security_label": "אבטחות",
       "terror_label": "פח״ע"
     }
   },

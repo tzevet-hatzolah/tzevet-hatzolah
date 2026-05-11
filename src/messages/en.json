@@ -36,6 +36,7 @@
     "stats": {
       "volunteers": "Volunteers always on call",
       "calls_per_year": "Calls handled per year",
+      "response_vehicles": "Life-saving response vehicles",
       "years_active": "Years saving lives"
     },
     "mission": {
@@ -235,11 +236,14 @@
     "filters": {
       "all": "All",
       "empty": "No articles in this category",
+      "search_label": "Search articles",
+      "search_placeholder": "Search articles",
       "traffic_label": "Traffic accidents",
       "home_accidents_label": "Home accidents",
       "children_label": "Children",
       "medical_label": "Medical event",
-      "violence_label": "Violence",
+      "fires_label": "Fires",
+      "security_label": "Security details",
       "terror_label": "Terror attack"
     }
   },

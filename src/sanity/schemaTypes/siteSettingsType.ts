@@ -111,6 +111,12 @@ export const siteSettingsType = defineType({
       type: "number",
     }),
     defineField({
+      name: "statsResponseVehicles",
+      title: "Stats: Life-saving Response Vehicles",
+      type: "number",
+      description: "Number shown in the homepage stats strip for response vehicles.",
+    }),
+    defineField({
       name: "accessibilityCoordinator",
       title: "Accessibility Coordinator Name",
       type: "string",
