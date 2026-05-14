@@ -50,7 +50,7 @@
     },
     "mission": {
       "title": "Who We Are",
-      "text": "Tzevet Hatzolah is dedicated to saving lives and providing first-response medical assistance in real time, with dedication and professionalism.",
+      "text": "For decades, Tzevet Hatzolah has worked to save lives and provide first-response medical assistance in real time, with dedication and professionalism while respecting the volunteers' way of life.",
       "link": "Read our story"
     },
     "donate_block": {
@@ -194,9 +194,9 @@
       "monthly_helper": "₪{monthly} / month for {months} months · total ₪{total}",
       "one_time_helper": "One-time donation · ₪{total}",
       "min_error": "Minimum amount ₪{min}",
-      "continue": "Continue to payment details",
+      "continue": "Donate by credit card",
       "pay_methods_label": "Payment method",
-      "pay_credit": "Pay by credit card",
+      "pay_credit": "Donate by credit card",
       "pay_alt_or": "or via",
       "pay_bit": "Bit",
       "pay_paypal": "PayPal",

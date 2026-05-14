@@ -34,15 +34,37 @@ export default function Ticker({
       <button
         type="button"
         onClick={() => setPaused((current) => !current)}
-        className="absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-full border border-white/20 bg-navy-950/90 px-2 py-1 text-[11px] font-bold text-white/85 hover:bg-navy-800 hover:text-white"
+        className="absolute top-1/2 left-2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/5 text-white/55 transition-colors duration-200 hover:bg-white/10 hover:text-white focus-visible:text-white"
         aria-pressed={paused}
+        aria-label={paused ? resumeLabel : pauseLabel}
+        title={paused ? resumeLabel : pauseLabel}
       >
-        {paused ? resumeLabel : pauseLabel}
+        {paused ? (
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        ) : (
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+          </svg>
+        )}
       </button>
 
       <div
         ref={trackRef}
-        className="flex w-max whitespace-nowrap ticker-track ps-20"
+        className="flex w-max whitespace-nowrap ticker-track ps-12"
         style={{ animationPlayState: paused ? "paused" : "running" }}
       >
         {repeated.map((item, i) => {

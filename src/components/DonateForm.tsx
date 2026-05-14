@@ -1354,11 +1354,11 @@ function ReceiptWarningModal({
               <button
                 type="button"
                 onClick={onProceed}
-                className="w-full text-xs sm:text-sm text-dark/70 hover:text-charcoal underline-offset-2 hover:underline py-2"
+                className="w-full rounded-[var(--radius-md)] border border-navy-200 bg-white px-4 py-3 text-sm sm:text-base font-[number:var(--font-weight-bold)] text-navy-950 shadow-sm transition-all duration-200 hover:border-navy-400 hover:bg-navy-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-gold-500"
               >
                 {t.rich("proceed", {
                   emph: (chunks) => (
-                    <span className="font-[number:var(--font-weight-bold)] text-charcoal underline">
+                    <span className="font-[number:var(--font-weight-black)] underline decoration-navy-300 underline-offset-4">
                       {chunks}
                     </span>
                   ),
