@@ -22,23 +22,20 @@ const SUMIT_ENABLED = Boolean(SUMIT_COMPANY_ID && SUMIT_PUBLIC_KEY);
 const BANK_NUMBER_LENGTH = 2;
 const BANK_BRANCH_LENGTH = 3;
 const BANK_ACCOUNT_MAX_LENGTH = 9;
-const BANK_LOGO_DOMAINS: Record<string, string> = {
-  "03": "eshbank.co.il",
-  "04": "bank-yahav.co.il",
-  "09": "israelpost.co.il",
-  "10": "bankleumi.co.il",
-  "11": "discountbank.co.il",
-  "12": "bankhapoalim.co.il",
-  "13": "unionbank.co.il",
-  "14": "bankotsar.co.il",
-  "17": "mercantile.co.il",
-  "18": "onezerobank.com",
-  "20": "mizrahi-tefahot.co.il",
-  "31": "fibi.co.il",
-  "34": "arab-israelibank.co.il",
-  "46": "bankmassad.co.il",
-  "52": "pagi.co.il",
-  "54": "bankjerusalem.co.il",
+const BANK_LOGOS: Record<string, string> = {
+  "03": "/bank-logos/esh.svg",
+  "04": "/bank-logos/yahav.svg",
+  "10": "/bank-logos/leumi.svg",
+  "11": "/bank-logos/discount.svg",
+  "12": "/bank-logos/hapoalim.svg",
+  "14": "/bank-logos/fibi.svg",
+  "17": "/bank-logos/fibi.svg",
+  "18": "/bank-logos/one-zero.svg",
+  "20": "/bank-logos/mizrahi-tefahot.svg",
+  "31": "/bank-logos/fibi.svg",
+  "46": "/bank-logos/fibi.svg",
+  "52": "/bank-logos/fibi.svg",
+  "54": "/bank-logos/jerusalem.svg",
 };
 
 type OfficeGuyGlobal = {
@@ -407,10 +404,7 @@ export default function DonateForm({
 
   const bankLogoFor = (bank: string): string => {
     const normalized = bank.padStart(BANK_NUMBER_LENGTH, "0");
-    const domain = BANK_LOGO_DOMAINS[normalized];
-    return domain
-      ? `url("https://logo.clearbit.com/${domain}"), url("https://www.google.com/s2/favicons?domain=${domain}&sz=64")`
-      : "";
+    return BANK_LOGOS[normalized] ? `url("${BANK_LOGOS[normalized]}")` : "";
   };
 
   const lookupBankDetails = async (bankValue: string, branchValue?: string) => {

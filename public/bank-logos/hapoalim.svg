@@ -1,0 +1,14 @@
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="1" y1="0.5" x2="0" y2="0.5">
+      <stop offset="0%" stop-color="#EBEBEB" />
+      <stop offset="100%" stop-color="#FFFFFF" />
+    </linearGradient>
+  </defs>
+
+  <rect width="500" height="500" rx="40" ry="40" fill="url(#bgGradient)"/>
+  
+  <rect x="125" y="125" width="250" height="250" rx="30" ry="30" 
+        fill="#EE1C25" 
+        transform="rotate(45 250 250)"/>
+</svg>

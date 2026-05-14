@@ -1,0 +1,14 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" rx="40" fill="#00A859"/>
+
+  <!-- Smile curve -->
+  <path d="
+    M 220 520
+    Q 512 760 804 520
+  "
+  fill="none"
+  stroke="white"
+  stroke-width="55"
+  stroke-linecap="round"/>
+</svg>
