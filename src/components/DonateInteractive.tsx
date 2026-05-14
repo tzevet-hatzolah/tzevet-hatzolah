@@ -42,6 +42,12 @@ export default function DonateInteractive({
     });
   };
 
+  const handleModeChange = (nextMode: PickerMode) => {
+    setMode(nextMode);
+    setFormRevealed(null);
+    setNedarimOpen(false);
+  };
+
   const stickySummary =
     mode === "monthly"
       ? `₪${amount.toLocaleString("he-IL")} × ${months}`
@@ -58,7 +64,7 @@ export default function DonateInteractive({
           customRaw={customRaw}
           customMonthsMode={customMonthsMode}
           customMonthsRaw={customMonthsRaw}
-          onModeChange={setMode}
+          onModeChange={handleModeChange}
           onAmountChange={setAmount}
           onMonthsChange={setMonths}
           onCustomModeChange={setCustomMode}
