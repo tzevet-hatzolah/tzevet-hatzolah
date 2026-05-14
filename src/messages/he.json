@@ -24,6 +24,15 @@
     "contact_email": "אימייל",
     "contact_address": "כתובת"
   },
+  "accessibility": {
+    "skip_to_content": "דלגו לתוכן המרכזי",
+    "main_navigation": "ניווט ראשי",
+    "mobile_navigation": "ניווט מובייל",
+    "open_menu": "פתח תפריט",
+    "close_menu": "סגור תפריט",
+    "pause_ticker": "עצור עדכונים",
+    "resume_ticker": "המשך עדכונים"
+  },
   "home": {
     "hero": {
       "badge": "צוות הצלה ·  נלחמים על החיים",
@@ -119,13 +128,25 @@
       "payment_section": "פרטי תשלום",
       "card_label": "מספר כרטיס",
       "exp_label": "תוקף",
+      "exp_month_label": "חודש תפוגה",
+      "exp_year_label": "שנת תפוגה",
       "exp_month_placeholder": "חודש",
       "exp_year_placeholder": "שנה",
       "cvv_label": "CVV",
+      "bank_section": "פרטי חשבון בנק",
+      "bank_helper": "לפני המעבר לאתר הבנק חשוב לוודא:",
+      "bank_notice_id_match": "מספר הזהות למעלה חייב להיות תואם לחשבון הבנק שתציינו כאן.",
+      "bank_notice_app_closed": "במידה ואפליקציית הבנק פתוחה ברקע, עליכם לסגור אותה לפני לחיצה על המשך.",
+      "bank_notice_joint_account": "חשבון משותף? מספר הזהות צריך להתאים לפרטי המשתמש באתר הבנק. אם מספר הזהות שייך לכם ובמעבר לבנק תזדהו עם פרטי משתמש של השותף בחשבון, הפעולה תיכשל.",
+      "bank_notice_discount": "בבנק דיסקונט ומרכנתיל, יש להזין את מספר החשבון הארוך ולא הקצר.",
+      "bank_number_label": "מספר בנק",
+      "bank_branch_label": "מספר סניף",
+      "bank_account_label": "מספר חשבון",
       "consent": "אני מאשר/ת שקראתי את <privacy>מדיניות הפרטיות</privacy> ו<terms>תנאי השימוש</terms>",
       "submit_one_time": "תרמו ₪{total}",
       "submit_recurring": "אשרו תרומה · ₪{monthly} × {payments}",
       "submit_bit": "לתרומת ₪{total} ב-bit",
+      "submit_bank": "לחץ לאישור העברה באתר הבנק",
       "alt_or": "או",
       "alt_bit": "תרומה ב-Bit",
       "alt_more": "אפשרויות נוספות",
@@ -139,11 +160,18 @@
         "invalid_email": "כתובת אימייל לא תקינה",
         "invalid_phone": "מספר טלפון לא תקין",
         "invalid_card": "מספר כרטיס לא תקין",
+        "invalid_bank_number": "מספר בנק חייב להיות 2 ספרות",
+        "invalid_bank_unknown": "מספר הבנק לא נמצא ברשימת בנק ישראל",
+        "unsupported_bank": "הבנק הזה לא נתמך בהעברה בנקאית בקליק",
+        "invalid_bank_branch": "מספר סניף חייב להיות 3 ספרות",
+        "invalid_bank_account": "מספר חשבון חייב להכיל 1–9 ספרות ולא אפסים בלבד",
+        "invalid_bank_branch_pair": "מספר הבנק והסניף לא נמצאו ברשימת בנק ישראל",
         "invalid_month": "חודש חייב להיות בין 1 ל-12",
         "expired_card": "תוקף הכרטיס פג",
         "consent_required": "יש לאשר את התנאים כדי להמשיך",
         "charge_failed": "התשלום נכשל. נסו שוב או צרו קשר.",
-        "network": "תקלה בחיבור. נסו שוב."
+        "network": "תקלה בחיבור. נסו שוב.",
+        "bank_unavailable": "לא הצלחנו לפתוח את ההעברה הבנקאית. בדקו את הפרטים ונסו שוב, או צרו קשר עם העמותה."
       },
       "warn": {
         "title": "שימו לב",
@@ -192,8 +220,24 @@
       "pay_more": "אפשרויות נוספות",
       "pay_nedarim": "נדרים פלוס",
       "pay_jgive": "Jgive",
-      "pay_bank": "העברה בנקאית",
+      "pay_bank": "להעברה בנקאית בקליק",
+      "pay_bank_details": "לפרטי חשבון להעברה",
       "paypal_recurring_hint": "בעמוד של PayPal — אל תשכחו לסמן ✓ את „להפוך זאת לתרומה פעם בחודש״."
+    },
+    "bank_details": {
+      "title": "פרטי חשבון להעברה",
+      "close": "סגור",
+      "copy": "העתקת הפרטים",
+      "copied": "הפרטים הועתקו",
+      "tax_refund_note": "לקבלת החזר מס שילחו אסמכתא, שם, ומספר תעודת זהות לכתובת: office@tzevethtzolah.com",
+      "account_name": "שם המוטב",
+      "account_name_value": "צוות הצלה עזרה ראשונה בישראל",
+      "bank": "בנק",
+      "bank_value": "מרכנתיל - 17",
+      "branch": "סניף",
+      "branch_value": "746",
+      "account": "מספר חשבון",
+      "account_value": "61528481"
     }
   },
   "contact": {

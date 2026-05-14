@@ -54,8 +54,7 @@ async function waitForMediaReady(containerId: string): Promise<void> {
 
 export async function publishToInstagram(
   message: BotMessage,
-  photoUrls: string[],
-  baseUrl: string
+  photoUrls: string[]
 ): Promise<PublishResult> {
   try {
     if (photoUrls.length === 0) {

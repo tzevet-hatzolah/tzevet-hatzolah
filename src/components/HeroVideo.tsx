@@ -12,8 +12,21 @@ export default function HeroVideo({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setReducedMotion(media.matches);
+    const rafId = requestAnimationFrame(updatePreference);
+    media.addEventListener("change", updatePreference);
+    return () => {
+      cancelAnimationFrame(rafId);
+      media.removeEventListener("change", updatePreference);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion) return;
     const video = videoRef.current;
     if (!video) return;
 
@@ -21,13 +34,15 @@ export default function HeroVideo({
     video.addEventListener("canplaythrough", onCanPlay);
 
     // If already ready (cached)
-    if (video.readyState >= 4) setLoaded(true);
+    if (video.readyState >= 4) {
+      requestAnimationFrame(() => setLoaded(true));
+    }
 
     return () => video.removeEventListener("canplaythrough", onCanPlay);
-  }, []);
+  }, [reducedMotion]);
 
   // No video — render poster as a still hero background
-  if (!videoUrl) {
+  if (!videoUrl || reducedMotion) {
     if (!posterUrl) return null;
     return (
       <Image

@@ -83,9 +83,13 @@ export default async function LocaleLayout({
     getTickerItems(locale),
   ]);
   const t = await getTranslations({ locale, namespace: "contact" });
+  const tA11y = await getTranslations({ locale, namespace: "accessibility" });
 
   return (
     <>
+      <a href="#main-content" className="skip-link">
+        {tA11y("skip_to_content")}
+      </a>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -93,7 +97,9 @@ export default async function LocaleLayout({
         }}
       />
       <Header tickerItems={tickerItems} />
-      {children}
+      <div id="main-content" tabIndex={-1}>
+        {children}
+      </div>
       <Footer />
       {settings?.whatsappNumber && (
         <FloatingWhatsApp

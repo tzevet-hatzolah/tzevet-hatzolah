@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // Handle callback queries (button presses)
     if (update.callback_query) {
-      await handleCallbackQuery(update.callback_query, baseUrl);
+      await handleCallbackQuery(update.callback_query);
       return NextResponse.json({ ok: true });
     }
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
         try {
           const platforms = await getUserPlatforms(group.senderId);
-          const results = await publishToAll(botMessage, baseUrl, { platforms });
+          const results = await publishToAll(botMessage, { platforms });
           await resetUserPlatforms(group.senderId);
           const summary = formatResultsSummary(results);
           await sendBotReply(group.chatId, summary);
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     if (isTextOnly) {
       // Text-only: publish to enabled platforms (minus Instagram), then ask about Instagram.
-      const results = await publishToAll(botMessage, baseUrl, {
+      const results = await publishToAll(botMessage, {
         skipInstagram: true,
         platforms,
       });
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
       );
     } else {
       // Has photos: publish to user's enabled platforms
-      const results = await publishToAll(botMessage, baseUrl, { platforms });
+      const results = await publishToAll(botMessage, { platforms });
       await resetUserPlatforms(senderId);
       const summary = formatResultsSummary(results);
       await sendBotReply(chatId, summary);
@@ -238,8 +238,7 @@ async function handleCallbackQuery(
       chat: { id: number };
       reply_markup?: { inline_keyboard: InlineKeyboardButton[][] };
     };
-  },
-  baseUrl: string
+  }
 ) {
   const data = callbackQuery.data;
   if (!data) return;
@@ -409,7 +408,7 @@ async function handleCallbackQuery(
     }
 
     const result = instagramPhotoUrls.length
-      ? await publishToInstagram(dummyMessage, instagramPhotoUrls, baseUrl)
+      ? await publishToInstagram(dummyMessage, instagramPhotoUrls)
       : {
           platform: "instagram" as const,
           success: false,

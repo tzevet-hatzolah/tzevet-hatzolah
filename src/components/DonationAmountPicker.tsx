@@ -34,6 +34,8 @@ export default function DonationAmountPicker({
   onCustomMonthsRawChange,
   onContinue,
   onBit,
+  onBank,
+  onBankDetails,
   onNedarim,
   trustSlot,
 }: {
@@ -53,6 +55,8 @@ export default function DonationAmountPicker({
   onCustomMonthsRawChange: (raw: string) => void;
   onContinue: () => void;
   onBit: () => void;
+  onBank: () => void;
+  onBankDetails: () => void;
   onNedarim: () => void;
   trustSlot?: ReactNode;
 }) {
@@ -272,6 +276,8 @@ export default function DonationAmountPicker({
           paypalUrl={paypalDonateUrl(amount)}
           onCredit={onContinue}
           onBit={onBit}
+          onBank={onBank}
+          onBankDetails={onBankDetails}
           onNedarim={onNedarim}
         />
       </div>

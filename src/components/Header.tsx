@@ -21,6 +21,7 @@ export default function Header({
   tickerItems?: TickerItem[];
 }) {
   const t = useTranslations("nav");
+  const tA11y = useTranslations("accessibility");
   const tHome = useTranslations("home.ticker");
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -59,7 +60,7 @@ export default function Header({
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" aria-label={tA11y("main_navigation")}>
           {navLinks.map(({ href, key }) => (
             <Link
               key={key}
@@ -69,6 +70,7 @@ export default function Header({
                   ? "text-white bg-white/10"
                   : "text-white/65 hover:text-white hover:bg-white/5"
               }`}
+              aria-current={pathname === href ? "page" : undefined}
             >
               {t(key)}
               {pathname === href && (
@@ -92,8 +94,9 @@ export default function Header({
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="text-white/80 hover:text-white p-1.5 rounded-[var(--radius-sm)] hover:bg-white/10 transition-all duration-200"
-            aria-label="Toggle menu"
+            aria-label={mobileOpen ? tA11y("close_menu") : tA11y("open_menu")}
             aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             <svg
               width="22"
@@ -126,7 +129,11 @@ export default function Header({
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <nav className="md:hidden bg-navy-950/98 backdrop-blur-lg border-t border-white/5 px-5 py-5 flex flex-col gap-1 animate-fade-in">
+        <nav
+          id="mobile-navigation"
+          className="md:hidden bg-navy-950/98 backdrop-blur-lg border-t border-white/5 px-5 py-5 flex flex-col gap-1 animate-fade-in"
+          aria-label={tA11y("mobile_navigation")}
+        >
           {navLinks.map(({ href, key }) => (
             <Link
               key={key}
@@ -137,6 +144,7 @@ export default function Header({
                   ? "text-white bg-white/10"
                   : "text-white/65 hover:text-white hover:bg-white/5"
               }`}
+              aria-current={pathname === href ? "page" : undefined}
             >
               {t(key)}
             </Link>
@@ -144,7 +152,11 @@ export default function Header({
         </nav>
       )}
       </div>
-      <Ticker items={items} />
+      <Ticker
+        items={items}
+        pauseLabel={tA11y("pause_ticker")}
+        resumeLabel={tA11y("resume_ticker")}
+      />
     </header>
   );
 }

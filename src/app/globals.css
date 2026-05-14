@@ -22,7 +22,7 @@
   --color-gold-50:  #FEFAE6;
   --color-gold-300: #F8E048;
   --color-gold-500: #C9A800;
-  --color-gold-700: #957B00;
+  --color-gold-700: #6F5A00;
   --color-gold-900: #5C4C00;
 
   /* --- Red (Donations / CTA / Urgency) --- */
@@ -35,7 +35,7 @@
   /* --- Neutrals --- */
   --color-warm-white: #F7F6F2;
   --color-stone:      #ECEAE3;
-  --color-muted:      #9B9A95;
+  --color-muted:      #66645F;
   --color-dark:       #44433F;
   --color-charcoal:   #1E1D1A;
 
@@ -142,6 +142,15 @@
     color: var(--color-navy-600);
   }
 
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--color-gold-500);
+    outline-offset: 3px;
+  }
+
+  :where([tabindex="-1"]):focus {
+    outline: none;
+  }
+
   ::selection {
     background-color: var(--color-navy-600);
     color: white;
@@ -153,6 +162,26 @@
    ============================================ */
 
 @layer components {
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    inset-inline-start: 0.75rem;
+    z-index: 1000;
+    transform: translateY(-160%);
+    border-radius: var(--radius-md);
+    background: var(--color-navy-950);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-elevated);
+    transition: transform 0.2s ease;
+  }
+
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    color: #ffffff;
+  }
 
   /* --- CTA Button (Donate) --- */
   .btn-donate {
@@ -523,10 +552,6 @@
   animation: hi-vis-pulse 1.6s var(--ease-out-expo) infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hi-vis-dot { animation: none; }
-}
-
 /* Navy-tinted duotone — applied to a wrapper around an <img>, the image
    is pushed toward the brand palette so chartreuse vests pop against navy. */
 .duotone-navy {
@@ -569,5 +594,27 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .modal-backdrop, .modal-panel { animation: none; }
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .scroll-hidden {
+    opacity: 1;
+  }
+
+  .ticker-track,
+  .hi-vis-dot,
+  .modal-backdrop,
+  .modal-panel {
+    animation: none !important;
+  }
 }

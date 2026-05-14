@@ -14,7 +14,6 @@ async function resolvePhotoUrls(message: BotMessage): Promise<string[]> {
 /** Publish a message to all platforms in parallel. */
 export async function publishToAll(
   message: BotMessage,
-  baseUrl: string,
   options?: { skipInstagram?: boolean; platforms?: Set<PlatformName> }
 ): Promise<PublishResult[]> {
   const enabled = options?.platforms;
@@ -58,7 +57,7 @@ export async function publishToAll(
 
   if (instagramWanted) {
     if (facebookPhotoUrls.length > 0) {
-      publishers.push(publishToInstagram(message, facebookPhotoUrls, baseUrl));
+      publishers.push(publishToInstagram(message, facebookPhotoUrls));
     } else if (telegramPhotoUrls.length > 0) {
       // Instagram can't fetch from Telegram/Vercel, so it depends on the
       // Facebook host-upload step. If that failed, surface the upstream

@@ -19,6 +19,27 @@ import { EMAIL_RE, isFullName, isValidPhone } from "@/lib/donor-validation";
 const SUMIT_COMPANY_ID = process.env.NEXT_PUBLIC_SUMIT_COMPANY_ID ?? "";
 const SUMIT_PUBLIC_KEY = process.env.NEXT_PUBLIC_SUMIT_PUBLIC_KEY ?? "";
 const SUMIT_ENABLED = Boolean(SUMIT_COMPANY_ID && SUMIT_PUBLIC_KEY);
+const BANK_NUMBER_LENGTH = 2;
+const BANK_BRANCH_LENGTH = 3;
+const BANK_ACCOUNT_MAX_LENGTH = 9;
+const BANK_LOGO_DOMAINS: Record<string, string> = {
+  "03": "eshbank.co.il",
+  "04": "bank-yahav.co.il",
+  "09": "israelpost.co.il",
+  "10": "bankleumi.co.il",
+  "11": "discountbank.co.il",
+  "12": "bankhapoalim.co.il",
+  "13": "unionbank.co.il",
+  "14": "bankotsar.co.il",
+  "17": "mercantile.co.il",
+  "18": "onezerobank.com",
+  "20": "mizrahi-tefahot.co.il",
+  "31": "fibi.co.il",
+  "34": "arab-israelibank.co.il",
+  "46": "bankmassad.co.il",
+  "52": "pagi.co.il",
+  "54": "bankjerusalem.co.il",
+};
 
 type OfficeGuyGlobal = {
   Payments?: {
@@ -41,12 +62,25 @@ type FormErrors = Partial<Record<
   | "expMonth"
   | "expYear"
   | "cvv"
+  | "bankNumber"
+  | "bankBranch"
+  | "bankAccount"
   | "consent"
   | "submit",
   string
 >>;
 
 type CardField = "cardNumber" | "expMonth" | "expYear" | "cvv";
+type BankField = "bankNumber" | "bankBranch" | "bankAccount";
+type PaymentMode = "credit" | "bit" | "bank";
+type BankLookupResponse = {
+  ok?: boolean;
+  bankKnown?: boolean;
+  bankSupported?: boolean;
+  bankName?: string | null;
+  branchKnown?: boolean | null;
+  error?: string;
+};
 
 type IdStatus = "ok" | "missing" | "invalid";
 type ReceiptIssue = { nameMissing: boolean; idStatus: IdStatus };
@@ -75,9 +109,11 @@ export default function DonateForm({
   total: number;
   payments: number;
   itemSlug?: string | null;
-  paymentMode?: "credit" | "bit";
+  paymentMode?: PaymentMode;
 }) {
   const isBit = paymentMode === "bit";
+  const isBank = paymentMode === "bank";
+  const isCredit = paymentMode === "credit";
   const t = useTranslations("donate.form");
   const router = useRouter();
   const locale = useLocale();
@@ -90,23 +126,31 @@ export default function DonateForm({
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [bankName, setBankName] = useState("");
+  const [bankLogoUrl, setBankLogoUrl] = useState("");
   const [receiptIssue, setReceiptIssue] = useState<ReceiptIssue | null>(null);
   const [sumitReady, setSumitReady] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const idRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLInputElement>(null);
   const expMonthRef = useRef<HTMLInputElement>(null);
   const expYearRef = useRef<HTMLInputElement>(null);
   const cvvRef = useRef<HTMLInputElement>(null);
+  const bankNumberRef = useRef<HTMLInputElement>(null);
+  const bankBranchRef = useRef<HTMLInputElement>(null);
+  const bankAccountRef = useRef<HTMLInputElement>(null);
+  const bankLookupRequestRef = useRef(0);
   // Set to true right before we deliberately let a submit event through to
   // Sumit's Payments JS. The next onSubmit consumes the flag and skips
   // re-validation so it doesn't loop.
   const allowNativeSubmitRef = useRef(false);
 
   useEffect(() => {
-    if (!SUMIT_ENABLED) return;
+    if (!SUMIT_ENABLED || !isCredit) return;
     let cancelled = false;
     function tryBind() {
       if (cancelled) return;
@@ -162,7 +206,8 @@ export default function DonateForm({
       cancelled = true;
     };
     // `t` is stable from useTranslations — adding it would just re-bind on
-    // every render with no behavior change.
+    // every render with no behavior change. The form is keyed by payment
+    // mode, so this effect runs fresh when credit mode mounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -204,6 +249,30 @@ export default function DonateForm({
     return out;
   };
 
+  const bankFieldError = (field: BankField, value: string): string | undefined => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return t("errors.required");
+    if (
+      field === "bankNumber" &&
+      (digits.length !== BANK_NUMBER_LENGTH || Number(digits) < 1)
+    ) {
+      return t("errors.invalid_bank_number");
+    }
+    if (
+      field === "bankBranch" &&
+      (digits.length !== BANK_BRANCH_LENGTH || Number(digits) < 1)
+    ) {
+      return t("errors.invalid_bank_branch");
+    }
+    if (
+      field === "bankAccount" &&
+      (digits.length > BANK_ACCOUNT_MAX_LENGTH || Number(digits) < 1)
+    ) {
+      return t("errors.invalid_bank_account");
+    }
+    return undefined;
+  };
+
   const validateHard = (): FormErrors => {
     const e: FormErrors = {};
     if (!EMAIL_RE.test(email)) e.email = t("errors.invalid_email");
@@ -215,7 +284,29 @@ export default function DonateForm({
     if (isBit && !isFullName(name.trim())) {
       e.name = t("errors.full_name");
     }
-    if (!isBit) {
+    if (isBank) {
+      if (!idNumber.trim()) {
+        e.idNumber = t("errors.required");
+      } else if (!isValidIsraeliId(idNumber)) {
+        e.idNumber = t("errors.invalid_id");
+      }
+      const bankNumberError = bankFieldError(
+        "bankNumber",
+        bankNumberRef.current?.value ?? ""
+      );
+      const bankBranchError = bankFieldError(
+        "bankBranch",
+        bankBranchRef.current?.value ?? ""
+      );
+      const bankAccountError = bankFieldError(
+        "bankAccount",
+        bankAccountRef.current?.value ?? ""
+      );
+      if (bankNumberError) e.bankNumber = bankNumberError;
+      if (bankBranchError) e.bankBranch = bankBranchError;
+      if (bankAccountError) e.bankAccount = bankAccountError;
+    }
+    if (isCredit) {
       const rawCard = cardRef.current?.value ?? "";
       if (!rawCard.trim()) {
         e.cardNumber = t("errors.required");
@@ -310,6 +401,113 @@ export default function DonateForm({
       setErrors((prev) => ({ ...prev, expMonth: exp.expMonth, expYear: exp.expYear }));
     };
 
+  const formatBankName = (value: string | null | undefined): string => {
+    return (value ?? "").trim();
+  };
+
+  const bankLogoFor = (bank: string): string => {
+    const normalized = bank.padStart(BANK_NUMBER_LENGTH, "0");
+    const domain = BANK_LOGO_DOMAINS[normalized];
+    return domain
+      ? `url("https://logo.clearbit.com/${domain}"), url("https://www.google.com/s2/favicons?domain=${domain}&sz=64")`
+      : "";
+  };
+
+  const lookupBankDetails = async (bankValue: string, branchValue?: string) => {
+    const bank = bankValue.replace(/\D/g, "");
+    const branch = (branchValue ?? bankBranchRef.current?.value ?? "").replace(
+      /\D/g,
+      ""
+    );
+    const requestId = bankLookupRequestRef.current + 1;
+    bankLookupRequestRef.current = requestId;
+
+    if (bank.length !== BANK_NUMBER_LENGTH || Number(bank) < 1) {
+      setBankName("");
+      setBankLogoUrl("");
+      return;
+    }
+
+    const params = new URLSearchParams({ bank });
+    if (branch.length === BANK_BRANCH_LENGTH) params.set("branch", branch);
+
+    try {
+      const res = await fetch(`/api/donate/bank/lookup?${params.toString()}`);
+      const data = (await res.json()) as BankLookupResponse;
+      if (bankLookupRequestRef.current !== requestId || !res.ok || !data.ok) {
+        return;
+      }
+
+      setBankName(formatBankName(data.bankName));
+      setBankLogoUrl(data.bankKnown ? bankLogoFor(bank) : "");
+      setErrors((prev) => {
+        const next = { ...prev };
+        if (data.bankKnown === false) {
+          next.bankNumber = t("errors.invalid_bank_unknown");
+        } else if (data.bankSupported === false) {
+          next.bankNumber = t("errors.unsupported_bank");
+        } else if (data.bankKnown) {
+          next.bankNumber = undefined;
+        }
+
+        if (branch.length === BANK_BRANCH_LENGTH) {
+          if (data.branchKnown === false) {
+            next.bankBranch = t("errors.invalid_bank_branch_pair");
+          } else if (data.branchKnown) {
+            next.bankBranch = undefined;
+          }
+        }
+        return next;
+      });
+    } catch {
+      // If the registry lookup is temporarily unavailable, the submit route
+      // still validates before sending the donor to the bank.
+    }
+  };
+
+  const handleBankChange =
+    (field: BankField) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const max =
+        field === "bankNumber"
+          ? BANK_NUMBER_LENGTH
+          : field === "bankBranch"
+          ? BANK_BRANCH_LENGTH
+          : BANK_ACCOUNT_MAX_LENGTH;
+      const digits = e.target.value.replace(/\D/g, "").slice(0, max);
+      if (e.target.value !== digits) e.target.value = digits;
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+      if (field === "bankNumber") {
+        bankLookupRequestRef.current += 1;
+        setBankName("");
+        setBankLogoUrl("");
+        setErrors((prev) => ({ ...prev, bankBranch: undefined }));
+        if (digits.length === BANK_NUMBER_LENGTH) {
+          void lookupBankDetails(digits);
+        }
+      } else if (field === "bankBranch") {
+        bankLookupRequestRef.current += 1;
+        const bank = bankNumberRef.current?.value ?? "";
+        if (digits.length === BANK_BRANCH_LENGTH) {
+          void lookupBankDetails(bank, digits);
+        }
+      }
+      if (field === "bankNumber" && digits.length === BANK_NUMBER_LENGTH) {
+        bankBranchRef.current?.focus();
+      } else if (field === "bankBranch" && digits.length === BANK_BRANCH_LENGTH) {
+        bankAccountRef.current?.focus();
+      }
+    };
+
+  const handleBankBlur =
+    (field: BankField) => (e: React.FocusEvent<HTMLInputElement>) => {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: bankFieldError(field, e.target.value),
+      }));
+    };
+
   const checkReceiptIssue = (): ReceiptIssue | null => {
     const nameMissing = !isFullName(name);
     const idStatus: IdStatus =
@@ -368,6 +566,88 @@ export default function DonateForm({
     }
   };
 
+  const submitBankTransfer = async () => {
+    setErrors({});
+    setSubmitting(true);
+    const focusBankError = (nextErrors: FormErrors) => {
+      const order: Array<[keyof FormErrors, React.RefObject<HTMLInputElement | null>]> = [
+        ["idNumber", idRef],
+        ["email", emailRef],
+        ["phone", phoneRef],
+        ["bankNumber", bankNumberRef],
+        ["bankBranch", bankBranchRef],
+        ["bankAccount", bankAccountRef],
+      ];
+      for (const [key, ref] of order) {
+        if (nextErrors[key]) {
+          ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          ref.current?.focus({ preventScroll: true });
+          return;
+        }
+      }
+    };
+    const serverBankErrors = (error: unknown): FormErrors | null => {
+      switch (error) {
+        case "invalid_id":
+          return { idNumber: t("errors.invalid_id") };
+        case "invalid_email":
+          return { email: t("errors.invalid_email") };
+        case "invalid_phone":
+          return { phone: t("errors.invalid_phone") };
+        case "invalid_bank":
+          return { bankNumber: t("errors.invalid_bank_number") };
+        case "invalid_bank_unknown":
+          return { bankNumber: t("errors.invalid_bank_unknown") };
+        case "unsupported_bank":
+          return { bankNumber: t("errors.unsupported_bank") };
+        case "invalid_branch":
+          return { bankBranch: t("errors.invalid_bank_branch") };
+        case "invalid_account":
+          return { bankAccount: t("errors.invalid_bank_account") };
+        case "invalid_bank_branch":
+          return { bankBranch: t("errors.invalid_bank_branch_pair") };
+        default:
+          return null;
+      }
+    };
+    try {
+      const res = await fetch("/api/donate/bank/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          total,
+          itemSlug,
+          locale,
+          donor: {
+            name: name.trim(),
+            idNumber,
+            email,
+            phone,
+          },
+          bank: {
+            number: bankNumberRef.current?.value ?? "",
+            branch: bankBranchRef.current?.value ?? "",
+            account: bankAccountRef.current?.value ?? "",
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok || !data.redirect) {
+        const nextErrors =
+          serverBankErrors((data as { error?: unknown } | null)?.error) ??
+          { submit: t("errors.bank_unavailable") };
+        setErrors(nextErrors);
+        focusBankError(nextErrors);
+        setSubmitting(false);
+        return;
+      }
+      window.location.href = data.redirect;
+    } catch {
+      setErrors({ submit: t("errors.network") });
+      setSubmitting(false);
+    }
+  };
+
   const stopHere = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -392,6 +672,23 @@ export default function DonateForm({
         ["expYear", expYearRef],
         ["cvv", cvvRef],
       ];
+      const bankOrder: Array<[BankField, React.RefObject<HTMLInputElement | null>]> = [
+        ["bankNumber", bankNumberRef],
+        ["bankBranch", bankBranchRef],
+        ["bankAccount", bankAccountRef],
+      ];
+      if (fieldErrors.idNumber) {
+        idRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        idRef.current?.focus({ preventScroll: true });
+        return;
+      }
+      for (const [key, ref] of bankOrder) {
+        if (fieldErrors[key]) {
+          ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          ref.current?.focus({ preventScroll: true });
+          return;
+        }
+      }
       for (const [key, ref] of cardOrder) {
         if (fieldErrors[key]) {
           ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -399,6 +696,12 @@ export default function DonateForm({
           break;
         }
       }
+      return;
+    }
+
+    if (isBank) {
+      stopHere(e);
+      void submitBankTransfer();
       return;
     }
 
@@ -477,6 +780,8 @@ export default function DonateForm({
 
   const submitLabel = isBit
     ? t("submit_bit", { total: total.toLocaleString("he-IL") })
+    : isBank
+    ? t("submit_bank")
     : payments === 1
     ? t("submit_one_time", { total: total.toLocaleString("he-IL") })
     : t("submit_recurring", {
@@ -493,12 +798,12 @@ export default function DonateForm({
           // Belt-and-suspenders: in stub mode or Bit mode, never let a submit
           // through to the browser default — keeps card fields off the wire
           // even if hydration hasn't finished or Sumit's listener isn't bound.
-          if (!SUMIT_ENABLED || isBit) e.preventDefault();
+          if (!SUMIT_ENABLED || !isCredit) e.preventDefault();
         }}
         // Sumit's BindFormSubmit binds to forms marked with data-og="form".
-        // Skip the marker in Bit mode so Sumit ignores the form entirely.
-        {...(isBit ? {} : { "data-og": "form" })}
-        {...(SUMIT_ENABLED && !isBit
+        // Skip the marker outside credit mode so Sumit ignores those forms.
+        {...(isCredit ? { "data-og": "form" } : {})}
+        {...(SUMIT_ENABLED && isCredit
           ? { action: "/api/donate/charge", method: "post" }
           : {})}
         noValidate
@@ -521,8 +826,9 @@ export default function DonateForm({
           {t("donor_section")}
         </legend>
 
-        <Field label={t("name_label")} error={errors.name} required={isBit}>
+        <Field id="donor-name" label={t("name_label")} error={errors.name} required={isBit}>
           <input
+            id="donor-name"
             ref={nameRef}
             type="text"
             name="name"
@@ -534,18 +840,23 @@ export default function DonateForm({
               clearError("name");
             }}
             onBlur={handleBlur("name")}
+            aria-invalid={errors.name ? "true" : "false"}
+            aria-describedby={errors.name ? "donor-name-error" : undefined}
             className={inputClass(Boolean(errors.name))}
           />
         </Field>
 
         <Field
+          id="donor-id"
           label={t("id_label")}
           helper={t("id_helper")}
           error={errors.idNumber}
           tooltip={t("id_tooltip")}
           tooltipAria={t("id_tooltip_aria")}
+          required={isBank}
         >
           <input
+            id="donor-id"
             ref={idRef}
             type="text"
             name="citizenid"
@@ -559,13 +870,17 @@ export default function DonateForm({
             }}
             onBlur={handleBlur("idNumber")}
             maxLength={9}
+            aria-invalid={errors.idNumber ? "true" : "false"}
+            aria-describedby={errors.idNumber ? "donor-id-error" : undefined}
             className={inputClass(Boolean(errors.idNumber))}
           />
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <Field label={t("email_label")} error={errors.email} required>
+          <Field id="donor-email" label={t("email_label")} error={errors.email} required>
             <input
+              id="donor-email"
+              ref={emailRef}
               type="email"
               name="email"
               autoComplete="email"
@@ -576,16 +891,21 @@ export default function DonateForm({
                 clearError("email");
               }}
               onBlur={handleBlur("email")}
+              aria-invalid={errors.email ? "true" : "false"}
+              aria-describedby={errors.email ? "donor-email-error" : undefined}
               className={`${inputClass(Boolean(errors.email))} text-start`}
               required
             />
           </Field>
           <Field
+            id="donor-phone"
             label={t("phone_label")}
             error={errors.phone}
             required={isBit}
           >
             <input
+              id="donor-phone"
+              ref={phoneRef}
               type="tel"
               name="phone"
               autoComplete="tel"
@@ -596,25 +916,29 @@ export default function DonateForm({
                 clearError("phone");
               }}
               onBlur={handleBlur("phone")}
+              aria-invalid={errors.phone ? "true" : "false"}
+              aria-describedby={errors.phone ? "donor-phone-error" : undefined}
               className={`${inputClass(Boolean(errors.phone))} text-start`}
             />
           </Field>
         </div>
       </fieldset>
 
-      {!isBit ? (
+      {isCredit ? (
       <fieldset className="space-y-3 sm:space-y-4 pt-2">
         <legend className="text-sm font-[number:var(--font-weight-bold)] text-charcoal mb-2">
           {t("payment_section")}
         </legend>
 
         <Field
+          id="card-number"
           label={t("card_label")}
           helper={brandLabel(detectCardBrand(cardNumber)) ?? undefined}
           error={errors.cardNumber}
           required
         >
           <input
+            id="card-number"
             ref={cardRef}
             type="text"
             inputMode="numeric"
@@ -650,12 +974,15 @@ export default function DonateForm({
             }}
             onBlur={handleCardBlur("cardNumber")}
             maxLength={maxCardDigits(detectCardBrand(cardNumber)) + 4}
+            aria-invalid={errors.cardNumber ? "true" : "false"}
+            aria-describedby={errors.cardNumber ? "card-number-error" : undefined}
             className={`${inputClass(Boolean(errors.cardNumber))} text-start tabular-nums tracking-wide`}
           />
         </Field>
 
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
           <Field
+            id="card-exp"
             label={t("exp_label")}
             className="col-span-2"
             error={errors.expMonth || errors.expYear}
@@ -663,6 +990,8 @@ export default function DonateForm({
           >
             <div className="grid grid-cols-2 gap-2">
               <input
+                id="card-exp"
+                aria-label={t("exp_month_label")}
                 ref={expMonthRef}
                 type="text"
                 inputMode="numeric"
@@ -673,9 +1002,12 @@ export default function DonateForm({
                 maxLength={2}
                 onChange={handleCardChange("expMonth")}
                 onBlur={handleCardBlur("expMonth")}
+                aria-invalid={errors.expMonth ? "true" : "false"}
+                aria-describedby={errors.expMonth || errors.expYear ? "card-exp-error" : undefined}
                 className={`${inputClass(Boolean(errors.expMonth))} text-center tabular-nums`}
               />
               <input
+                aria-label={t("exp_year_label")}
                 ref={expYearRef}
                 type="text"
                 inputMode="numeric"
@@ -683,15 +1015,18 @@ export default function DonateForm({
                 data-og="expirationyear"
                 name="expirationyear"
                 placeholder={t("exp_year_placeholder")}
-                maxLength={2}
+                maxLength={BANK_NUMBER_LENGTH}
                 onChange={handleCardChange("expYear")}
                 onBlur={handleCardBlur("expYear")}
+                aria-invalid={errors.expYear ? "true" : "false"}
+                aria-describedby={errors.expMonth || errors.expYear ? "card-exp-error" : undefined}
                 className={`${inputClass(Boolean(errors.expYear))} text-center tabular-nums`}
               />
             </div>
           </Field>
-          <Field label={t("cvv_label")} error={errors.cvv} required>
+          <Field id="card-cvv" label={t("cvv_label")} error={errors.cvv} required>
             <input
+              id="card-cvv"
               ref={cvvRef}
               type="text"
               inputMode="numeric"
@@ -701,6 +1036,8 @@ export default function DonateForm({
               maxLength={4}
               onChange={handleCardChange("cvv")}
               onBlur={handleCardBlur("cvv")}
+              aria-invalid={errors.cvv ? "true" : "false"}
+              aria-describedby={errors.cvv ? "card-cvv-error" : undefined}
               className={`${inputClass(Boolean(errors.cvv))} text-center tabular-nums`}
             />
           </Field>
@@ -708,8 +1045,135 @@ export default function DonateForm({
       </fieldset>
       ) : null}
 
+      {isBank ? (
+        <fieldset className="space-y-3 sm:space-y-4 pt-2">
+          <legend className="text-sm font-[number:var(--font-weight-bold)] text-charcoal mb-2">
+            {t("bank_section")}
+          </legend>
+          <div className="rounded-[var(--radius-md)] border border-gold-500/25 bg-gold-50/70 p-4 sm:p-5">
+            <p className="text-sm font-[number:var(--font-weight-bold)] text-navy-950 leading-relaxed">
+              {t("bank_helper")}
+            </p>
+            <div className="mt-3 space-y-2.5">
+              {[
+                t("bank_notice_id_match"),
+                t("bank_notice_app_closed"),
+                t("bank_notice_joint_account"),
+                t("bank_notice_discount"),
+              ].map((notice) => (
+                <div key={notice} className="flex items-start gap-3 text-sm text-dark/80 leading-relaxed">
+                  <span className="mt-[0.7em] h-2 w-2 shrink-0 -translate-y-1/2 rounded-full bg-gold-500 ring-4 ring-white" aria-hidden>
+                  </span>
+                  <span>{notice}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <Field
+              id="bank-number"
+              label={t("bank_number_label")}
+              error={errors.bankNumber}
+              required
+            >
+              <div>
+                <div className="relative">
+                  <input
+                    id="bank-number"
+                    ref={bankNumberRef}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    name="bankNumber"
+                    dir="ltr"
+                    maxLength={BANK_NUMBER_LENGTH}
+                    onChange={handleBankChange("bankNumber")}
+                    onBlur={handleBankBlur("bankNumber")}
+                    aria-invalid={errors.bankNumber ? "true" : "false"}
+                    aria-describedby={
+                      errors.bankNumber
+                        ? "bank-number-error"
+                        : bankName
+                        ? "bank-number-bank-name"
+                        : undefined
+                    }
+                    className={`${inputClass(Boolean(errors.bankNumber))} pr-12 text-start tabular-nums`}
+                  />
+                  {bankLogoUrl ? (
+                    <span
+                      className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center"
+                      aria-hidden
+                    >
+                      <span
+                        className="h-8 w-8 rounded-[10px] bg-warm-white bg-[length:24px_24px] bg-center bg-no-repeat shadow-sm ring-1 ring-dark/10"
+                        style={{ backgroundImage: bankLogoUrl }}
+                      />
+                    </span>
+                  ) : null}
+                </div>
+                {bankName ? (
+                  <p
+                    id="bank-number-bank-name"
+                    className="mt-1.5 truncate pr-3 text-right text-xs text-muted"
+                    dir="rtl"
+                  >
+                    {bankName}
+                  </p>
+                ) : null}
+              </div>
+            </Field>
+            <Field
+              id="bank-branch"
+              label={t("bank_branch_label")}
+              error={errors.bankBranch}
+              required
+            >
+              <input
+                id="bank-branch"
+                ref={bankBranchRef}
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                name="bankBranch"
+                dir="ltr"
+                maxLength={BANK_BRANCH_LENGTH}
+                onChange={handleBankChange("bankBranch")}
+                onBlur={handleBankBlur("bankBranch")}
+                aria-invalid={errors.bankBranch ? "true" : "false"}
+                aria-describedby={errors.bankBranch ? "bank-branch-error" : undefined}
+                className={`${inputClass(Boolean(errors.bankBranch))} text-start tabular-nums`}
+              />
+            </Field>
+            <Field
+              id="bank-account"
+              label={t("bank_account_label")}
+              error={errors.bankAccount}
+              required
+            >
+              <input
+                id="bank-account"
+                ref={bankAccountRef}
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                name="bankAccount"
+                dir="ltr"
+                maxLength={BANK_ACCOUNT_MAX_LENGTH}
+                onChange={handleBankChange("bankAccount")}
+                onBlur={handleBankBlur("bankAccount")}
+                aria-invalid={errors.bankAccount ? "true" : "false"}
+                aria-describedby={errors.bankAccount ? "bank-account-error" : undefined}
+                className={`${inputClass(Boolean(errors.bankAccount))} text-start tabular-nums`}
+              />
+            </Field>
+          </div>
+        </fieldset>
+      ) : null}
+
       <label className="flex items-start gap-3 text-xs sm:text-sm text-dark/85 leading-relaxed">
         <input
+          id="donation-consent"
           type="checkbox"
           checked={consent}
           onChange={(e) => {
@@ -718,6 +1182,8 @@ export default function DonateForm({
               setErrors((prev) => ({ ...prev, consent: undefined }));
             }
           }}
+          aria-invalid={errors.consent ? "true" : "false"}
+          aria-describedby={errors.consent ? "donation-consent-error" : undefined}
           className="mt-0.5 w-4 h-4 accent-gold-500 shrink-0"
         />
         <span>
@@ -746,18 +1212,18 @@ export default function DonateForm({
         </span>
       </label>
       {errors.consent ? (
-        <p className="text-xs text-red-600 -mt-3">{errors.consent}</p>
+        <p id="donation-consent-error" className="text-xs text-red-600 -mt-3" role="alert">{errors.consent}</p>
       ) : null}
 
       {errors.submit ? (
-        <div className="rounded-[var(--radius-md)] border border-red-400/40 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-[var(--radius-md)] border border-red-400/40 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
           {errors.submit}
         </div>
       ) : null}
 
       <button
         type="submit"
-        disabled={submitting || (!isBit && SUMIT_ENABLED && !sumitReady)}
+        disabled={submitting || (isCredit && SUMIT_ENABLED && !sumitReady)}
         className="btn-donate w-full text-base sm:text-lg py-3.5 sm:py-4 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {submitting ? "…" : submitLabel}
@@ -971,6 +1437,7 @@ function ProcessingModal() {
 }
 
 function Field({
+  id,
   label,
   helper,
   error,
@@ -980,6 +1447,7 @@ function Field({
   required,
   children,
 }: {
+  id?: string;
   label: string;
   helper?: string;
   error?: string;
@@ -993,7 +1461,10 @@ function Field({
     <div className={className ?? ""}>
       <div className="flex items-baseline justify-between gap-2 mb-1.5">
         <div className="flex items-center gap-1.5">
-          <label className="text-xs sm:text-sm font-[number:var(--font-weight-bold)] text-charcoal">
+          <label
+            htmlFor={id}
+            className="text-xs sm:text-sm font-[number:var(--font-weight-bold)] text-charcoal"
+          >
             {label}
             {required ? (
               <span className="text-red-600 ms-0.5" aria-hidden>
@@ -1011,7 +1482,9 @@ function Field({
       </div>
       {children}
       {error ? (
-        <p className="text-[11px] text-red-600 mt-1">{error}</p>
+        <p id={id ? `${id}-error` : undefined} className="text-[11px] text-red-600 mt-1" role="alert">
+          {error}
+        </p>
       ) : null}
     </div>
   );

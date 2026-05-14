@@ -27,8 +27,8 @@ export default function AnimatedCounter({
     ).matches;
 
     if (prefersReducedMotion) {
-      setDisplay(value);
-      return;
+      const rafId = requestAnimationFrame(() => setDisplay(value));
+      return () => cancelAnimationFrame(rafId);
     }
 
     let rafId: number | null = null;

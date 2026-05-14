@@ -22,7 +22,7 @@ export default function PageHeader({ title, subtitle, image, imageAlt }: Props) 
         <>
           <Image
             src={image}
-            alt={imageAlt ?? title}
+            alt={imageAlt ?? ""}
             fill
             priority
             sizes="100vw"

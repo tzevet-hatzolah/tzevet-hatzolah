@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
-  BANK_TRANSFER_URL,
   JGIVE_URL,
 } from "@/lib/payment-links";
 
@@ -13,6 +12,8 @@ type Props = {
   paypalUrl: string;
   onCredit: () => void;
   onBit: () => void;
+  onBank: () => void;
+  onBankDetails: () => void;
   onNedarim: () => void;
 };
 
@@ -21,6 +22,8 @@ export default function PaymentMethods({
   paypalUrl,
   onCredit,
   onBit,
+  onBank,
+  onBankDetails,
   onNedarim,
 }: Props) {
   const t = useTranslations("donate.picker");
@@ -77,7 +80,7 @@ export default function PaymentMethods({
         <TileLink href={paypalUrl} ariaLabel={t("pay_paypal")}>
           <PaypalMark />
         </TileLink>
-        <div ref={moreWrapRef} className="relative">
+        <div ref={moreWrapRef} className={`relative ${moreOpen ? "z-50" : ""}`}>
           <button
             type="button"
             onClick={() => setMoreOpen((v) => !v)}
@@ -93,7 +96,7 @@ export default function PaymentMethods({
           {moreOpen ? (
             <div
               role="menu"
-              className="absolute z-30 inset-x-0 top-full mt-1 rounded-[var(--radius-md)] bg-warm-white border border-dark/10 shadow-[var(--shadow-elevated)] overflow-hidden"
+              className="absolute z-50 inset-x-0 top-full mt-1 rounded-[var(--radius-md)] bg-warm-white border border-dark/10 shadow-[var(--shadow-elevated)] overflow-hidden"
             >
               <button
                 type="button"
@@ -116,13 +119,30 @@ export default function PaymentMethods({
                 {t("pay_jgive")}
               </a>
               {isRecurring ? null : (
-                <a
-                  href={BANK_TRANSFER_URL}
-                  role="menuitem"
-                  className="block px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start border-t border-dark/5"
-                >
-                  {t("pay_bank")}
-                </a>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      onBank();
+                    }}
+                    role="menuitem"
+                    className="block w-full px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start border-t border-dark/5"
+                  >
+                    {t("pay_bank")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      onBankDetails();
+                    }}
+                    role="menuitem"
+                    className="block w-full px-3.5 py-2.5 text-sm text-charcoal hover:bg-navy-50 text-start border-t border-dark/5"
+                  >
+                    {t("pay_bank_details")}
+                  </button>
+                </>
               )}
             </div>
           ) : null}

@@ -56,11 +56,14 @@ export default async function ContactPage({
             <div className="card p-5 sm:p-8 md:p-10">
               <form className="flex flex-col gap-4 sm:gap-5">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
+                  <label htmlFor="contact-name" className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
                     {t("name")}
                   </label>
                   <input
+                    id="contact-name"
+                    name="name"
                     type="text"
+                    autoComplete="name"
                     required
                     className="w-full border border-dark/10 rounded-[var(--radius-md)] px-3 sm:px-4 py-3 sm:py-3.5 text-dark bg-warm-white focus:outline-none focus:ring-2 focus:ring-navy-400/40 focus:border-navy-400 transition-all duration-300 text-sm sm:text-base"
                   />
@@ -68,31 +71,39 @@ export default async function ContactPage({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
+                    <label htmlFor="contact-email" className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
                       {t("email")}
                     </label>
                     <input
+                      id="contact-email"
+                      name="email"
                       type="email"
+                      autoComplete="email"
                       required
                       className="w-full border border-dark/10 rounded-[var(--radius-md)] px-3 sm:px-4 py-3 sm:py-3.5 text-dark bg-warm-white focus:outline-none focus:ring-2 focus:ring-navy-400/40 focus:border-navy-400 transition-all duration-300 text-sm sm:text-base"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
+                    <label htmlFor="contact-phone" className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
                       {t("phone")}
                     </label>
                     <input
+                      id="contact-phone"
+                      name="phone"
                       type="tel"
+                      autoComplete="tel"
                       className="w-full border border-dark/10 rounded-[var(--radius-md)] px-3 sm:px-4 py-3 sm:py-3.5 text-dark bg-warm-white focus:outline-none focus:ring-2 focus:ring-navy-400/40 focus:border-navy-400 transition-all duration-300 text-sm sm:text-base"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
+                  <label htmlFor="contact-message" className="block text-xs sm:text-sm font-medium text-charcoal mb-1 sm:mb-1.5">
                     {t("message")}
                   </label>
                   <textarea
+                    id="contact-message"
+                    name="message"
                     required
                     rows={5}
                     className="w-full border border-dark/10 rounded-[var(--radius-md)] px-3 sm:px-4 py-3 sm:py-3.5 text-dark bg-warm-white focus:outline-none focus:ring-2 focus:ring-navy-400/40 focus:border-navy-400 transition-all duration-300 resize-none text-sm sm:text-base"
@@ -120,7 +131,7 @@ export default async function ContactPage({
             <AnimateOnScroll animation="fade-up" delay={0}>
               <div className="card p-5 sm:p-7 group hover:border-navy-100 hover-lift">
                 <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-navy-50 flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-navy-100 transition-colors duration-300">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-navy-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-navy-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 </div>
                 <h3 className="font-bold text-charcoal mb-2 text-sm sm:text-base">פרטי התקשרות</h3>
                 <div className="flex flex-col gap-1.5 text-xs sm:text-sm text-dark/70">
@@ -143,7 +154,7 @@ export default async function ContactPage({
             <AnimateOnScroll animation="fade-up" delay={120}>
               <div className="card p-5 sm:p-7 group hover:border-navy-100 hover-lift">
                 <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-navy-50 flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-navy-100 transition-colors duration-300">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-navy-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-navy-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </div>
                 <h3 className="font-bold text-charcoal mb-2 text-sm sm:text-base">{t("whatsapp")}</h3>
                 {whatsappHref ? (

@@ -11,4 +11,3 @@ export function paypalDonateUrl(amount: number): string {
 }
 
 export const JGIVE_URL = "#";
-export const BANK_TRANSFER_URL = "#";
