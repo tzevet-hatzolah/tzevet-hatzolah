@@ -136,12 +136,12 @@ export default async function ContactPage({
                 <h3 className="font-bold text-charcoal mb-2 text-sm sm:text-base">פרטי התקשרות</h3>
                 <div className="flex flex-col gap-1.5 text-xs sm:text-sm text-dark/70">
                   {phone && (
-                    <a href={`tel:${phone.replace(/\s|-/g, "")}`} className="hover:text-navy-600 transition-colors">
+                    <a href={`tel:${phone.replace(/\s|-/g, "")}`} className="inline-flex min-h-6 items-center hover:text-navy-600 transition-colors">
                       {phone}
                     </a>
                   )}
                   {email && (
-                    <a href={`mailto:${email}`} className="hover:text-navy-600 transition-colors">
+                    <a href={`mailto:${email}`} className="inline-flex min-h-6 items-center hover:text-navy-600 transition-colors">
                       {email}
                     </a>
                   )}

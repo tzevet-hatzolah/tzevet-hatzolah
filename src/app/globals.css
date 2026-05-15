@@ -463,6 +463,7 @@
 
 .ticker-track {
   animation: ticker-scroll 300s linear infinite;
+  animation-direction: reverse;
 }
 
 @media (max-width: 640px) {

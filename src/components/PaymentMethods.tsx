@@ -232,9 +232,13 @@ function BitMark() {
 
 function PaypalMark() {
   return (
-    <span className="inline-flex items-baseline text-lg sm:text-xl leading-none font-black italic tracking-tight">
+    <span
+      dir="ltr"
+      aria-hidden="true"
+      className="inline-flex items-baseline text-lg sm:text-xl leading-none font-black italic tracking-tight"
+    >
       <span style={{ color: "#003087" }}>Pay</span>
-      <span style={{ color: "#009CDE" }}>Pal</span>
+      <span style={{ color: "#006EA6" }}>Pal</span>
     </span>
   );
 }

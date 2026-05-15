@@ -304,7 +304,7 @@ function ModeButton({
       className={`flex-1 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-[number:var(--font-weight-bold)] transition-all duration-200 ${
         active
           ? "bg-gradient-to-l from-gold-300 to-gold-500 text-navy-950 shadow-md"
-          : "text-dark/75 hover:text-charcoal"
+          : "text-dark hover:text-charcoal"
       }`}
     >
       {label}
