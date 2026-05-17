@@ -63,7 +63,7 @@ export function organizationSchema(settings: OrgSettings, locale: string) {
     name,
     ...(alternateName ? { alternateName } : {}),
     url: siteUrl,
-    logo: `${siteUrl}/logo.jpg`,
+    logo: `${siteUrl}/tzevethatzolah-logo.svg`,
     ...(settings?.registrationNumber ? { taxID: settings.registrationNumber } : {}),
     ...(contactPoint ? { contactPoint } : {}),
     ...(settings?.address

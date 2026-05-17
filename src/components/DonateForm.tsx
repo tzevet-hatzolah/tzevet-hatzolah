@@ -93,19 +93,16 @@ type BankLookupResponse = {
 };
 
 type IdStatus = "ok" | "missing" | "invalid";
-type ReceiptIssue = { nameMissing: boolean; idStatus: IdStatus };
+type ReceiptIssue =
+  | { kind: "id"; idStatus: IdStatus }
+  | { kind: "foreignResident" };
 
 function bodyKeyFor(issue: ReceiptIssue):
-  | "body_name_missing"
   | "body_id_missing"
   | "body_id_invalid"
-  | "body_name_missing_id_missing"
-  | "body_name_missing_id_invalid" {
-  const { nameMissing, idStatus } = issue;
-  if (nameMissing && idStatus === "missing") return "body_name_missing_id_missing";
-  if (nameMissing && idStatus === "invalid") return "body_name_missing_id_invalid";
-  if (nameMissing) return "body_name_missing";
-  if (idStatus === "missing") return "body_id_missing";
+  | "body_foreign_resident" {
+  if (issue.kind === "foreignResident") return "body_foreign_resident";
+  if (issue.idStatus === "missing") return "body_id_missing";
   return "body_id_invalid";
 }
 
@@ -130,6 +127,7 @@ export default function DonateForm({
 
   const [name, setName] = useState("");
   const [idNumber, setIdNumber] = useState("");
+  const [foreignResident, setForeignResident] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -145,6 +143,7 @@ export default function DonateForm({
   const formRef = useRef<HTMLFormElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const idRef = useRef<HTMLInputElement>(null);
+  const foreignResidentRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLInputElement>(null);
@@ -306,21 +305,23 @@ export default function DonateForm({
 
   const validateHard = (): FormErrors => {
     const e: FormErrors = {};
+    if (!isFullName(name.trim())) {
+      e.name = t("errors.full_name");
+    }
     if (!EMAIL_RE.test(email)) e.email = t("errors.invalid_email");
     if (isBit && phone.trim().length === 0) {
       e.phone = t("errors.required");
     } else if (phone.trim().length > 0 && !isValidPhone(phone)) {
       e.phone = t("errors.invalid_phone");
     }
-    if (isBit && !isFullName(name.trim())) {
-      e.name = t("errors.full_name");
-    }
-    if (isBank) {
+    if (isBank && !foreignResident) {
       if (!idNumber.trim()) {
         e.idNumber = t("errors.required");
       } else if (!isValidIsraeliId(idNumber)) {
         e.idNumber = t("errors.invalid_id");
       }
+    }
+    if (isBank) {
       const bankNumberError = bankFieldError(
         "bankNumber",
         normalizeBankField("bankNumber", bankNumberRef.current)
@@ -360,12 +361,10 @@ export default function DonateForm({
     const v = value.trim();
     switch (field) {
       case "name":
-        // Soft field — empty is allowed (warned at submit). Only flag content
-        // that's clearly less than a full name.
-        if (v.length === 0) return "";
         if (!isFullName(v)) return t("errors.full_name");
         return "";
       case "idNumber":
+        if (foreignResident) return "";
         if (v.length === 0) return "";
         if (!isValidIsraeliId(v)) return t("errors.invalid_id");
         return "";
@@ -566,32 +565,34 @@ export default function DonateForm({
     };
 
   const checkReceiptIssue = (): ReceiptIssue | null => {
-    const nameMissing = !isFullName(name);
+    if (!isBank && foreignResident) return { kind: "foreignResident" };
     const idStatus: IdStatus =
       idNumber.length === 0
         ? "missing"
         : isValidIsraeliId(idNumber)
         ? "ok"
         : "invalid";
-    if (!nameMissing && idStatus === "ok") return null;
-    return { nameMissing, idStatus };
+    if (idStatus === "ok") return null;
+    return { kind: "id", idStatus };
+  };
+
+  const effectiveIdNumber = (sanitize: boolean): string => {
+    if (!isBank && foreignResident) return ID_OPT_OUT_MARKER;
+    return sanitize && !isValidIsraeliId(idNumber) ? ID_OPT_OUT_MARKER : idNumber;
   };
 
   const submitViaJson = async (sanitize: boolean) => {
     setErrors({});
     setSubmitting(true);
     const trimmedName = name.trim();
-    const cleanName = sanitize && !isFullName(trimmedName) ? "" : trimmedName;
-    const cleanId =
-      sanitize && !isValidIsraeliId(idNumber) ? ID_OPT_OUT_MARKER : idNumber;
     const endpoint = isBit ? "/api/donate/bit/create" : "/api/donate/charge";
     const payload: Record<string, unknown> = {
       total,
       itemSlug,
       locale,
       donor: {
-        name: cleanName,
-        idNumber: cleanId,
+        name: trimmedName,
+        idNumber: effectiveIdNumber(sanitize),
         email,
         phone,
       },
@@ -608,7 +609,12 @@ export default function DonateForm({
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setErrors({ submit: t("errors.charge_failed") });
+        if ((data as { error?: unknown } | null)?.error === "invalid_name") {
+          setErrors({ name: t("errors.full_name") });
+          nameRef.current?.focus();
+        } else {
+          setErrors({ submit: t("errors.charge_failed") });
+        }
         setSubmitting(false);
         return;
       }
@@ -628,6 +634,7 @@ export default function DonateForm({
     setSubmitting(true);
     const focusBankError = (nextErrors: FormErrors) => {
       const order: Array<[keyof FormErrors, React.RefObject<HTMLInputElement | null>]> = [
+        ["name", nameRef],
         ["idNumber", idRef],
         ["email", emailRef],
         ["phone", phoneRef],
@@ -645,6 +652,8 @@ export default function DonateForm({
     };
     const serverBankErrors = (error: unknown): FormErrors | null => {
       switch (error) {
+        case "invalid_name":
+          return { name: t("errors.full_name") };
         case "invalid_id":
           return { idNumber: t("errors.invalid_id") };
         case "invalid_email":
@@ -679,7 +688,7 @@ export default function DonateForm({
           locale,
           donor: {
             name: name.trim(),
-            idNumber,
+            idNumber: effectiveIdNumber(true),
             email,
             phone,
           },
@@ -736,10 +745,21 @@ export default function DonateForm({
         ["bankBranch", bankBranchRef],
         ["bankAccount", bankAccountRef],
       ];
-      if (fieldErrors.idNumber) {
-        idRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        idRef.current?.focus({ preventScroll: true });
-        return;
+      const donorOrder: Array<[
+        "name" | "idNumber" | "email" | "phone",
+        React.RefObject<HTMLInputElement | null>
+      ]> = [
+        ["name", nameRef],
+        ["idNumber", idRef],
+        ["email", emailRef],
+        ["phone", phoneRef],
+      ];
+      for (const [key, ref] of donorOrder) {
+        if (fieldErrors[key]) {
+          ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          ref.current?.focus({ preventScroll: true });
+          return;
+        }
       }
       for (const [key, ref] of bankOrder) {
         if (fieldErrors[key]) {
@@ -758,16 +778,16 @@ export default function DonateForm({
       return;
     }
 
-    if (isBank) {
-      stopHere(e);
-      void submitBankTransfer();
-      return;
-    }
-
     const issue = checkReceiptIssue();
     if (issue) {
       stopHere(e);
       setReceiptIssue(issue);
+      return;
+    }
+
+    if (isBank) {
+      stopHere(e);
+      void submitBankTransfer();
       return;
     }
 
@@ -796,9 +816,12 @@ export default function DonateForm({
   };
 
   const onProceedAnyway = async () => {
+    if (isBank) {
+      setReceiptIssue(null);
+      await submitBankTransfer();
+      return;
+    }
     if (!SUMIT_ENABLED) {
-      // submitViaJson sanitizes the JSON body locally; React state stays as
-      // the donor typed it, so no 999999999 ever appears in the visible field.
       setReceiptIssue(null);
       await submitViaJson(true);
       return;
@@ -807,15 +830,6 @@ export default function DonateForm({
       setReceiptIssue(null);
       setErrors({ submit: t("errors.network") });
       return;
-    }
-    // Override the visible identity inputs at the DOM level (not React state)
-    // so Sumit's BindFormSubmit reads the opt-out marker, but the donor never
-    // sees 999999999 in their ID field. The modal stays mounted to cover the
-    // form during tokenization; on success Sumit navigates away, on failure
-    // the ResponseCallback closes the modal and React reconciles the
-    // controlled inputs back to state.
-    if (!isFullName(name.trim()) && nameRef.current) {
-      nameRef.current.value = "";
     }
     if (!isValidIsraeliId(idNumber) && idRef.current) {
       idRef.current.value = ID_OPT_OUT_MARKER;
@@ -829,8 +843,8 @@ export default function DonateForm({
     const issue = receiptIssue;
     setReceiptIssue(null);
     setTimeout(() => {
-      if (issue?.nameMissing) {
-        nameRef.current?.focus();
+      if (issue?.kind === "foreignResident") {
+        foreignResidentRef.current?.focus();
       } else if (issue && issue.idStatus !== "ok") {
         idRef.current?.focus();
       }
@@ -885,14 +899,13 @@ export default function DonateForm({
           {t("donor_section")}
         </legend>
 
-        <Field id="donor-name" label={t("name_label")} error={errors.name} required={isBit}>
+        <Field id="donor-name" label={t("name_label")} error={errors.name} required>
           <input
             id="donor-name"
             ref={nameRef}
             type="text"
             name="name"
             autoComplete="name"
-            placeholder={t("name_placeholder")}
             value={name}
             onChange={(e) => {
               setName(e.target.value);
@@ -906,33 +919,61 @@ export default function DonateForm({
         </Field>
 
         <Field
-          id="donor-id"
+          id={foreignResident ? undefined : "donor-id"}
           label={t("id_label")}
-          helper={t("id_helper")}
           error={errors.idNumber}
           tooltip={t("id_tooltip")}
           tooltipAria={t("id_tooltip_aria")}
-          required={isBank}
+          required={isBank && !foreignResident}
         >
-          <input
-            id="donor-id"
-            ref={idRef}
-            type="text"
-            name="citizenid"
-            data-og="citizenid"
-            inputMode="numeric"
-            autoComplete="off"
-            value={idNumber}
-            onChange={(e) => {
-              setIdNumber(e.target.value.replace(/\D/g, ""));
-              clearError("idNumber");
-            }}
-            onBlur={handleBlur("idNumber")}
-            maxLength={9}
-            aria-invalid={errors.idNumber ? "true" : "false"}
-            aria-describedby={errors.idNumber ? "donor-id-error" : undefined}
-            className={inputClass(Boolean(errors.idNumber))}
-          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {foreignResident && !isBank ? (
+              <input
+                type="hidden"
+                name="citizenid"
+                data-og="citizenid"
+                value={ID_OPT_OUT_MARKER}
+                readOnly
+              />
+            ) : (
+              <input
+                id="donor-id"
+                ref={idRef}
+                type="text"
+                name="citizenid"
+                data-og="citizenid"
+                inputMode="numeric"
+                autoComplete="off"
+                value={idNumber}
+                onChange={(e) => {
+                  setIdNumber(e.target.value.replace(/\D/g, ""));
+                  clearError("idNumber");
+                }}
+                onBlur={handleBlur("idNumber")}
+                maxLength={9}
+                aria-invalid={errors.idNumber ? "true" : "false"}
+                aria-describedby={errors.idNumber ? "donor-id-error" : undefined}
+                className={`${inputClass(Boolean(errors.idNumber))} sm:flex-1`}
+              />
+            )}
+            {!isBank ? (
+              <label className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border-2 border-dark/10 bg-warm-white px-3 text-sm font-[number:var(--font-weight-bold)] text-charcoal transition-all sm:shrink-0">
+                <input
+                  ref={foreignResidentRef}
+                  type="checkbox"
+                  checked={foreignResident}
+                  onChange={(e) => {
+                    setForeignResident(e.target.checked);
+                    if (e.target.checked) {
+                      setErrors((prev) => ({ ...prev, idNumber: undefined }));
+                    }
+                  }}
+                  className="h-4 w-4 accent-gold-500"
+                />
+                {t("foreign_resident_label")}
+              </label>
+            ) : null}
+          </div>
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -985,10 +1026,6 @@ export default function DonateForm({
 
       {isCredit ? (
       <fieldset className="space-y-3 sm:space-y-4 pt-2">
-        <legend className="text-sm font-[number:var(--font-weight-bold)] text-charcoal mb-2">
-          {t("payment_section")}
-        </legend>
-
         <Field
           id="card-number"
           label={t("card_label")}
@@ -1005,7 +1042,6 @@ export default function DonateForm({
             data-og="cardnumber"
             name="cardnumber"
             dir="ltr"
-            placeholder="0000 0000 0000 0000"
             value={cardNumber}
             onChange={(e) => {
               const input = e.target;

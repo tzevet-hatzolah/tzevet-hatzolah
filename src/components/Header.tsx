@@ -43,13 +43,13 @@ export default function Header({
       <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-16 md:h-[72px]">
         {/* Logo + org name */}
         <Link href="/" className="flex items-center gap-3 text-white hover:text-white group">
-          <div className="relative">
+          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center md:h-[60px] md:w-[60px]">
             <Image
-              src="/logo.jpg"
+              src="/tzevethatzolah-logo.svg"
               alt="צוות הצלה לוגו"
-              width={44}
-              height={44}
-              className="rounded-full shrink-0 ring-2 ring-gold-500/30 group-hover:ring-gold-500/60 transition-all duration-300"
+              width={60}
+              height={60}
+              className="h-full w-full object-contain"
               priority
             />
           </div>

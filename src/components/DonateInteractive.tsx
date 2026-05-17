@@ -229,7 +229,16 @@ function BankDetailsModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <p className="mt-4 text-sm text-dark/75 leading-relaxed">
-          {t("tax_refund_note")}
+          {t.rich("tax_refund_note", {
+            email: (chunks) => (
+              <a
+                href="mailto:office@tzevethtzolah.com"
+                className="font-[number:var(--font-weight-bold)] text-navy-700 underline decoration-navy-300 underline-offset-4 hover:text-gold-600"
+              >
+                {chunks}
+              </a>
+            ),
+          })}
         </p>
         <button
           type="button"

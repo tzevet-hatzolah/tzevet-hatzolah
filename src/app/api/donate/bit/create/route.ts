@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isValidIsraeliId, ID_OPT_OUT_MARKER } from "@/lib/israeli-id";
+import { isFullName } from "@/lib/donor-validation";
 
 const DEBIT_BIT_URL =
   "https://matara.pro/nedarimplus/V6/Files/WebServices/DebitBit.aspx";
@@ -43,7 +44,7 @@ function parsePayload(v: unknown): CreatePayload | null {
 function validate(p: CreatePayload): string | null {
   if (!Number.isFinite(p.total) || p.total < 1) return "invalid_total";
   // Nedarim's DebitBit requires Phone + ClientName. Email is recommended (no validation on their side).
-  if (!p.donor.name.trim()) return "invalid_name";
+  if (!isFullName(p.donor.name)) return "invalid_name";
   if (!PHONE_RE.test(p.donor.phone)) return "invalid_phone";
   if (p.donor.email.length > 0 && !EMAIL_RE.test(p.donor.email)) {
     return "invalid_email";

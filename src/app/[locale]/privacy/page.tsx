@@ -109,7 +109,14 @@ function PrivacyContent() {
             </li>
             <li>
               <strong>בקשת מחיקה:</strong> לבקשת מחיקה של מידע אישי, אנא פנו
-              אלינו בכתובת הדוא&quot;ל: <strong>office@tzevethatzolah.com</strong>.
+              אלינו בכתובת הדוא&quot;ל:{" "}
+              <a
+                href="mailto:office@tzevethatzolah.com"
+                className="font-[number:var(--font-weight-bold)] text-navy-700 underline decoration-navy-300 underline-offset-4 hover:text-gold-600"
+              >
+                office@tzevethatzolah.com
+              </a>
+              .
               ונטפל בבקשתכם בשיא היעילות תוך 30 ימי עסקים ממועד קבלתה.
             </li>
             <li>

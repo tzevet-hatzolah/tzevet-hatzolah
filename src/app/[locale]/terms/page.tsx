@@ -90,7 +90,13 @@ function TermsContent() {
               <strong>מדיניות ביטול תרומה: </strong> בהתאם לחוק הגנת הצרכן,
               התשמ&quot;א-1981, תורם רשאי לבקש לבטל תרומה בתוך 30 ימים מיום
               ביצועה, בכפוף להצגת אישור תרומה ופנייה בכתב למייל:{" "}
-              <strong>office@tzevethatzolah.com</strong>. העמותה תבצע את הזיכוי
+              <a
+                href="mailto:office@tzevethatzolah.com"
+                className="font-[number:var(--font-weight-bold)] text-navy-700 underline decoration-navy-300 underline-offset-4 hover:text-gold-600"
+              >
+                office@tzevethatzolah.com
+              </a>
+              . העמותה תבצע את הזיכוי
               בהתאם לנהלי חברות האשראי ובקיזוז עמלות סליקה במידה ויחולו.
             </li>
           </ul>

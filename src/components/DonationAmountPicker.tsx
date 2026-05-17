@@ -76,6 +76,16 @@ export default function DonationAmountPicker({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
+  useEffect(() => {
+    if (!customMode) return;
+    requestAnimationFrame(() => customInputRef.current?.focus());
+  }, [customMode]);
+
+  useEffect(() => {
+    if (!customMonthsMode) return;
+    requestAnimationFrame(() => customMonthsInputRef.current?.focus());
+  }, [customMonthsMode]);
+
   const customN = parseInt(customRaw, 10);
   const customInvalid =
     customMode && customRaw.length > 0 && (Number.isNaN(customN) || customN < minAmount);
@@ -104,9 +114,11 @@ export default function DonationAmountPicker({
         />
       </div>
 
-      <div className="text-xs font-[number:var(--font-weight-bold)] text-charcoal mb-2">
-        {t("amount_label")}
-      </div>
+      {mode === "monthly" ? (
+        <div className="text-xs font-[number:var(--font-weight-bold)] text-charcoal mb-2">
+          {t("amount_label_monthly")}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-3 gap-2 mb-3">
         {presets.map((p) => {
@@ -130,56 +142,42 @@ export default function DonationAmountPicker({
             </button>
           );
         })}
-        <button
-          type="button"
-          onClick={() => {
-            onCustomModeChange(true);
-            customInputRef.current?.focus();
-          }}
-          aria-pressed={customMode}
-          className={`px-3 py-2.5 sm:py-3 rounded-[var(--radius-md)] text-sm sm:text-base font-[number:var(--font-weight-bold)] transition-all duration-200 col-span-3 ${
-            customMode
-              ? "border-2 border-gold-500 bg-gold-50 text-navy-950 shadow-[var(--shadow-glow-gold)]"
-              : "border-2 border-dark/10 bg-white text-dark hover:border-dark/25"
-          }`}
-        >
-          {t("custom_label")}
-        </button>
+        {customMode ? (
+          <input
+            ref={customInputRef}
+            type="number"
+            inputMode="numeric"
+            min={minAmount}
+            value={customRaw}
+            onChange={(e) => {
+              onCustomRawChange(e.target.value);
+              const n = parseInt(e.target.value, 10);
+              if (!Number.isNaN(n) && n >= minAmount) {
+                onAmountChange(n);
+              }
+            }}
+            placeholder={t("custom_placeholder")}
+            className={`min-w-0 rounded-[var(--radius-md)] px-3 py-2.5 sm:py-3 bg-gold-50 text-center text-charcoal text-sm sm:text-base font-[number:var(--font-weight-bold)] tabular-nums focus:outline-none focus:ring-2 focus:ring-navy-400/40 transition-all ${
+              customInvalid ? "border-2 border-red-400" : "border-2 border-gold-500"
+            }`}
+            aria-invalid={customInvalid ? "true" : "false"}
+            aria-describedby={customInvalid ? "custom-amount-error" : undefined}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => onCustomModeChange(true)}
+            aria-pressed={false}
+            className="px-3 py-2.5 sm:py-3 rounded-[var(--radius-md)] text-sm sm:text-base font-[number:var(--font-weight-bold)] transition-all duration-200 border-2 border-dark/10 bg-white text-dark hover:border-dark/25"
+          >
+            {t("custom_label")}
+          </button>
+        )}
       </div>
 
-      {customMode ? (
-        <div className="mb-3">
-          <div className="relative">
-            <span className="absolute top-1/2 -translate-y-1/2 end-3 text-muted text-base font-[number:var(--font-weight-bold)] pointer-events-none">
-              ₪
-            </span>
-            <input
-              ref={customInputRef}
-              type="number"
-              inputMode="numeric"
-              min={minAmount}
-              value={customRaw}
-              onChange={(e) => {
-                onCustomRawChange(e.target.value);
-                const n = parseInt(e.target.value, 10);
-                if (!Number.isNaN(n) && n >= minAmount) {
-                  onAmountChange(n);
-                }
-              }}
-              placeholder={t("custom_placeholder")}
-              className={`w-full rounded-[var(--radius-md)] px-3 py-2.5 sm:py-3 ps-10 bg-white text-charcoal text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-navy-400/40 transition-all ${
-                customInvalid
-                  ? "border-2 border-red-400"
-                  : "border-2 border-dark/10 focus:border-navy-400"
-              }`}
-              aria-invalid={customInvalid ? "true" : "false"}
-            />
-          </div>
-          {customInvalid ? (
-            <div className="text-[11px] text-red-600 mt-1.5">
-              {t("min_error", { min: minAmount })}
-            </div>
-          ) : null}
+      {customInvalid ? (
+        <div id="custom-amount-error" className="text-[11px] text-red-600 -mt-1 mb-3">
+          {t("min_error", { min: minAmount })}
         </div>
       ) : null}
 
@@ -210,25 +208,7 @@ export default function DonationAmountPicker({
                 </button>
               );
             })}
-            <button
-              type="button"
-              onClick={() => {
-                onCustomMonthsModeChange(true);
-                customMonthsInputRef.current?.focus();
-              }}
-              aria-pressed={customMonthsMode}
-              className={`px-3 py-2.5 rounded-[var(--radius-md)] text-sm sm:text-base font-[number:var(--font-weight-bold)] transition-all duration-200 col-span-3 ${
-                customMonthsMode
-                  ? "border-2 border-gold-500 bg-gold-50 text-navy-950 shadow-[var(--shadow-glow-gold)]"
-                  : "border-2 border-dark/10 bg-white text-dark hover:border-dark/25"
-              }`}
-            >
-              {t("months_custom")}
-            </button>
-          </div>
-
-          {customMonthsMode ? (
-            <div className="mb-3">
+            {customMonthsMode ? (
               <input
                 ref={customMonthsInputRef}
                 type="number"
@@ -244,18 +224,31 @@ export default function DonationAmountPicker({
                   }
                 }}
                 placeholder={t("months_custom_placeholder")}
-                className={`w-full rounded-[var(--radius-md)] px-3 py-2.5 bg-white text-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-navy-400/40 transition-all ${
+                className={`min-w-0 rounded-[var(--radius-md)] px-3 py-2.5 bg-gold-50 text-center text-charcoal text-sm sm:text-base font-[number:var(--font-weight-bold)] tabular-nums focus:outline-none focus:ring-2 focus:ring-navy-400/40 transition-all ${
                   customMonthsInvalid
                     ? "border-2 border-red-400"
-                    : "border-2 border-dark/10 focus:border-navy-400"
+                    : "border-2 border-gold-500"
                 }`}
                 aria-invalid={customMonthsInvalid ? "true" : "false"}
+                aria-describedby={
+                  customMonthsInvalid ? "custom-months-error" : undefined
+                }
               />
-              {customMonthsInvalid ? (
-                <div className="text-[11px] text-red-600 mt-1.5">
-                  {t("months_custom_error")}
-                </div>
-              ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={() => onCustomMonthsModeChange(true)}
+                aria-pressed={false}
+                className="px-3 py-2.5 rounded-[var(--radius-md)] text-sm sm:text-base font-[number:var(--font-weight-bold)] transition-all duration-200 border-2 border-dark/10 bg-white text-dark hover:border-dark/25"
+              >
+                {t("months_custom")}
+              </button>
+            )}
+          </div>
+
+          {customMonthsInvalid ? (
+            <div id="custom-months-error" className="text-[11px] text-red-600 -mt-1 mb-3">
+              {t("months_custom_error")}
             </div>
           ) : null}
         </>

@@ -32,9 +32,9 @@ export default async function OpengraphImage({
 
   const [heeboBold, logoBuffer] = await Promise.all([
     readFile(join(process.cwd(), "public/fonts/Heebo-Bold.ttf")),
-    readFile(join(process.cwd(), "public/logo-circle.png")),
+    readFile(join(process.cwd(), "public/tzevethatzolah-logo.svg")),
   ]);
-  const logoSrc = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+  const logoSrc = `data:image/svg+xml;base64,${logoBuffer.toString("base64")}`;
 
   const title = isEn ? "Tzevet Hatzolah" : toVisual("צוות הצלה");
   const subtitle = isEn

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ID_OPT_OUT_MARKER, isValidIsraeliId } from "@/lib/israeli-id";
+import { isFullName } from "@/lib/donor-validation";
 import { chargeWithToken, isSumitLiveMode } from "@/lib/sumit";
 
 type ChargePayload = {
@@ -23,6 +24,7 @@ function validate(p: ChargePayload): string | null {
   if (!Number.isFinite(p.total) || p.total < 1) return "invalid_total";
   if (!Number.isFinite(p.payments) || p.payments < 1 || p.payments > 36)
     return "invalid_payments";
+  if (!isFullName(p.donor.name)) return "invalid_name";
   if (!EMAIL_RE.test(p.donor.email)) return "invalid_email";
   if (p.donor.phone.length > 0 && !PHONE_RE.test(p.donor.phone)) {
     return "invalid_phone";

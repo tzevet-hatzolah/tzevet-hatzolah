@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isValidIsraeliId } from "@/lib/israeli-id";
+import { ID_OPT_OUT_MARKER, isValidIsraeliId } from "@/lib/israeli-id";
+import { isFullName } from "@/lib/donor-validation";
 import { lookupOfficialBankBranch } from "@/lib/bank-branch-registry";
 
 const DEBIT_DIGITAL_TRANSFER_URL =
@@ -73,7 +74,13 @@ function isDigits(value: string, max: number): boolean {
 
 function validate(p: CreatePayload): string | null {
   if (!Number.isFinite(p.total) || p.total < 1) return "invalid_total";
-  if (!isValidIsraeliId(p.donor.idNumber)) return "invalid_id";
+  if (!isFullName(p.donor.name)) return "invalid_name";
+  if (
+    p.donor.idNumber !== ID_OPT_OUT_MARKER &&
+    !isValidIsraeliId(p.donor.idNumber)
+  ) {
+    return "invalid_id";
+  }
   if (!EMAIL_RE.test(p.donor.email)) return "invalid_email";
   if (p.donor.phone.length > 0 && !PHONE_RE.test(p.donor.phone)) {
     return "invalid_phone";

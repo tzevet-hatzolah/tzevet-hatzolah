@@ -48,10 +48,6 @@ export default function PaymentMethods({
 
   return (
     <div>
-      <div className="text-xs font-[number:var(--font-weight-bold)] text-charcoal mb-2">
-        {t("pay_methods_label")}
-      </div>
-
       <button
         type="button"
         onClick={onCredit}
