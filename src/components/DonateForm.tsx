@@ -22,14 +22,26 @@ const SUMIT_ENABLED = Boolean(SUMIT_COMPANY_ID && SUMIT_PUBLIC_KEY);
 const BANK_NUMBER_LENGTH = 2;
 const BANK_BRANCH_LENGTH = 3;
 const BANK_ACCOUNT_MAX_LENGTH = 9;
+const HADOAR_BANK_CODE = "09";
+const FULL_BLEED_BANK_LOGO_CODES = new Set([
+  "11",
+  "12",
+  "14",
+  "17",
+  "18",
+  "31",
+  "46",
+  "52",
+]);
 const BANK_LOGOS: Record<string, string> = {
   "03": "/bank-logos/esh.svg",
   "04": "/bank-logos/yahav.svg",
+  "09": "/bank-logos/hadoar.svg",
   "10": "/bank-logos/leumi.svg",
   "11": "/bank-logos/discount.svg",
   "12": "/bank-logos/hapoalim.svg",
   "14": "/bank-logos/fibi.svg",
-  "17": "/bank-logos/fibi.svg",
+  "17": "/bank-logos/discount.svg",
   "18": "/bank-logos/one-zero.svg",
   "20": "/bank-logos/mizrahi-tefahot.svg",
   "31": "/bank-logos/fibi.svg",
@@ -76,6 +88,7 @@ type BankLookupResponse = {
   bankSupported?: boolean;
   bankName?: string | null;
   branchKnown?: boolean | null;
+  branchName?: string | null;
   error?: string;
 };
 
@@ -124,6 +137,7 @@ export default function DonateForm({
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
   const [bankLogoUrl, setBankLogoUrl] = useState("");
   const [receiptIssue, setReceiptIssue] = useState<ReceiptIssue | null>(null);
   const [sumitReady, setSumitReady] = useState(false);
@@ -270,6 +284,26 @@ export default function DonateForm({
     return undefined;
   };
 
+  const normalizeBankField = (
+    field: BankField,
+    input: HTMLInputElement | null
+  ): string => {
+    if (!input) return "";
+    const max =
+      field === "bankNumber"
+        ? BANK_NUMBER_LENGTH
+        : field === "bankBranch"
+        ? BANK_BRANCH_LENGTH
+        : BANK_ACCOUNT_MAX_LENGTH;
+    const digits = input.value.replace(/\D/g, "").slice(0, max);
+    const normalized =
+      digits && (field === "bankNumber" || field === "bankBranch")
+        ? digits.padStart(max, "0")
+        : digits;
+    if (input.value !== normalized) input.value = normalized;
+    return normalized;
+  };
+
   const validateHard = (): FormErrors => {
     const e: FormErrors = {};
     if (!EMAIL_RE.test(email)) e.email = t("errors.invalid_email");
@@ -289,15 +323,15 @@ export default function DonateForm({
       }
       const bankNumberError = bankFieldError(
         "bankNumber",
-        bankNumberRef.current?.value ?? ""
+        normalizeBankField("bankNumber", bankNumberRef.current)
       );
       const bankBranchError = bankFieldError(
         "bankBranch",
-        bankBranchRef.current?.value ?? ""
+        normalizeBankField("bankBranch", bankBranchRef.current)
       );
       const bankAccountError = bankFieldError(
         "bankAccount",
-        bankAccountRef.current?.value ?? ""
+        normalizeBankField("bankAccount", bankAccountRef.current)
       );
       if (bankNumberError) e.bankNumber = bankNumberError;
       if (bankBranchError) e.bankBranch = bankBranchError;
@@ -407,6 +441,19 @@ export default function DonateForm({
     return BANK_LOGOS[normalized] ? `url("${BANK_LOGOS[normalized]}")` : "";
   };
 
+  const bankLogoClassFor = (bank: string): string => {
+    const normalized = bank.padStart(BANK_NUMBER_LENGTH, "0");
+    return FULL_BLEED_BANK_LOGO_CODES.has(normalized)
+      ? "bg-cover"
+      : "bg-[length:24px_24px]";
+  };
+
+  const bankBranchLookupError = (bank: string): string => {
+    return bank.padStart(BANK_NUMBER_LENGTH, "0") === HADOAR_BANK_CODE
+      ? t("errors.invalid_hadoar_branch")
+      : t("errors.invalid_branch_unknown");
+  };
+
   const lookupBankDetails = async (bankValue: string, branchValue?: string) => {
     const bank = bankValue.replace(/\D/g, "");
     const branch = (branchValue ?? bankBranchRef.current?.value ?? "").replace(
@@ -418,6 +465,7 @@ export default function DonateForm({
 
     if (bank.length !== BANK_NUMBER_LENGTH || Number(bank) < 1) {
       setBankName("");
+      setBranchName("");
       setBankLogoUrl("");
       return;
     }
@@ -433,6 +481,11 @@ export default function DonateForm({
       }
 
       setBankName(formatBankName(data.bankName));
+      setBranchName(
+        branch.length === BANK_BRANCH_LENGTH && data.branchKnown
+          ? formatBankName(data.branchName)
+          : ""
+      );
       setBankLogoUrl(data.bankKnown ? bankLogoFor(bank) : "");
       setErrors((prev) => {
         const next = { ...prev };
@@ -446,7 +499,7 @@ export default function DonateForm({
 
         if (branch.length === BANK_BRANCH_LENGTH) {
           if (data.branchKnown === false) {
-            next.bankBranch = t("errors.invalid_bank_branch_pair");
+            next.bankBranch = bankBranchLookupError(bank);
           } else if (data.branchKnown) {
             next.bankBranch = undefined;
           }
@@ -475,6 +528,7 @@ export default function DonateForm({
       if (field === "bankNumber") {
         bankLookupRequestRef.current += 1;
         setBankName("");
+        setBranchName("");
         setBankLogoUrl("");
         setErrors((prev) => ({ ...prev, bankBranch: undefined }));
         if (digits.length === BANK_NUMBER_LENGTH) {
@@ -482,6 +536,7 @@ export default function DonateForm({
         }
       } else if (field === "bankBranch") {
         bankLookupRequestRef.current += 1;
+        setBranchName("");
         const bank = bankNumberRef.current?.value ?? "";
         if (digits.length === BANK_BRANCH_LENGTH) {
           void lookupBankDetails(bank, digits);
@@ -496,10 +551,18 @@ export default function DonateForm({
 
   const handleBankBlur =
     (field: BankField) => (e: React.FocusEvent<HTMLInputElement>) => {
+      const value = normalizeBankField(field, e.target);
       setErrors((prev) => ({
         ...prev,
-        [field]: bankFieldError(field, e.target.value),
+        [field]: bankFieldError(field, value),
       }));
+      if (field === "bankNumber" && value.length === BANK_NUMBER_LENGTH) {
+        setBankName("");
+        setBankLogoUrl("");
+        void lookupBankDetails(value);
+      } else if (field === "bankBranch" && value.length === BANK_BRANCH_LENGTH) {
+        void lookupBankDetails(bankNumberRef.current?.value ?? "", value);
+      }
     };
 
   const checkReceiptIssue = (): ReceiptIssue | null => {
@@ -599,7 +662,9 @@ export default function DonateForm({
         case "invalid_account":
           return { bankAccount: t("errors.invalid_bank_account") };
         case "invalid_bank_branch":
-          return { bankBranch: t("errors.invalid_bank_branch_pair") };
+          return {
+            bankBranch: bankBranchLookupError(bankNumberRef.current?.value ?? ""),
+          };
         default:
           return null;
       }
@@ -1100,7 +1165,9 @@ export default function DonateForm({
                       aria-hidden
                     >
                       <span
-                        className="h-8 w-8 rounded-[10px] bg-warm-white bg-[length:24px_24px] bg-center bg-no-repeat shadow-sm ring-1 ring-dark/10"
+                        className={`h-8 w-8 rounded-[10px] bg-warm-white ${bankLogoClassFor(
+                          bankNumberRef.current?.value ?? ""
+                        )} bg-center bg-no-repeat shadow-sm ring-1 ring-dark/10`}
                         style={{ backgroundImage: bankLogoUrl }}
                       />
                     </span>
@@ -1123,21 +1190,38 @@ export default function DonateForm({
               error={errors.bankBranch}
               required
             >
-              <input
-                id="bank-branch"
-                ref={bankBranchRef}
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                name="bankBranch"
-                dir="ltr"
-                maxLength={BANK_BRANCH_LENGTH}
-                onChange={handleBankChange("bankBranch")}
-                onBlur={handleBankBlur("bankBranch")}
-                aria-invalid={errors.bankBranch ? "true" : "false"}
-                aria-describedby={errors.bankBranch ? "bank-branch-error" : undefined}
-                className={`${inputClass(Boolean(errors.bankBranch))} text-start tabular-nums`}
-              />
+              <div>
+                <input
+                  id="bank-branch"
+                  ref={bankBranchRef}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  name="bankBranch"
+                  dir="ltr"
+                  maxLength={BANK_BRANCH_LENGTH}
+                  onChange={handleBankChange("bankBranch")}
+                  onBlur={handleBankBlur("bankBranch")}
+                  aria-invalid={errors.bankBranch ? "true" : "false"}
+                  aria-describedby={
+                    errors.bankBranch
+                      ? "bank-branch-error"
+                      : branchName
+                      ? "bank-branch-branch-name"
+                      : undefined
+                  }
+                  className={`${inputClass(Boolean(errors.bankBranch))} text-start tabular-nums`}
+                />
+                {branchName ? (
+                  <p
+                    id="bank-branch-branch-name"
+                    className="mt-1.5 truncate pr-3 text-right text-xs text-muted"
+                    dir="rtl"
+                  >
+                    {branchName}
+                  </p>
+                ) : null}
+              </div>
             </Field>
             <Field
               id="bank-account"
