@@ -9,9 +9,14 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-# Load env vars from .env.local
+# Load missing env vars from .env.local. Values already provided in the shell
+# take priority, so TELEGRAM_BOT_TOKEN can be used without saving it locally.
 if [ -f .env.local ]; then
-  export $(grep -E '^(TELEGRAM_BOT_TOKEN|TELEGRAM_WEBHOOK_SECRET)=' .env.local | xargs)
+  while IFS='=' read -r key value; do
+    if [ -n "$key" ] && [ -z "${!key}" ]; then
+      export "$key=$value"
+    fi
+  done < <(grep -E '^(TELEGRAM_BOT_TOKEN|TELEGRAM_WEBHOOK_SECRET)=' .env.local)
 fi
 
 if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
