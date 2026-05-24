@@ -64,6 +64,28 @@ export async function kvSet(
   });
 }
 
+export async function kvSetIfNotExists(
+  key: string,
+  value: unknown,
+  ttlSeconds?: number
+): Promise<boolean> {
+  if (redis) {
+    const result = ttlSeconds
+      ? await redis.set(key, value, { nx: true, ex: ttlSeconds })
+      : await redis.set(key, value, { nx: true });
+    return result === "OK";
+  }
+
+  memCleanup();
+  if (mem.has(key)) return false;
+
+  mem.set(key, {
+    value,
+    expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1000 : undefined,
+  });
+  return true;
+}
+
 export async function kvDel(key: string): Promise<void> {
   if (redis) {
     await redis.del(key);

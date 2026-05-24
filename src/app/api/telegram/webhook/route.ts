@@ -46,7 +46,16 @@ import {
 } from "@/lib/news-categories";
 import { formatForPlainText } from "@/lib/bot/formatter";
 import { broadcastToOthers, getSenderName } from "@/lib/bot/broadcast";
+import { claimTelegramMessageUpdate } from "@/lib/bot/processed-updates";
+import {
+  getBotPausedReason,
+  isBotPaused,
+  isBotPausedByEnv,
+  setBotPaused,
+} from "@/lib/bot/control";
 import type { BotMessage, PhotoFile, PublishResult } from "@/lib/bot/types";
+
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   // Verify webhook secret
@@ -65,6 +74,10 @@ export async function POST(request: NextRequest) {
 
     // Handle callback queries (button presses)
     if (update.callback_query) {
+      if (await isBotPaused()) {
+        await answerCallbackQuery(update.callback_query.id, "הבוט מושהה");
+        return NextResponse.json({ ok: true });
+      }
       await handleCallbackQuery(update.callback_query);
       return NextResponse.json({ ok: true });
     }
@@ -86,6 +99,29 @@ export async function POST(request: NextRequest) {
 
     // Extract text (from text or caption)
     const text = message.text || message.caption || "";
+
+    const claimed = await claimTelegramMessageUpdate(
+      update.update_id,
+      chatId,
+      message.message_id
+    );
+    if (!claimed) {
+      console.log(
+        `[Webhook] Duplicate Telegram message ignored: ${chatId}/${message.message_id}`
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    if (await handleBotControlCommand(text, chatId)) {
+      return NextResponse.json({ ok: true });
+    }
+
+    if (await isBotPaused()) {
+      console.warn(
+        `[Webhook] Bot is paused; message ignored: ${chatId}/${message.message_id}`
+      );
+      return NextResponse.json({ ok: true });
+    }
 
     // Intercept the persistent-keyboard button: open the platform picker.
     if (text.trim() === PLATFORM_PICKER_BUTTON) {
@@ -166,6 +202,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    after(async () => {
+      await handleSingleMessage(botMessage, senderName, baseUrl);
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    return NextResponse.json({ ok: true });
+  }
+}
+
+async function handleBotControlCommand(
+  text: string,
+  chatId: number
+): Promise<boolean> {
+  const command = text.trim().split(/\s+/)[0]?.toLowerCase();
+  if (!command) return false;
+
+  if (command === "/bot_pause" || command === "/pause_bot") {
+    await setBotPaused(true);
+    await sendBotReply(chatId, "⏸️ הבוט הושהה. הודעות חדשות לא יפורסמו.");
+    return true;
+  }
+
+  if (command === "/bot_resume" || command === "/resume_bot") {
+    if (isBotPausedByEnv()) {
+      await sendBotReply(
+        chatId,
+        "הבוט מושהה דרך TELEGRAM_BOT_PAUSED=true. צריך לשנות את משתנה הסביבה כדי להפעיל מחדש."
+      );
+      return true;
+    }
+
+    await setBotPaused(false);
+    await sendBotReply(chatId, "▶️ הבוט הופעל מחדש.");
+    return true;
+  }
+
+  if (command === "/bot_status") {
+    const paused = await isBotPaused();
+    await sendBotReply(
+      chatId,
+      paused
+        ? `הבוט מושהה (${getBotPausedReason()}).`
+        : "הבוט פעיל."
+    );
+    return true;
+  }
+
+  return false;
+}
+
+async function handleSingleMessage(
+  botMessage: BotMessage,
+  senderName: string,
+  baseUrl: string
+) {
+  try {
+    const { text, photos, senderId, chatId } = botMessage;
     const isTextOnly = photos.length === 0;
     const platforms = await getUserPlatforms(senderId);
     const instagramEnabled = platforms.has("instagram");
@@ -184,7 +279,7 @@ export async function POST(request: NextRequest) {
       if (!instagramEnabled) {
         // User has Instagram disabled — don't prompt for it.
         await resetUserPlatforms(senderId);
-        return NextResponse.json({ ok: true });
+        return;
       }
 
       // Generate the Instagram image preview
@@ -209,20 +304,22 @@ export async function POST(request: NextRequest) {
           { text: "לא ❌", callbackData: `ig_no:${pendingId}` },
         ]
       );
-    } else {
-      // Has photos: publish to user's enabled platforms
-      const results = await publishToAll(botMessage, { platforms });
-      await resetUserPlatforms(senderId);
-      const summary = formatResultsSummary(results);
-      await sendBotReply(chatId, summary);
-      await broadcastToOthers(senderId, senderName, text, summary);
-      await maybeSendCategoryPicker(results, chatId);
+      return;
     }
 
-    return NextResponse.json({ ok: true });
+    // Has photos: publish to user's enabled platforms
+    const results = await publishToAll(botMessage, { platforms });
+    await resetUserPlatforms(senderId);
+    const summary = formatResultsSummary(results);
+    await sendBotReply(chatId, summary);
+    await broadcastToOthers(senderId, senderName, text, summary);
+    await maybeSendCategoryPicker(results, chatId);
   } catch (error) {
-    console.error("Webhook error:", error);
-    return NextResponse.json({ ok: true });
+    console.error("Single message publish error:", error);
+    await sendBotReply(
+      botMessage.chatId,
+      "שגיאה בפרסום. נסה שוב מאוחר יותר."
+    );
   }
 }
 
